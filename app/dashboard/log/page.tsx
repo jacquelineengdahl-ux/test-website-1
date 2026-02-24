@@ -4,17 +4,85 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
+function Slider({
+  id,
+  label,
+  leftLabel,
+  rightLabel,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  leftLabel: string;
+  rightLabel: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-medium mb-1">
+        {label}: {value}/10
+      </label>
+      <input
+        id={id}
+        type="range"
+        min={0}
+        max={10}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full"
+      />
+      <div className="flex justify-between text-xs opacity-60">
+        <span>{leftLabel}</span>
+        <span>{rightLabel}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function LogPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
-  const [logDate, setLogDate] = useState(new Date().toISOString().slice(0, 10));
-  const [painLevel, setPainLevel] = useState(0);
-  const [fatigueLevel, setFatigueLevel] = useState(0);
-  const [moodLevel, setMoodLevel] = useState(0);
-  const [notes, setNotes] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const [logDate, setLogDate] = useState(new Date().toISOString().slice(0, 10));
+
+  // Pain sliders
+  const [legPain, setLegPain] = useState(0);
+  const [lowerBackPain, setLowerBackPain] = useState(0);
+  const [chestPain, setChestPain] = useState(0);
+  const [shoulderPain, setShoulderPain] = useState(0);
+  const [headache, setHeadache] = useState(0);
+  const [pelvicPain, setPelvicPain] = useState(0);
+  const [bowelUrinationPain, setBowelUrinationPain] = useState(0);
+  const [intercoursePain, setIntercoursePain] = useState(0);
+
+  // Other sliders
+  const [bloating, setBloating] = useState(0);
+  const [nausea, setNausea] = useState(0);
+  const [digestion, setDigestion] = useState(5);
+  const [fatigue, setFatigue] = useState(0);
+  const [inflammation, setInflammation] = useState(0);
+  const [mood, setMood] = useState(0);
+
+  // Lifestyle factors
+  const [stress, setStress] = useState(0);
+  const [physicalActivity, setPhysicalActivity] = useState(5);
+  const [coffee, setCoffee] = useState(0);
+  const [alcohol, setAlcohol] = useState(0);
+  const [smoking, setSmoking] = useState(0);
+  const [diet, setDiet] = useState(5);
+  const [sleep, setSleep] = useState(0);
+
+  // Cycle phase
+  const [cyclePhase, setCyclePhase] = useState("");
+  const [cyclePhaseOther, setCyclePhaseOther] = useState("");
+
+  // Notes
+  const [notes, setNotes] = useState("");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -36,9 +104,28 @@ export default function LogPage() {
     const { error } = await supabase.from("symptom_logs").insert({
       user_id: userId,
       log_date: logDate,
-      pain_level: painLevel,
-      fatigue_level: fatigueLevel,
-      mood_level: moodLevel,
+      leg_pain: legPain,
+      lower_back_pain: lowerBackPain,
+      chest_pain: chestPain,
+      shoulder_pain: shoulderPain,
+      headache,
+      pelvic_pain: pelvicPain,
+      bowel_urination_pain: bowelUrinationPain,
+      intercourse_pain: intercoursePain,
+      bloating,
+      nausea,
+      digestion,
+      fatigue,
+      inflammation,
+      mood,
+      stress,
+      physical_activity: physicalActivity,
+      coffee,
+      alcohol,
+      smoking,
+      diet,
+      sleep,
+      cycle_phase: cyclePhase === "other" ? (cyclePhaseOther ? `other:${cyclePhaseOther}` : null) : (cyclePhase || null),
       notes: notes || null,
     });
     setSubmitting(false);
@@ -59,11 +146,11 @@ export default function LogPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center py-12">
       <div className="w-full max-w-sm space-y-6">
         <h1 className="text-2xl font-bold text-center">Log symptoms</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="log-date" className="block text-sm font-medium mb-1">
               Date
@@ -78,54 +165,77 @@ export default function LogPage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="pain-level" className="block text-sm font-medium mb-1">
-              Pain level: {painLevel}/10
-            </label>
-            <input
-              id="pain-level"
-              type="range"
-              min={0}
-              max={10}
-              value={painLevel}
-              onChange={(e) => setPainLevel(Number(e.target.value))}
-              className="w-full"
-            />
+          {/* Pain sliders */}
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide opacity-60">Pain</h2>
+            <Slider id="leg-pain" label="Leg" leftLabel="None" rightLabel="Severe" value={legPain} onChange={setLegPain} />
+            <Slider id="lower-back-pain" label="Lower back" leftLabel="None" rightLabel="Severe" value={lowerBackPain} onChange={setLowerBackPain} />
+            <Slider id="chest-pain" label="Chest" leftLabel="None" rightLabel="Severe" value={chestPain} onChange={setChestPain} />
+            <Slider id="shoulder-pain" label="Shoulder" leftLabel="None" rightLabel="Severe" value={shoulderPain} onChange={setShoulderPain} />
+            <Slider id="headache" label="Headache" leftLabel="None" rightLabel="Severe" value={headache} onChange={setHeadache} />
+            <Slider id="pelvic-pain" label="Pelvic" leftLabel="None" rightLabel="Severe" value={pelvicPain} onChange={setPelvicPain} />
+            <Slider id="bowel-urination-pain" label="Bowel/urination" leftLabel="None" rightLabel="Severe" value={bowelUrinationPain} onChange={setBowelUrinationPain} />
+            <Slider id="intercourse-pain" label="Intercourse" leftLabel="None" rightLabel="Severe" value={intercoursePain} onChange={setIntercoursePain} />
           </div>
 
-          <div>
-            <label htmlFor="fatigue-level" className="block text-sm font-medium mb-1">
-              Fatigue level: {fatigueLevel}/10
-            </label>
-            <input
-              id="fatigue-level"
-              type="range"
-              min={0}
-              max={10}
-              value={fatigueLevel}
-              onChange={(e) => setFatigueLevel(Number(e.target.value))}
-              className="w-full"
-            />
+          {/* Other sliders */}
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide opacity-60">Other symptoms</h2>
+            <Slider id="bloating" label="Bloating" leftLabel="None" rightLabel="Severe" value={bloating} onChange={setBloating} />
+            <Slider id="nausea" label="Nausea" leftLabel="None" rightLabel="Severe" value={nausea} onChange={setNausea} />
+            <Slider id="digestion" label="Digestion" leftLabel="Diarrhea" rightLabel="Constipated" value={digestion} onChange={setDigestion} />
+            <Slider id="fatigue" label="Fatigue" leftLabel="Energized" rightLabel="Exhausted" value={fatigue} onChange={setFatigue} />
+            <Slider id="inflammation" label="Full body inflammation" leftLabel="None" rightLabel="Severe" value={inflammation} onChange={setInflammation} />
+            <Slider id="mood" label="Mood" leftLabel="Normal" rightLabel="Depressive" value={mood} onChange={setMood} />
           </div>
 
-          <div>
-            <label htmlFor="mood-level" className="block text-sm font-medium mb-1">
-              Mood level: {moodLevel}/10
-            </label>
-            <input
-              id="mood-level"
-              type="range"
-              min={0}
-              max={10}
-              value={moodLevel}
-              onChange={(e) => setMoodLevel(Number(e.target.value))}
-              className="w-full"
-            />
+          {/* Lifestyle factors */}
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide opacity-60">Lifestyle factors</h2>
+            <Slider id="stress" label="Stress & emotional health" leftLabel="None" rightLabel="Extreme" value={stress} onChange={setStress} />
+            <Slider id="physical-activity" label="Physical activity" leftLabel="Sedentary" rightLabel="Exhaustive" value={physicalActivity} onChange={setPhysicalActivity} />
+            <Slider id="coffee" label="Coffee intake" leftLabel="None" rightLabel="Heavy" value={coffee} onChange={setCoffee} />
+            <Slider id="alcohol" label="Alcohol intake" leftLabel="None" rightLabel="Heavy" value={alcohol} onChange={setAlcohol} />
+            <Slider id="smoking" label="Smoking" leftLabel="None" rightLabel="Heavy" value={smoking} onChange={setSmoking} />
+            <Slider id="diet" label="Overall diet" leftLabel="Poor" rightLabel="Healthy" value={diet} onChange={setDiet} />
+            <Slider id="sleep" label="Sleep" leftLabel="Normal" rightLabel="Poor" value={sleep} onChange={setSleep} />
           </div>
 
+          {/* Cycle phase */}
+          <div>
+            <label htmlFor="cycle-phase" className="block text-sm font-medium mb-1">
+              Menstrual cycle phase
+            </label>
+            <select
+              id="cycle-phase"
+              value={cyclePhase}
+              onChange={(e) => setCyclePhase(e.target.value)}
+              className="w-full rounded border px-3 py-2"
+            >
+              <option value="">— Select —</option>
+              <option value="menstrual">Menstrual phase (Day 1–5)</option>
+              <option value="follicular">Follicular phase (Day 1–13)</option>
+              <option value="ovulation">Ovulation (Day 14)</option>
+              <option value="luteal">Luteal phase (Day 15–28)</option>
+              <option value="on_pill">On the pill</option>
+              <option value="other">Other</option>
+            </select>
+            {cyclePhase === "other" && (
+              <input
+                id="cycle-phase-other"
+                type="text"
+                placeholder="Please specify"
+                value={cyclePhaseOther}
+                onChange={(e) => setCyclePhaseOther(e.target.value)}
+                className="w-full rounded border px-3 py-2 mt-2"
+              />
+            )}
+          </div>
+
+          {/* Notes */}
           <div>
             <label htmlFor="notes" className="block text-sm font-medium mb-1">
-              Notes (optional)
+              Other / notes (optional)
             </label>
             <textarea
               id="notes"
