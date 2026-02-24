@@ -154,8 +154,8 @@ export default function HistoryPage() {
     );
   }
 
-  // Charts need chronological order (oldest first)
-  const chronological = [...entries].reverse();
+  // Charts need chronological order (oldest first, left to right)
+  const chronological = [...entries].sort((a, b) => a.log_date.localeCompare(b.log_date));
 
   return (
     <div className="flex min-h-screen justify-center py-12">
