@@ -44,7 +44,6 @@ function Slider({
 export default function LogPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -63,18 +62,20 @@ export default function LogPage() {
   // Other sliders
   const [bloating, setBloating] = useState(0);
   const [nausea, setNausea] = useState(0);
-  const [digestion, setDigestion] = useState(5);
+  const [diarrhea, setDiarrhea] = useState(0);
+  const [constipation, setConstipation] = useState(0);
   const [fatigue, setFatigue] = useState(0);
   const [inflammation, setInflammation] = useState(0);
   const [mood, setMood] = useState(0);
 
   // Lifestyle factors
   const [stress, setStress] = useState(0);
-  const [physicalActivity, setPhysicalActivity] = useState(5);
+  const [inactivity, setInactivity] = useState(0);
+  const [overexertion, setOverexertion] = useState(0);
   const [coffee, setCoffee] = useState(0);
   const [alcohol, setAlcohol] = useState(0);
   const [smoking, setSmoking] = useState(0);
-  const [diet, setDiet] = useState(5);
+  const [diet, setDiet] = useState(0);
   const [sleep, setSleep] = useState(0);
 
   // Cycle phase
@@ -86,14 +87,9 @@ export default function LogPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUserId(data.user.id);
-      } else {
-        router.replace("/login");
-      }
-      setLoading(false);
+      if (data.user) setUserId(data.user.id);
     });
-  }, [router]);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -114,12 +110,14 @@ export default function LogPage() {
       intercourse_pain: intercoursePain,
       bloating,
       nausea,
-      digestion,
+      diarrhea,
+      constipation,
       fatigue,
       inflammation,
       mood,
       stress,
-      physical_activity: physicalActivity,
+      inactivity,
+      overexertion,
       coffee,
       alcohol,
       smoking,
@@ -135,14 +133,6 @@ export default function LogPage() {
     } else {
       router.push("/dashboard/history");
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p>Loading…</p>
-      </div>
-    );
   }
 
   return (
@@ -183,8 +173,9 @@ export default function LogPage() {
             <h2 className="text-sm font-semibold uppercase tracking-wide opacity-60">Other symptoms</h2>
             <Slider id="bloating" label="Bloating" leftLabel="None" rightLabel="Severe" value={bloating} onChange={setBloating} />
             <Slider id="nausea" label="Nausea" leftLabel="None" rightLabel="Severe" value={nausea} onChange={setNausea} />
-            <Slider id="digestion" label="Digestion" leftLabel="Diarrhea" rightLabel="Constipated" value={digestion} onChange={setDigestion} />
-            <Slider id="fatigue" label="Fatigue" leftLabel="Energized" rightLabel="Exhausted" value={fatigue} onChange={setFatigue} />
+            <Slider id="diarrhea" label="Diarrhea" leftLabel="None" rightLabel="Severe" value={diarrhea} onChange={setDiarrhea} />
+            <Slider id="constipation" label="Constipation" leftLabel="None" rightLabel="Severe" value={constipation} onChange={setConstipation} />
+            <Slider id="fatigue" label="Fatigue" leftLabel="None" rightLabel="Exhausted" value={fatigue} onChange={setFatigue} />
             <Slider id="inflammation" label="Full body inflammation" leftLabel="None" rightLabel="Severe" value={inflammation} onChange={setInflammation} />
             <Slider id="mood" label="Mood" leftLabel="Normal" rightLabel="Depressive" value={mood} onChange={setMood} />
           </div>
@@ -193,11 +184,12 @@ export default function LogPage() {
           <div className="space-y-4">
             <h2 className="text-sm font-semibold uppercase tracking-wide opacity-60">Lifestyle factors</h2>
             <Slider id="stress" label="Stress & emotional health" leftLabel="None" rightLabel="Extreme" value={stress} onChange={setStress} />
-            <Slider id="physical-activity" label="Physical activity" leftLabel="Sedentary" rightLabel="Exhaustive" value={physicalActivity} onChange={setPhysicalActivity} />
+            <Slider id="inactivity" label="Inactivity" leftLabel="None" rightLabel="Severe" value={inactivity} onChange={setInactivity} />
+            <Slider id="overexertion" label="Overexertion" leftLabel="None" rightLabel="Severe" value={overexertion} onChange={setOverexertion} />
             <Slider id="coffee" label="Coffee intake" leftLabel="None" rightLabel="Heavy" value={coffee} onChange={setCoffee} />
             <Slider id="alcohol" label="Alcohol intake" leftLabel="None" rightLabel="Heavy" value={alcohol} onChange={setAlcohol} />
             <Slider id="smoking" label="Smoking" leftLabel="None" rightLabel="Heavy" value={smoking} onChange={setSmoking} />
-            <Slider id="diet" label="Overall diet" leftLabel="Poor" rightLabel="Healthy" value={diet} onChange={setDiet} />
+            <Slider id="diet" label="Overall diet" leftLabel="Healthy" rightLabel="Poor" value={diet} onChange={setDiet} />
             <Slider id="sleep" label="Sleep" leftLabel="Normal" rightLabel="Poor" value={sleep} onChange={setSleep} />
           </div>
 

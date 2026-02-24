@@ -1,0 +1,75 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [loading, setLoading] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setAuthenticated(true);
+      } else {
+        router.replace("/login");
+      }
+      setLoading(false);
+    });
+  }, [router]);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.replace("/");
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p>Loading…</p>
+      </div>
+    );
+  }
+
+  if (!authenticated) return null;
+
+  const links = [
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/dashboard/log", label: "Log" },
+    { href: "/dashboard/history", label: "History" },
+  ];
+
+  return (
+    <div className="min-h-screen">
+      <nav className="flex items-center justify-between border-b px-6 py-3">
+        <div className="flex gap-4">
+          {links.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className={`text-sm font-medium ${
+                pathname === link.href ? "underline" : "opacity-60 hover:opacity-100"
+              }`}
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+        <button
+          onClick={handleSignOut}
+          className="text-sm opacity-60 hover:opacity-100"
+        >
+          Sign out
+        </button>
+      </nav>
+      <main>{children}</main>
+    </div>
+  );
+}
