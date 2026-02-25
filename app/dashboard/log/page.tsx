@@ -79,7 +79,7 @@ export default function LogPage() {
   const [sleep, setSleep] = useState(0);
 
   // Cycle phase
-  const [cyclePhase, setCyclePhase] = useState("");
+  const [cyclePhases, setCyclePhases] = useState<string[]>([]);
   const [cyclePhaseOther, setCyclePhaseOther] = useState("");
 
   // Notes
@@ -123,7 +123,16 @@ export default function LogPage() {
       smoking,
       diet,
       sleep,
-      cycle_phase: cyclePhase === "other" ? (cyclePhaseOther ? `other:${cyclePhaseOther}` : null) : (cyclePhase || null),
+      cycle_phase: (() => {
+        const phases = [...cyclePhases];
+        const otherIdx = phases.indexOf("other");
+        if (otherIdx !== -1 && cyclePhaseOther) {
+          phases[otherIdx] = `other:${cyclePhaseOther}`;
+        } else if (otherIdx !== -1) {
+          phases.splice(otherIdx, 1);
+        }
+        return phases.length > 0 ? phases.join(",") : null;
+      })(),
       notes: notes || null,
     });
     setSubmitting(false);
@@ -140,9 +149,9 @@ export default function LogPage() {
       <div className="w-full max-w-sm space-y-6">
         <h1 className="text-center font-serif text-2xl font-semibold tracking-tight text-foreground">Log symptoms</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-16">
           <div>
-            <label htmlFor="log-date" className="mb-1 block text-sm font-medium text-foreground">
+            <label htmlFor="log-date" className="mb-1 block font-serif text-lg font-semibold tracking-tight text-muted">
               Date
             </label>
             <input
@@ -156,8 +165,8 @@ export default function LogPage() {
           </div>
 
           {/* Pain sliders */}
-          <div className="space-y-4">
-            <h2 className="font-serif text-sm font-semibold uppercase tracking-wide text-muted">Pain</h2>
+          <div className="space-y-2">
+            <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">Pain levels</h2>
             <Slider id="leg-pain" label="Leg" leftLabel="None" rightLabel="Severe" value={legPain} onChange={setLegPain} />
             <Slider id="lower-back-pain" label="Lower back" leftLabel="None" rightLabel="Severe" value={lowerBackPain} onChange={setLowerBackPain} />
             <Slider id="chest-pain" label="Chest" leftLabel="None" rightLabel="Severe" value={chestPain} onChange={setChestPain} />
@@ -169,8 +178,8 @@ export default function LogPage() {
           </div>
 
           {/* Other sliders */}
-          <div className="space-y-4">
-            <h2 className="font-serif text-sm font-semibold uppercase tracking-wide text-muted">Other symptoms</h2>
+          <div className="space-y-2">
+            <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">Other symptoms</h2>
             <Slider id="bloating" label="Bloating" leftLabel="None" rightLabel="Severe" value={bloating} onChange={setBloating} />
             <Slider id="nausea" label="Nausea" leftLabel="None" rightLabel="Severe" value={nausea} onChange={setNausea} />
             <Slider id="diarrhea" label="Diarrhea" leftLabel="None" rightLabel="Severe" value={diarrhea} onChange={setDiarrhea} />
@@ -181,8 +190,8 @@ export default function LogPage() {
           </div>
 
           {/* Lifestyle factors */}
-          <div className="space-y-4">
-            <h2 className="font-serif text-sm font-semibold uppercase tracking-wide text-muted">Lifestyle factors</h2>
+          <div className="space-y-2">
+            <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">Lifestyle factors</h2>
             <Slider id="stress" label="Stress & emotional health" leftLabel="None" rightLabel="Extreme" value={stress} onChange={setStress} />
             <Slider id="inactivity" label="Inactivity" leftLabel="None" rightLabel="Severe" value={inactivity} onChange={setInactivity} />
             <Slider id="overexertion" label="Overexertion" leftLabel="None" rightLabel="Severe" value={overexertion} onChange={setOverexertion} />
@@ -194,39 +203,46 @@ export default function LogPage() {
           </div>
 
           {/* Cycle phase */}
-          <div>
-            <label htmlFor="cycle-phase" className="mb-1 block text-sm font-medium text-foreground">
-              Menstrual cycle phase
-            </label>
-            <select
-              id="cycle-phase"
-              value={cyclePhase}
-              onChange={(e) => setCyclePhase(e.target.value)}
-              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
-            >
-              <option value="">— Select —</option>
-              <option value="menstrual">Menstrual phase (Day 1–5)</option>
-              <option value="follicular">Follicular phase (Day 1–13)</option>
-              <option value="ovulation">Ovulation (Day 14)</option>
-              <option value="luteal">Luteal phase (Day 15–28)</option>
-              <option value="on_pill">On the pill</option>
-              <option value="other">Other</option>
-            </select>
-            {cyclePhase === "other" && (
+          <div className="space-y-2">
+            <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">Menstrual cycle phase</h2>
+            {[
+              { value: "menstrual", label: "Menstrual phase (Day 1–5)" },
+              { value: "follicular", label: "Follicular phase (Day 1–13)" },
+              { value: "ovulation", label: "Ovulation (Day 14)" },
+              { value: "luteal", label: "Luteal phase (Day 15–28)" },
+              { value: "on_pill", label: "On the pill" },
+              { value: "other", label: "Other" },
+            ].map((option) => (
+              <label key={option.value} className="flex items-center gap-2 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  checked={cyclePhases.includes(option.value)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setCyclePhases([...cyclePhases, option.value]);
+                    } else {
+                      setCyclePhases(cyclePhases.filter((p) => p !== option.value));
+                    }
+                  }}
+                  className="accent-accent-green"
+                />
+                {option.label}
+              </label>
+            ))}
+            {cyclePhases.includes("other") && (
               <input
-                id="cycle-phase-other"
                 type="text"
                 placeholder="Please specify"
                 value={cyclePhaseOther}
                 onChange={(e) => setCyclePhaseOther(e.target.value)}
-                className="mt-2 w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
+                className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
               />
             )}
           </div>
 
           {/* Notes */}
           <div>
-            <label htmlFor="notes" className="mb-1 block text-sm font-medium text-foreground">
+            <label htmlFor="notes" className="mb-1 block font-serif text-lg font-semibold tracking-tight text-muted">
               Other / notes (optional)
             </label>
             <textarea

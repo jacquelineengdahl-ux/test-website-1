@@ -5,31 +5,37 @@ const features = [
     title: "Daily symptom logging",
     description:
       "Record pain levels, digestion, lifestyle factors, and cycle phase — all in one place.",
+    color: "#f2a0a0",
   },
   {
     title: "Visual trend tracking",
     description:
       "Stacked bar charts and line graphs surface patterns across days, weeks, months, or years.",
+    color: "#f0c08a",
   },
   {
     title: "Body-literacy insights",
     description:
       "Connections between lifestyle factors and symptom flare-ups, made visible over time.",
+    color: "#a0dab0",
   },
   {
     title: "Doctor-ready exports",
     description:
       "Generate clear summaries of your symptoms and trends to bring to your next medical appointment.",
+    color: "#88d4c8",
   },
   {
     title: "Community support",
     description:
       "Connect with others who understand what you're going through — share experiences, not advice.",
+    color: "#92c4e8",
   },
   {
     title: "Research & treatment updates",
     description:
       "Stay informed on the latest endometriosis research, treatments, and clinical developments.",
+    color: "#c4a8e0",
   },
 ];
 
@@ -144,7 +150,8 @@ export default function Home() {
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="rounded-lg border border-border bg-surface p-6"
+                className="rounded-lg border-2 bg-surface p-6"
+                style={{ borderColor: feature.color }}
               >
                 <h2 className="mb-2 font-serif text-lg font-semibold text-foreground">
                   {feature.title}
@@ -164,20 +171,30 @@ export default function Home() {
             Why do we exist?
           </h2>
           <div className="relative h-px w-16 bg-accent-clay" />
-          <p className="relative max-w-lg text-center text-base leading-7 text-muted">
-            Endometriosis is a chronic condition where tissue similar to the
-            uterine lining grows outside the uterus, causing pain, fatigue, and
-            digestive issues that can affect every part of daily life. It impacts
-            roughly 1 in 10 women and can take years to diagnose.{" "}
-            <span className="font-serif font-semibold text-foreground">livingwithendo</span>{" "}
-            helps you log how you feel, what you eat, how you move, and where you
-            are in your cycle — so you and your care team can spot triggers,
-            measure what works, and advocate for better treatment.
-            After decades of living with excruciating pain and a debilitating
-            life situation, our founder decided to build the page she wished
-            had existed — to support her own journey and, hopefully, the
-            journeys of more women living with endo.
-          </p>
+          <div className="relative max-w-lg space-y-4 text-center text-base leading-7 text-muted">
+            <p>
+              Endometriosis is a chronic condition in which tissue similar to the
+              uterine lining grows outside the uterus. It can cause persistent
+              pain, fatigue, and digestive symptoms that affect daily life in ways
+              that are often invisible to others. Around 1 in 10 women live with
+              endometriosis, yet diagnosis frequently takes many years.
+            </p>
+            <p>
+              <span className="font-serif font-semibold text-foreground">livingwithendo</span>{" "}
+              is a private space to track how you feel over time — including
+              symptoms, movement, food, and where you are in your cycle. By
+              bringing this information together, it becomes easier to notice
+              patterns, understand what helps or worsens symptoms, and have more
+              informed conversations with healthcare providers.
+            </p>
+            <p>
+              This site was created by someone who has lived with endometriosis
+              for decades, often with severe pain and significant disruption to
+              everyday life. It began as a tool to support her own care, and is now
+              growing into something to support other women living with
+              endometriosis.
+            </p>
+          </div>
         </section>
       </main>
 

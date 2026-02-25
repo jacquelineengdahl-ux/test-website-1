@@ -10,7 +10,6 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
 
@@ -58,36 +57,94 @@ function formatCyclePhase(phase: string): string {
 }
 
 const painLines = [
-  { key: "leg_pain", label: "Leg", color: "#e74c3c" },
-  { key: "lower_back_pain", label: "Lower back", color: "#e67e22" },
-  { key: "chest_pain", label: "Chest", color: "#f1c40f" },
-  { key: "shoulder_pain", label: "Shoulder", color: "#2ecc71" },
-  { key: "headache", label: "Headache", color: "#1abc9c" },
-  { key: "pelvic_pain", label: "Pelvic", color: "#3498db" },
-  { key: "bowel_urination_pain", label: "Bowel/urination", color: "#9b59b6" },
-  { key: "intercourse_pain", label: "Intercourse", color: "#e84393" },
+  { key: "leg_pain", label: "Leg", color: "#f2a0a0" },
+  { key: "lower_back_pain", label: "Lower back", color: "#f0c08a" },
+  { key: "chest_pain", label: "Chest", color: "#f0dc82" },
+  { key: "shoulder_pain", label: "Shoulder", color: "#a0dab0" },
+  { key: "headache", label: "Headache", color: "#88d4c8" },
+  { key: "pelvic_pain", label: "Pelvic", color: "#92c4e8" },
+  { key: "bowel_urination_pain", label: "Bowel/urination", color: "#c4a8e0" },
+  { key: "intercourse_pain", label: "Intercourse", color: "#eba8c8" },
 ];
 
 const otherLines = [
-  { key: "bloating", label: "Bloating", color: "#e74c3c" },
-  { key: "nausea", label: "Nausea", color: "#e67e22" },
-  { key: "diarrhea", label: "Diarrhea", color: "#f1c40f" },
-  { key: "constipation", label: "Constipation", color: "#2ecc71" },
-  { key: "fatigue", label: "Fatigue", color: "#3498db" },
-  { key: "inflammation", label: "Inflammation", color: "#9b59b6" },
-  { key: "mood", label: "Mood", color: "#e84393" },
+  { key: "bloating", label: "Bloating", color: "#f2a0a0" },
+  { key: "nausea", label: "Nausea", color: "#f0c08a" },
+  { key: "diarrhea", label: "Diarrhea", color: "#f0dc82" },
+  { key: "constipation", label: "Constipation", color: "#a0dab0" },
+  { key: "fatigue", label: "Fatigue", color: "#92c4e8" },
+  { key: "inflammation", label: "Inflammation", color: "#c4a8e0" },
+  { key: "mood", label: "Mood", color: "#eba8c8" },
 ];
 
 const lifestyleLines = [
-  { key: "stress", label: "Stress", color: "#e74c3c" },
-  { key: "inactivity", label: "Inactivity", color: "#2ecc71" },
-  { key: "overexertion", label: "Overexertion", color: "#1abc9c" },
-  { key: "coffee", label: "Coffee", color: "#e67e22" },
-  { key: "alcohol", label: "Alcohol", color: "#f1c40f" },
-  { key: "smoking", label: "Smoking", color: "#95a5a6" },
-  { key: "diet", label: "Diet", color: "#3498db" },
-  { key: "sleep", label: "Sleep", color: "#9b59b6" },
+  { key: "stress", label: "Stress", color: "#f2a0a0" },
+  { key: "inactivity", label: "Inactivity", color: "#a0dab0" },
+  { key: "overexertion", label: "Overexertion", color: "#88d4c8" },
+  { key: "coffee", label: "Coffee", color: "#f0c08a" },
+  { key: "alcohol", label: "Alcohol", color: "#f0dc82" },
+  { key: "smoking", label: "Smoking", color: "#c8c0b8" },
+  { key: "diet", label: "Diet", color: "#92c4e8" },
+  { key: "sleep", label: "Sleep", color: "#c4a8e0" },
 ];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CustomTooltip(props: any) {
+  const { active, payload, label } = props;
+  if (!active || !payload || !payload.length) return null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const nonZero = payload.filter((p: any) => (p.value ?? 0) > 0);
+  if (nonZero.length === 0) return null;
+  return (
+    <div
+      style={{
+        background: "#faf8f5",
+        border: "1px solid #d6d0c8",
+        borderRadius: 6,
+        padding: "6px 10px",
+        fontSize: 12,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+        zIndex: 1000,
+        pointerEvents: "none",
+      }}
+    >
+      <p style={{ margin: "0 0 4px", fontWeight: 600, color: "#2c2825" }}>{label}</p>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      {nonZero.map((entry: any) => (
+        <div key={entry.name || entry.dataKey} style={{ display: "flex", alignItems: "center", gap: 6, lineHeight: "18px" }}>
+          <span
+            style={{
+              display: "inline-block",
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              backgroundColor: entry.color || entry.fill || entry.stroke || "#999",
+            }}
+          />
+          <span style={{ color: "#78716c" }}>{entry.name}:</span>
+          <span style={{ fontWeight: 600, color: "#2c2825" }}>{entry.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ChartLegend({ items }: { items: { label: string; color: string }[] }) {
+  return (
+    <div className="flex flex-wrap gap-x-3 gap-y-1 pl-[40px] text-xs text-foreground">
+      {items.map((item) => (
+        <span key={item.label} className="flex items-center gap-1">
+          <span
+            className="inline-block h-2.5 w-2.5 rounded-full"
+            style={{ backgroundColor: item.color }}
+          />
+          {item.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 
 function SymptomChart({
   title,
@@ -100,15 +157,18 @@ function SymptomChart({
 }) {
   return (
     <div className="space-y-2">
-      <h2 className="font-serif text-sm font-semibold uppercase tracking-wide text-muted">
+      <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">
         {title}
       </h2>
       <ResponsiveContainer width="100%" height={250}>
-        <LineChart data={data}>
+        <LineChart data={data} margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
           <XAxis dataKey="log_date" tick={{ fontSize: 11 }} />
           <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} />
-          <Tooltip />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
+          <Tooltip
+            content={(props) => <CustomTooltip {...props} />}
+            wrapperStyle={{ zIndex: 1000 }}
+            isAnimationActive={false}
+          />
           {lines.map((line) => (
             <Line
               key={line.key}
@@ -118,10 +178,12 @@ function SymptomChart({
               stroke={line.color}
               strokeWidth={2}
               dot={{ r: 3 }}
+              activeDot={{ r: 6, strokeWidth: 0 }}
             />
           ))}
         </LineChart>
       </ResponsiveContainer>
+      <ChartLegend items={lines} />
     </div>
   );
 }
@@ -138,7 +200,7 @@ function SymptomBarChart({
   if (data.length === 0) {
     return (
       <div className="space-y-2">
-        <h2 className="font-serif text-sm font-semibold uppercase tracking-wide text-muted">{title}</h2>
+        <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">{title}</h2>
         <p className="py-8 text-center text-sm text-muted">No data for this period</p>
       </div>
     );
@@ -146,15 +208,19 @@ function SymptomBarChart({
 
   return (
     <div className="space-y-2">
-      <h2 className="font-serif text-sm font-semibold uppercase tracking-wide text-muted">
+      <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">
         {title}
       </h2>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data} margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
           <XAxis dataKey="label" tick={{ fontSize: 11 }} />
           <YAxis tick={{ fontSize: 11 }} />
-          <Tooltip />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
+          <Tooltip
+            content={(props) => <CustomTooltip {...props} />}
+            wrapperStyle={{ zIndex: 1000 }}
+            cursor={{ fill: "transparent" }}
+            isAnimationActive={false}
+          />
           {lines.map((line) => (
             <Bar
               key={line.key}
@@ -166,6 +232,7 @@ function SymptomBarChart({
           ))}
         </BarChart>
       </ResponsiveContainer>
+      <ChartLegend items={lines} />
     </div>
   );
 }
@@ -357,7 +424,7 @@ export default function HistoryPage() {
 
   return (
     <div className="flex min-h-screen justify-center py-12">
-      <div className="w-full max-w-2xl space-y-8 px-4">
+      <div className="w-full max-w-2xl space-y-32 px-4">
         <div className="flex items-center justify-between">
           <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">History</h1>
           <a
@@ -421,25 +488,26 @@ export default function HistoryPage() {
             </div>
 
             {/* Stacked bar charts */}
-            <div className="space-y-6">
-              <SymptomBarChart title="Pain" data={chartData} lines={painLines} />
-              <SymptomBarChart title="Other symptoms" data={chartData} lines={otherLines} />
-              <SymptomBarChart title="Lifestyle factors" data={chartData} lines={lifestyleLines} />
+            <div className="space-y-16">
+              <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Trends</h2>
+              <SymptomBarChart title="Pain Levels" data={chartData} lines={painLines} />
+              <SymptomBarChart title="Other Symptoms" data={chartData} lines={otherLines} />
+              <SymptomBarChart title="Lifestyle Factors" data={chartData} lines={lifestyleLines} />
             </div>
 
             {/* Line charts – trends over time (show when 2+ entries) */}
             {chronological.length >= 2 && (
-              <div className="space-y-8">
-                <h2 className="font-serif text-lg font-semibold text-foreground">Trends</h2>
-                <SymptomChart title="Pain" data={chronological} lines={painLines} />
-                <SymptomChart title="Other symptoms" data={chronological} lines={otherLines} />
-                <SymptomChart title="Lifestyle factors" data={chronological} lines={lifestyleLines} />
+              <div className="space-y-16">
+                <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Line diagrams</h2>
+                <SymptomChart title="Pain Levels" data={chronological} lines={painLines} />
+                <SymptomChart title="Other Symptoms" data={chronological} lines={otherLines} />
+                <SymptomChart title="Lifestyle Factors" data={chronological} lines={lifestyleLines} />
               </div>
             )}
 
             {/* Daily logs – clickable accordion */}
             <div className="space-y-2">
-              <h2 className="font-serif text-lg font-semibold text-foreground">Daily logs</h2>
+              <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Daily logs</h2>
               <ul className="divide-y divide-border overflow-hidden rounded-md border border-border">
                 {entries.map((entry) => {
                   const isOpen = expandedId === entry.id;
@@ -455,19 +523,19 @@ export default function HistoryPage() {
                       {isOpen && (
                         <div className="space-y-3 px-4 pb-4">
                           <div className="space-y-1 text-sm text-foreground">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Pain</p>
+                            <p className="font-serif text-sm font-semibold tracking-tight text-muted">Pain Levels</p>
                             <p>Leg: {entry.leg_pain}/10 · Lower back: {entry.lower_back_pain}/10 · Chest: {entry.chest_pain}/10</p>
                             <p>Shoulder: {entry.shoulder_pain}/10 · Headache: {entry.headache}/10 · Pelvic: {entry.pelvic_pain}/10</p>
                             <p>Bowel/urination: {entry.bowel_urination_pain}/10 · Intercourse: {entry.intercourse_pain}/10</p>
                           </div>
                           <div className="space-y-1 text-sm text-foreground">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Other symptoms</p>
+                            <p className="font-serif text-sm font-semibold tracking-tight text-muted">Other Symptoms</p>
                             <p>Bloating: {entry.bloating}/10 · Nausea: {entry.nausea}/10 · Diarrhea: {entry.diarrhea}/10</p>
                             <p>Constipation: {entry.constipation}/10 · Fatigue: {entry.fatigue}/10 · Inflammation: {entry.inflammation}/10</p>
                             <p>Mood: {entry.mood}/10</p>
                           </div>
                           <div className="space-y-1 text-sm text-foreground">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Lifestyle factors</p>
+                            <p className="font-serif text-sm font-semibold tracking-tight text-muted">Lifestyle Factors</p>
                             <p>Stress: {entry.stress}/10 · Inactivity: {entry.inactivity}/10 · Overexertion: {entry.overexertion}/10</p>
                             <p>Coffee: {entry.coffee}/10 · Alcohol: {entry.alcohol}/10 · Smoking: {entry.smoking}/10</p>
                             <p>Diet: {entry.diet}/10 · Sleep: {entry.sleep}/10</p>
