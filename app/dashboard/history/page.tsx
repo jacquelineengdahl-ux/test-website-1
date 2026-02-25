@@ -359,7 +359,7 @@ export default function HistoryPage() {
     <div className="flex min-h-screen justify-center py-12">
       <div className="w-full max-w-2xl space-y-8 px-4">
         <div className="flex items-center justify-between">
-          <h1 className="font-serif text-2xl font-semibold text-foreground">History</h1>
+          <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">History</h1>
           <a
             href="/dashboard/log"
             className="rounded-md bg-accent-green px-3 py-1 text-sm font-medium text-white hover:opacity-90"

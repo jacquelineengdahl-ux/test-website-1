@@ -137,7 +137,7 @@ export default function Home() {
 
         {/* Feature cards */}
         <section className="relative z-10 flex w-full flex-col items-center gap-8">
-          <h2 className="font-serif text-2xl font-semibold text-foreground">
+          <h2 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
             How it works
           </h2>
           <div className="grid w-full gap-8 sm:grid-cols-2">
@@ -160,7 +160,7 @@ export default function Home() {
         {/* About */}
         <section className="relative z-10 flex w-full flex-col items-center gap-6">
           <div className="pointer-events-none absolute -inset-10 rounded-full bg-background opacity-70 blur-2xl" />
-          <h2 className="relative font-serif text-2xl font-semibold text-foreground">
+          <h2 className="relative font-serif text-2xl font-semibold tracking-tight text-foreground">
             Why do we exist?
           </h2>
           <div className="relative h-px w-16 bg-accent-clay" />
@@ -188,7 +188,7 @@ export default function Home() {
         <div className="pointer-events-none absolute -left-16 bottom-0 h-[250px] w-[250px] rounded-full bg-[#8fa580] opacity-[0.06] blur-[70px]" />
 
         <div className="flex flex-col items-center gap-6 px-6 text-center">
-          <h2 className="font-serif text-2xl font-semibold text-foreground">
+          <h2 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
             Ready to start tracking?
           </h2>
           <p className="max-w-sm text-sm leading-6 text-muted">

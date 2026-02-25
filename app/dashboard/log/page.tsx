@@ -138,7 +138,7 @@ export default function LogPage() {
   return (
     <div className="flex min-h-screen items-center justify-center py-12">
       <div className="w-full max-w-sm space-y-6">
-        <h1 className="text-center font-serif text-2xl font-semibold text-foreground">Log symptoms</h1>
+        <h1 className="text-center font-serif text-2xl font-semibold tracking-tight text-foreground">Log symptoms</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>

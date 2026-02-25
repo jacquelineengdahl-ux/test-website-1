@@ -30,13 +30,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-sm space-y-6">
-        <h1 className="text-2xl font-bold text-center">Log in</h1>
+        <h1 className="text-center font-serif text-2xl font-semibold text-foreground">Log in</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-1">
+            <label htmlFor="email" className="mb-1 block text-sm font-medium text-foreground">
               Email
             </label>
             <input
@@ -45,12 +45,12 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-1">
+            <label htmlFor="password" className="mb-1 block text-sm font-medium text-foreground">
               Password
             </label>
             <input
@@ -59,7 +59,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
             />
           </div>
 
@@ -68,15 +68,15 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded bg-foreground text-background py-2 font-medium hover:opacity-90 disabled:opacity-50"
+            className="w-full rounded-md bg-accent-green py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             {loading ? "Logging in…" : "Log in"}
           </button>
         </form>
 
-        <p className="text-center text-sm">
+        <p className="text-center text-sm text-muted">
           Don&apos;t have an account?{" "}
-          <a href="/signup" className="underline">
+          <a href="/signup" className="text-foreground underline">
             Sign up
           </a>
         </p>

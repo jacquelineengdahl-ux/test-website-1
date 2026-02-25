@@ -13,19 +13,19 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center py-24 space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-      {email && <p>Welcome, {email}</p>}
+    <div className="flex flex-col items-center justify-center space-y-6 py-24">
+      <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+      {email && <p className="text-muted">Welcome, {email}</p>}
       <div className="flex gap-4">
         <a
           href="/dashboard/log"
-          className="rounded bg-foreground text-background px-4 py-2 text-sm font-medium hover:opacity-90"
+          className="rounded-md bg-accent-green px-4 py-2 text-sm font-medium text-white hover:opacity-90"
         >
           Log symptoms
         </a>
         <a
           href="/dashboard/history"
-          className="rounded border px-4 py-2 text-sm font-medium hover:bg-foreground hover:text-background"
+          className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-surface"
         >
           View history
         </a>
