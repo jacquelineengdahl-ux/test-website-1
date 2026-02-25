@@ -51,6 +51,28 @@ export default function Home() {
           </div>
         </section>
 
+        {/* About endometriosis */}
+        <section className="w-full rounded-xl border border-black/[.08] p-6 dark:border-white/[.145]">
+          <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+            Endometriosis is a chronic condition where tissue similar to the
+            uterine lining grows outside the uterus, causing pain, fatigue,
+            and digestive issues that can affect every part of daily life. It
+            impacts roughly 1 in 10 women and can take years to diagnose.
+            Because symptoms vary widely and are influenced by diet, activity,
+            stress, and hormonal cycles, keeping a consistent log helps you
+            and your care team spot triggers, measure what works, and advocate
+            for better treatment.
+          </p>
+        </section>
+
+        {/* App description */}
+        <p className="max-w-lg text-center text-base leading-7 text-zinc-600 dark:text-zinc-400">
+          livingwithendo is a daily symptom tracker built for people with
+          endometriosis. Log how you feel, what you eat, how you move, and
+          where you are in your cycle — then discover patterns that help you
+          make informed decisions about your health.
+        </p>
+
         {/* Feature cards */}
         <section className="grid w-full gap-6 sm:grid-cols-2">
           {features.map((feature) => (
