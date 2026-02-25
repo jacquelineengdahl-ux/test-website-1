@@ -100,7 +100,7 @@ function SymptomChart({
 }) {
   return (
     <div className="space-y-2">
-      <h2 className="text-sm font-semibold uppercase tracking-wide opacity-60">
+      <h2 className="font-serif text-sm font-semibold uppercase tracking-wide text-muted">
         {title}
       </h2>
       <ResponsiveContainer width="100%" height={250}>
@@ -138,15 +138,15 @@ function SymptomBarChart({
   if (data.length === 0) {
     return (
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide opacity-60">{title}</h2>
-        <p className="text-sm opacity-50 text-center py-8">No data for this period</p>
+        <h2 className="font-serif text-sm font-semibold uppercase tracking-wide text-muted">{title}</h2>
+        <p className="py-8 text-center text-sm text-muted">No data for this period</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-2">
-      <h2 className="text-sm font-semibold uppercase tracking-wide opacity-60">
+      <h2 className="font-serif text-sm font-semibold uppercase tracking-wide text-muted">
         {title}
       </h2>
       <ResponsiveContainer width="100%" height={300}>
@@ -350,7 +350,7 @@ export default function HistoryPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p>Loading…</p>
+        <p className="text-muted">Loading…</p>
       </div>
     );
   }
@@ -359,10 +359,10 @@ export default function HistoryPage() {
     <div className="flex min-h-screen justify-center py-12">
       <div className="w-full max-w-2xl space-y-8 px-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">History</h1>
+          <h1 className="font-serif text-2xl font-semibold text-foreground">History</h1>
           <a
             href="/dashboard/log"
-            className="rounded bg-foreground text-background px-3 py-1 text-sm font-medium hover:opacity-90"
+            className="rounded-md bg-accent-green px-3 py-1 text-sm font-medium text-white hover:opacity-90"
           >
             + New entry
           </a>
@@ -371,9 +371,9 @@ export default function HistoryPage() {
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         {entries.length === 0 ? (
-          <p className="text-center text-sm">
+          <p className="text-center text-sm text-muted">
             No entries yet.{" "}
-            <a href="/dashboard/log" className="underline">
+            <a href="/dashboard/log" className="text-accent-green underline">
               Log your first one.
             </a>
           </p>
@@ -383,15 +383,15 @@ export default function HistoryPage() {
             <div className="space-y-3">
               {/* D / W / M / Y toggle */}
               <div className="flex justify-center">
-                <div className="inline-flex rounded-lg border overflow-hidden text-sm font-medium">
+                <div className="inline-flex overflow-hidden rounded-md border border-border text-sm font-medium">
                   {(["D", "W", "M", "Y"] as TimeRange[]).map((r) => (
                     <button
                       key={r}
                       onClick={() => { setTimeRange(r); setRefDate(new Date()); }}
                       className={`px-4 py-1.5 transition-colors ${
                         timeRange === r
-                          ? "bg-foreground text-background"
-                          : "hover:bg-foreground/10"
+                          ? "bg-accent-green text-white"
+                          : "text-foreground hover:bg-surface"
                       }`}
                     >
                       {r}
@@ -404,16 +404,16 @@ export default function HistoryPage() {
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={() => setRefDate(navigate(refDate, timeRange, -1))}
-                  className="rounded p-1 hover:bg-foreground/10 text-lg leading-none"
+                  className="rounded p-1 text-lg leading-none text-muted hover:bg-surface hover:text-foreground"
                 >
                   ‹
                 </button>
-                <span className="text-sm font-medium min-w-[10rem] text-center">
+                <span className="min-w-[10rem] text-center text-sm font-medium text-foreground">
                   {getRangeLabel(refDate, timeRange)}
                 </span>
                 <button
                   onClick={() => setRefDate(navigate(refDate, timeRange, 1))}
-                  className="rounded p-1 hover:bg-foreground/10 text-lg leading-none"
+                  className="rounded p-1 text-lg leading-none text-muted hover:bg-surface hover:text-foreground"
                 >
                   ›
                 </button>
@@ -430,7 +430,7 @@ export default function HistoryPage() {
             {/* Line charts – trends over time (show when 2+ entries) */}
             {chronological.length >= 2 && (
               <div className="space-y-8">
-                <h2 className="text-lg font-semibold">Trends</h2>
+                <h2 className="font-serif text-lg font-semibold text-foreground">Trends</h2>
                 <SymptomChart title="Pain" data={chronological} lines={painLines} />
                 <SymptomChart title="Other symptoms" data={chronological} lines={otherLines} />
                 <SymptomChart title="Lifestyle factors" data={chronological} lines={lifestyleLines} />
@@ -439,44 +439,44 @@ export default function HistoryPage() {
 
             {/* Daily logs – clickable accordion */}
             <div className="space-y-2">
-              <h2 className="text-lg font-semibold">Daily logs</h2>
-              <ul className="divide-y rounded border overflow-hidden">
+              <h2 className="font-serif text-lg font-semibold text-foreground">Daily logs</h2>
+              <ul className="divide-y divide-border overflow-hidden rounded-md border border-border">
                 {entries.map((entry) => {
                   const isOpen = expandedId === entry.id;
                   return (
                     <li key={entry.id}>
                       <button
                         onClick={() => setExpandedId(isOpen ? null : entry.id)}
-                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-foreground/5 transition-colors"
+                        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-surface"
                       >
-                        <span className="font-medium text-sm">{entry.log_date}</span>
-                        <span className="text-xs opacity-50">{isOpen ? "−" : "+"}</span>
+                        <span className="text-sm font-medium text-foreground">{entry.log_date}</span>
+                        <span className="text-xs text-muted">{isOpen ? "−" : "+"}</span>
                       </button>
                       {isOpen && (
-                        <div className="px-4 pb-4 space-y-3">
-                          <div className="text-sm space-y-1">
-                            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">Pain</p>
+                        <div className="space-y-3 px-4 pb-4">
+                          <div className="space-y-1 text-sm text-foreground">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Pain</p>
                             <p>Leg: {entry.leg_pain}/10 · Lower back: {entry.lower_back_pain}/10 · Chest: {entry.chest_pain}/10</p>
                             <p>Shoulder: {entry.shoulder_pain}/10 · Headache: {entry.headache}/10 · Pelvic: {entry.pelvic_pain}/10</p>
                             <p>Bowel/urination: {entry.bowel_urination_pain}/10 · Intercourse: {entry.intercourse_pain}/10</p>
                           </div>
-                          <div className="text-sm space-y-1">
-                            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">Other symptoms</p>
+                          <div className="space-y-1 text-sm text-foreground">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Other symptoms</p>
                             <p>Bloating: {entry.bloating}/10 · Nausea: {entry.nausea}/10 · Diarrhea: {entry.diarrhea}/10</p>
                             <p>Constipation: {entry.constipation}/10 · Fatigue: {entry.fatigue}/10 · Inflammation: {entry.inflammation}/10</p>
                             <p>Mood: {entry.mood}/10</p>
                           </div>
-                          <div className="text-sm space-y-1">
-                            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">Lifestyle factors</p>
+                          <div className="space-y-1 text-sm text-foreground">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Lifestyle factors</p>
                             <p>Stress: {entry.stress}/10 · Inactivity: {entry.inactivity}/10 · Overexertion: {entry.overexertion}/10</p>
                             <p>Coffee: {entry.coffee}/10 · Alcohol: {entry.alcohol}/10 · Smoking: {entry.smoking}/10</p>
                             <p>Diet: {entry.diet}/10 · Sleep: {entry.sleep}/10</p>
                           </div>
                           {entry.cycle_phase && (
-                            <p className="text-sm">Cycle: {formatCyclePhase(entry.cycle_phase)}</p>
+                            <p className="text-sm text-foreground">Cycle: {formatCyclePhase(entry.cycle_phase)}</p>
                           )}
                           {entry.notes && (
-                            <p className="text-sm opacity-70">{entry.notes}</p>
+                            <p className="text-sm text-muted">{entry.notes}</p>
                           )}
                         </div>
                       )}

@@ -21,7 +21,7 @@ function Slider({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium mb-1">
+      <label htmlFor={id} className="mb-1 block text-sm font-medium text-foreground">
         {label}: {value}/10
       </label>
       <input
@@ -31,9 +31,9 @@ function Slider({
         max={10}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full"
+        className="w-full accent-accent-green"
       />
-      <div className="flex justify-between text-xs opacity-60">
+      <div className="flex justify-between text-xs text-muted">
         <span>{leftLabel}</span>
         <span>{rightLabel}</span>
       </div>
@@ -138,11 +138,11 @@ export default function LogPage() {
   return (
     <div className="flex min-h-screen items-center justify-center py-12">
       <div className="w-full max-w-sm space-y-6">
-        <h1 className="text-2xl font-bold text-center">Log symptoms</h1>
+        <h1 className="text-center font-serif text-2xl font-semibold text-foreground">Log symptoms</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="log-date" className="block text-sm font-medium mb-1">
+            <label htmlFor="log-date" className="mb-1 block text-sm font-medium text-foreground">
               Date
             </label>
             <input
@@ -151,13 +151,13 @@ export default function LogPage() {
               required
               value={logDate}
               onChange={(e) => setLogDate(e.target.value)}
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
             />
           </div>
 
           {/* Pain sliders */}
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide opacity-60">Pain</h2>
+            <h2 className="font-serif text-sm font-semibold uppercase tracking-wide text-muted">Pain</h2>
             <Slider id="leg-pain" label="Leg" leftLabel="None" rightLabel="Severe" value={legPain} onChange={setLegPain} />
             <Slider id="lower-back-pain" label="Lower back" leftLabel="None" rightLabel="Severe" value={lowerBackPain} onChange={setLowerBackPain} />
             <Slider id="chest-pain" label="Chest" leftLabel="None" rightLabel="Severe" value={chestPain} onChange={setChestPain} />
@@ -170,7 +170,7 @@ export default function LogPage() {
 
           {/* Other sliders */}
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide opacity-60">Other symptoms</h2>
+            <h2 className="font-serif text-sm font-semibold uppercase tracking-wide text-muted">Other symptoms</h2>
             <Slider id="bloating" label="Bloating" leftLabel="None" rightLabel="Severe" value={bloating} onChange={setBloating} />
             <Slider id="nausea" label="Nausea" leftLabel="None" rightLabel="Severe" value={nausea} onChange={setNausea} />
             <Slider id="diarrhea" label="Diarrhea" leftLabel="None" rightLabel="Severe" value={diarrhea} onChange={setDiarrhea} />
@@ -182,7 +182,7 @@ export default function LogPage() {
 
           {/* Lifestyle factors */}
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide opacity-60">Lifestyle factors</h2>
+            <h2 className="font-serif text-sm font-semibold uppercase tracking-wide text-muted">Lifestyle factors</h2>
             <Slider id="stress" label="Stress & emotional health" leftLabel="None" rightLabel="Extreme" value={stress} onChange={setStress} />
             <Slider id="inactivity" label="Inactivity" leftLabel="None" rightLabel="Severe" value={inactivity} onChange={setInactivity} />
             <Slider id="overexertion" label="Overexertion" leftLabel="None" rightLabel="Severe" value={overexertion} onChange={setOverexertion} />
@@ -195,14 +195,14 @@ export default function LogPage() {
 
           {/* Cycle phase */}
           <div>
-            <label htmlFor="cycle-phase" className="block text-sm font-medium mb-1">
+            <label htmlFor="cycle-phase" className="mb-1 block text-sm font-medium text-foreground">
               Menstrual cycle phase
             </label>
             <select
               id="cycle-phase"
               value={cyclePhase}
               onChange={(e) => setCyclePhase(e.target.value)}
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
             >
               <option value="">— Select —</option>
               <option value="menstrual">Menstrual phase (Day 1–5)</option>
@@ -219,14 +219,14 @@ export default function LogPage() {
                 placeholder="Please specify"
                 value={cyclePhaseOther}
                 onChange={(e) => setCyclePhaseOther(e.target.value)}
-                className="w-full rounded border px-3 py-2 mt-2"
+                className="mt-2 w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
               />
             )}
           </div>
 
           {/* Notes */}
           <div>
-            <label htmlFor="notes" className="block text-sm font-medium mb-1">
+            <label htmlFor="notes" className="mb-1 block text-sm font-medium text-foreground">
               Other / notes (optional)
             </label>
             <textarea
@@ -234,7 +234,7 @@ export default function LogPage() {
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
             />
           </div>
 
@@ -243,7 +243,7 @@ export default function LogPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded bg-foreground text-background py-2 font-medium hover:opacity-90 disabled:opacity-50"
+            className="w-full rounded-md bg-accent-green py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             {submitting ? "Saving…" : "Save entry"}
           </button>

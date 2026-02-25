@@ -32,8 +32,8 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p>Loading…</p>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-muted">Loading…</p>
       </div>
     );
   }
@@ -47,15 +47,17 @@ export default function DashboardLayout({
   ];
 
   return (
-    <div className="min-h-screen">
-      <nav className="flex items-center justify-between border-b px-6 py-3">
+    <div className="min-h-screen bg-background">
+      <nav className="flex items-center justify-between border-b border-border px-6 py-3">
         <div className="flex gap-4">
           {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
               className={`text-sm font-medium ${
-                pathname === link.href ? "underline" : "opacity-60 hover:opacity-100"
+                pathname === link.href
+                  ? "text-foreground underline decoration-accent-clay underline-offset-4"
+                  : "text-muted hover:text-foreground"
               }`}
             >
               {link.label}
@@ -64,7 +66,7 @@ export default function DashboardLayout({
         </div>
         <button
           onClick={handleSignOut}
-          className="text-sm opacity-60 hover:opacity-100"
+          className="text-sm text-muted hover:text-foreground"
         >
           Sign out
         </button>
