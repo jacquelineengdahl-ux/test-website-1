@@ -44,6 +44,7 @@ export default function DashboardLayout({
     { href: "/dashboard", label: "Dashboard" },
     { href: "/dashboard/log", label: "Log" },
     { href: "/dashboard/history", label: "History" },
+    { href: "/profile", label: "My Profile" },
     { href: "/dashboard/settings", label: "Settings" },
   ];
 
@@ -56,7 +57,7 @@ export default function DashboardLayout({
               key={link.href}
               href={link.href}
               className={`text-sm font-medium ${
-                pathname === link.href
+                pathname === link.href || (link.href === "/profile" && pathname.startsWith("/profile"))
                   ? "text-foreground underline decoration-accent-clay underline-offset-4"
                   : "text-muted hover:text-foreground"
               }`}
