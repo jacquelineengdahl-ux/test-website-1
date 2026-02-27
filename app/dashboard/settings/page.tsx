@@ -68,6 +68,7 @@ export default function SettingsPage() {
     if (data.user) {
       await supabase.from("profiles").delete().eq("id", data.user.id);
       await supabase.from("symptom_logs").delete().eq("user_id", data.user.id);
+      await supabase.from("endo_stories").delete().eq("user_id", data.user.id);
     }
     await supabase.auth.signOut();
     router.replace("/");

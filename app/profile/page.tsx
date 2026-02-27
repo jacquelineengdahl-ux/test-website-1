@@ -48,6 +48,7 @@ const [dateOfBirth, setDateOfBirth] = useState("");
   const [country, setCountry] = useState("");
   const [diagnosisDate, setDiagnosisDate] = useState("");
   const [endoStage, setEndoStage] = useState("");
+  const [firstSymptomDate, setFirstSymptomDate] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -57,6 +58,12 @@ const [dateOfBirth, setDateOfBirth] = useState("");
 
   // Health overview state
   const [health, setHealth] = useState<HealthOverview | null>(null);
+
+  // Story state
+  const [storyContent, setStoryContent] = useState("");
+  const [storySaving, setStorySaving] = useState(false);
+  const [storySaved, setStorySaved] = useState(true);
+  const storyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -82,7 +89,19 @@ const [dateOfBirth, setDateOfBirth] = useState("");
         setCountry(profile.country ?? "");
         setDiagnosisDate(profile.diagnosis_date ?? "");
         setEndoStage(profile.endo_stage ?? "");
+        setFirstSymptomDate(profile.first_symptom_date ?? "");
         setAvatarUrl(profile.avatar_url ?? "");
+      }
+
+      // Load story
+      const { data: story } = await supabase
+        .from("endo_stories")
+        .select("content")
+        .eq("user_id", uid)
+        .maybeSingle();
+
+      if (story) {
+        setStoryContent(story.content ?? "");
       }
 
       // Load health overview
@@ -148,6 +167,80 @@ const [dateOfBirth, setDateOfBirth] = useState("");
     init();
   }, [router]);
 
+  // Cleanup story debounce timer
+  useEffect(() => {
+    return () => {
+      if (storyTimerRef.current) clearTimeout(storyTimerRef.current);
+    };
+  }, []);
+
+  function handleStoryChange(value: string) {
+    setStoryContent(value);
+    setStorySaved(false);
+
+    if (storyTimerRef.current) clearTimeout(storyTimerRef.current);
+
+    storyTimerRef.current = setTimeout(async () => {
+      if (!userId) return;
+      setStorySaving(true);
+      await supabase.from("endo_stories").upsert(
+        { user_id: userId, content: value, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" }
+      );
+      setStorySaving(false);
+      setStorySaved(true);
+    }, 2000);
+  }
+
+  async function handleDownloadPdf() {
+    const jsPDF = (await import("jspdf")).default;
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    const usableWidth = pageWidth - margin * 2;
+
+    function addFooter() {
+      doc.setFontSize(9);
+      doc.setTextColor(120, 113, 108);
+      doc.text("Living with Endo", pageWidth / 2, pageHeight - 12, { align: "center" });
+    }
+
+    // Title
+    doc.setFont("times", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(44, 40, 37);
+    doc.text("My Endo Story", pageWidth / 2, 30, { align: "center" });
+
+    // Author & date
+    doc.setFont("times", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(120, 113, 108);
+    const meta = [name, new Date().toLocaleDateString()].filter(Boolean).join("  ·  ");
+    if (meta) doc.text(meta, pageWidth / 2, 38, { align: "center" });
+
+    // Body text
+    doc.setFont("times", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(44, 40, 37);
+
+    const lines = doc.splitTextToSize(storyContent || "(No story written yet.)", usableWidth);
+    let y = 50;
+
+    for (const line of lines) {
+      if (y > pageHeight - 25) {
+        addFooter();
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(line, margin, y);
+      y += 6;
+    }
+
+    addFooter();
+    doc.save("my-endo-story.pdf");
+  }
+
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !userId) return;
@@ -194,6 +287,7 @@ const [dateOfBirth, setDateOfBirth] = useState("");
       date_of_birth: dateOfBirth || null,
       country: country || null,
       diagnosis_date: diagnosisDate || null,
+      first_symptom_date: firstSymptomDate || null,
       endo_stage: endoStage || null,
       avatar_url: avatarUrl || null,
       updated_at: new Date().toISOString(),
@@ -319,6 +413,18 @@ const [dateOfBirth, setDateOfBirth] = useState("");
               />
             </div>
             <div>
+              <label htmlFor="first-symptom-date" className="mb-1 block text-sm font-medium text-foreground">
+                Date of first symptom
+              </label>
+              <input
+                id="first-symptom-date"
+                type="date"
+                value={firstSymptomDate}
+                onChange={(e) => setFirstSymptomDate(e.target.value)}
+                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
+              />
+            </div>
+            <div>
               <label htmlFor="endo-stage" className="mb-1 block text-sm font-medium text-foreground">
                 Endo stage
               </label>
@@ -346,6 +452,54 @@ const [dateOfBirth, setDateOfBirth] = useState("");
               {saving ? "Saving..." : "Save profile"}
             </button>
           </form>
+        </div>
+
+        {/* My Endo Story */}
+        <div className="space-y-3">
+          <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">
+            My Endo Story
+          </h2>
+          <p className="text-sm text-muted">
+            A private space to write your story. Share it with loved ones or healthcare providers by downloading as a PDF.
+          </p>
+
+          <details className="text-sm">
+            <summary className="cursor-pointer text-muted hover:text-foreground">
+              Writing prompts to get started
+            </summary>
+            <ul className="mt-2 space-y-1 pl-4 text-muted list-disc">
+              <li>When did you first notice something wasn&apos;t right?</li>
+              <li>What has your journey to diagnosis looked like?</li>
+              <li>How has endo affected your daily life?</li>
+              <li>What do you wish people understood about living with endo?</li>
+              <li>What gives you strength on difficult days?</li>
+            </ul>
+          </details>
+
+          <textarea
+            rows={10}
+            value={storyContent}
+            onChange={(e) => handleStoryChange(e.target.value)}
+            placeholder="Start writing your story..."
+            className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground text-sm leading-relaxed resize-y"
+          />
+
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted">
+              {storySaving
+                ? "Saving..."
+                : storySaved
+                  ? "All changes saved"
+                  : "Unsaved changes"}
+            </span>
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-surface"
+            >
+              Download as PDF
+            </button>
+          </div>
         </div>
 
         {/* Health overview */}
