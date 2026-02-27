@@ -312,10 +312,6 @@ const [dateOfBirth, setDateOfBirth] = useState("");
   return (
     <div className="min-h-screen bg-background py-12">
       <div className="mx-auto w-full max-w-sm space-y-10 px-4">
-        <a href="/dashboard" className="text-sm text-muted hover:text-foreground">
-          &larr; Back to dashboard
-        </a>
-
         <h1 className="text-center font-serif text-2xl font-semibold tracking-tight text-foreground">
           My Profile
         </h1>
