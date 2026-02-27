@@ -37,7 +37,8 @@ export default function WaitlistPage() {
     "Free",
     "$5–10/mo",
     "$10–20/mo",
-    "$20+/mo",
+    "$20–30/mo",
+    "$30+/mo",
   ];
 
   if (submitted) {
