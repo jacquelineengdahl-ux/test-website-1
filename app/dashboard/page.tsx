@@ -5,17 +5,30 @@ import { supabase } from "@/lib/supabase";
 
 export default function DashboardPage() {
   const [email, setEmail] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [hasLogs, setHasLogs] = useState<boolean | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       if (data.user) {
         setEmail(data.user.email ?? "");
-        supabase
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("name")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
+        if (profile?.name) {
+          setDisplayName(profile.name);
+        }
+
+        const { count } = await supabase
           .from("symptom_logs")
           .select("id", { count: "exact", head: true })
-          .eq("user_id", data.user.id)
-          .then(({ count }) => setHasLogs((count ?? 0) > 0));
+          .eq("user_id", data.user.id);
+
+        setHasLogs((count ?? 0) > 0);
       }
     });
   }, []);
@@ -27,7 +40,7 @@ export default function DashboardPage() {
       <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
       {hasLogs ? (
         <>
-          {email && <p className="text-muted">Welcome back, {email}</p>}
+          {email && <p className="text-muted">Welcome back, {displayName || email}</p>}
           <div className="flex gap-4">
             <a
               href="/dashboard/log"
