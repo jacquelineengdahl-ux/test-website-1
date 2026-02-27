@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 function Slider({
@@ -41,10 +41,14 @@ function Slider({
   );
 }
 
-export default function LogPage() {
+function LogForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("id");
+
   const [userId, setUserId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingEntry, setLoadingEntry] = useState(!!editId);
   const [error, setError] = useState("");
 
   const [logDate, setLogDate] = useState(new Date().toISOString().slice(0, 10));
@@ -86,10 +90,73 @@ export default function LogPage() {
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUserId(data.user.id);
-    });
-  }, []);
+    async function init() {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) return;
+      setUserId(data.user.id);
+
+      if (editId) {
+        const { data: entry, error } = await supabase
+          .from("symptom_logs")
+          .select("*")
+          .eq("id", editId)
+          .eq("user_id", data.user.id)
+          .single();
+
+        if (error || !entry) {
+          setError("Entry not found.");
+          setLoadingEntry(false);
+          return;
+        }
+
+        setLogDate(entry.log_date);
+        setLegPain(entry.leg_pain);
+        setLowerBackPain(entry.lower_back_pain);
+        setChestPain(entry.chest_pain);
+        setShoulderPain(entry.shoulder_pain);
+        setHeadache(entry.headache);
+        setPelvicPain(entry.pelvic_pain);
+        setBowelUrinationPain(entry.bowel_urination_pain);
+        setIntercoursePain(entry.intercourse_pain);
+        setBloating(entry.bloating);
+        setNausea(entry.nausea);
+        setDiarrhea(entry.diarrhea);
+        setConstipation(entry.constipation);
+        setFatigue(entry.fatigue);
+        setInflammation(entry.inflammation);
+        setMood(entry.mood);
+        setStress(entry.stress);
+        setInactivity(entry.inactivity);
+        setOverexertion(entry.overexertion);
+        setCoffee(entry.coffee);
+        setAlcohol(entry.alcohol);
+        setSmoking(entry.smoking);
+        setDiet(entry.diet);
+        setSleep(entry.sleep);
+        setNotes(entry.notes ?? "");
+
+        // Parse cycle_phase
+        if (entry.cycle_phase) {
+          const parts = (entry.cycle_phase as string).split(",");
+          const phases: string[] = [];
+          let otherText = "";
+          for (const p of parts) {
+            if (p.startsWith("other:")) {
+              phases.push("other");
+              otherText = p.slice(6);
+            } else {
+              phases.push(p);
+            }
+          }
+          setCyclePhases(phases);
+          setCyclePhaseOther(otherText);
+        }
+
+        setLoadingEntry(false);
+      }
+    }
+    init();
+  }, [editId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -97,7 +164,7 @@ export default function LogPage() {
     setError("");
     setSubmitting(true);
 
-    const { error } = await supabase.from("symptom_logs").insert({
+    const payload = {
       user_id: userId,
       log_date: logDate,
       leg_pain: legPain,
@@ -134,20 +201,35 @@ export default function LogPage() {
         return phases.length > 0 ? phases.join(",") : null;
       })(),
       notes: notes || null,
-    });
+    };
+
+    const result = editId
+      ? await supabase.from("symptom_logs").update(payload).eq("id", editId)
+      : await supabase.from("symptom_logs").insert(payload);
+
     setSubmitting(false);
 
-    if (error) {
-      setError(error.message);
+    if (result.error) {
+      setError(result.error.message);
     } else {
       router.push("/dashboard/history");
     }
   }
 
+  if (loadingEntry) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-muted">Loading entry...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center py-12">
       <div className="w-full max-w-sm space-y-6">
-        <h1 className="text-center font-serif text-2xl font-semibold tracking-tight text-foreground">Log symptoms</h1>
+        <h1 className="text-center font-serif text-2xl font-semibold tracking-tight text-foreground">
+          {editId ? "Edit entry" : "Log symptoms"}
+        </h1>
 
         <form onSubmit={handleSubmit} className="space-y-16">
           <div>
@@ -261,10 +343,18 @@ export default function LogPage() {
             disabled={submitting}
             className="w-full rounded-md bg-accent-green py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
-            {submitting ? "Saving…" : "Save entry"}
+            {submitting ? "Saving…" : editId ? "Update entry" : "Save entry"}
           </button>
         </form>
       </div>
     </div>
+  );
+}
+
+export default function LogPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><p className="text-muted">Loading...</p></div>}>
+      <LogForm />
+    </Suspense>
   );
 }

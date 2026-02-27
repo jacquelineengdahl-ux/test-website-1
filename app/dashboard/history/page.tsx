@@ -438,12 +438,18 @@ export default function HistoryPage() {
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         {entries.length === 0 ? (
-          <p className="text-center text-sm text-muted">
-            No entries yet.{" "}
-            <a href="/dashboard/log" className="text-accent-green underline">
-              Log your first one.
+          <div className="mx-auto max-w-md space-y-4 rounded-md border border-border bg-surface px-8 py-10 text-center">
+            <h2 className="font-serif text-lg font-semibold text-foreground">No entries yet</h2>
+            <p className="text-sm text-muted">
+              Once you start logging symptoms, your history and trends will appear here.
+            </p>
+            <a
+              href="/dashboard/log"
+              className="inline-block rounded-md bg-accent-green px-6 py-2 text-sm font-medium text-white hover:opacity-90"
+            >
+              Log your first entry
             </a>
-          </p>
+          </div>
         ) : (
           <>
             {/* Time range selector */}
@@ -546,6 +552,32 @@ export default function HistoryPage() {
                           {entry.notes && (
                             <p className="text-sm text-muted">{entry.notes}</p>
                           )}
+                          <div className="flex gap-3 pt-2">
+                            <a
+                              href={`/dashboard/log?id=${entry.id}`}
+                              className="rounded-md border border-border px-3 py-1 text-xs font-medium text-foreground hover:bg-surface"
+                            >
+                              Edit
+                            </a>
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm("Delete this entry? This cannot be undone.")) return;
+                                const { error } = await supabase
+                                  .from("symptom_logs")
+                                  .delete()
+                                  .eq("id", entry.id);
+                                if (error) {
+                                  alert(error.message);
+                                } else {
+                                  setEntries(entries.filter((e) => e.id !== entry.id));
+                                  setExpandedId(null);
+                                }
+                              }}
+                              className="rounded-md border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
                       )}
                     </li>

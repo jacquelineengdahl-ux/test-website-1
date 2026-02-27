@@ -44,6 +44,7 @@ export default function DashboardLayout({
     { href: "/dashboard", label: "Dashboard" },
     { href: "/dashboard/log", label: "Log" },
     { href: "/dashboard/history", label: "History" },
+    { href: "/dashboard/settings", label: "Settings" },
   ];
 
   return (

@@ -22,6 +22,11 @@ export default function AuthCallbackPage() {
         return;
       }
 
+      // Detect password recovery flow
+      const hashType = hashParams.get("type");
+      const isRecovery = hashType === "recovery";
+      const destination = isRecovery ? "/dashboard/settings" : "/dashboard";
+
       // PKCE flow: exchange code for session
       const code = params.get("code");
       if (code) {
@@ -30,14 +35,14 @@ export default function AuthCallbackPage() {
           setError(error.message);
           return;
         }
-        router.push("/dashboard");
+        router.push(destination);
         return;
       }
 
       // Implicit flow: tokens in hash, auto-detected by supabase client
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.push("/dashboard");
+        router.push(destination);
         return;
       }
 
@@ -45,7 +50,7 @@ export default function AuthCallbackPage() {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
         if (event === "SIGNED_IN") {
           subscription.unsubscribe();
-          router.push("/dashboard");
+          router.push(destination);
         }
       });
 
