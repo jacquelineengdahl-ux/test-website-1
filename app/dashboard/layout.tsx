@@ -49,6 +49,7 @@ export default function DashboardLayout({
   const links = [
     { href: "/profile", label: "My Profile" },
     { href: "/dashboard", label: "Dashboard" },
+    { href: "/dashboard/summary", label: "Summary" },
     { href: "/dashboard/log", label: "New Log" },
     { href: "/dashboard/history", label: "History" },
     { href: "/dashboard/settings", label: "Settings" },
