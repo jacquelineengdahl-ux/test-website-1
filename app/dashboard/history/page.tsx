@@ -43,6 +43,32 @@ interface LogEntry {
   notes: string | null;
 }
 
+const symptomLabels: Record<string, string> = {
+  leg_pain: "Leg Pain",
+  lower_back_pain: "Lower Back Pain",
+  chest_pain: "Chest Pain",
+  shoulder_pain: "Shoulder Pain",
+  headache: "Headache",
+  pelvic_pain: "Pelvic Pain",
+  bowel_urination_pain: "Bowel/Urination Pain",
+  intercourse_pain: "Intercourse Pain",
+  bloating: "Bloating",
+  nausea: "Nausea",
+  diarrhea: "Diarrhea",
+  constipation: "Constipation",
+  fatigue: "Fatigue",
+  inflammation: "Inflammation",
+  mood: "Mood",
+  stress: "Stress",
+  inactivity: "Inactivity",
+  overexertion: "Overexertion",
+  coffee: "Coffee",
+  alcohol: "Alcohol",
+  smoking: "Smoking",
+  diet: "Diet",
+  sleep: "Sleep",
+};
+
 const cyclePhaseLabels: Record<string, string> = {
   menstrual: "Menstrual phase",
   follicular: "Follicular phase",
@@ -414,6 +440,121 @@ export default function HistoryPage() {
     [chronological, timeRange, refDate],
   );
 
+  function handleExportCsv() {
+    const headers = ["Date", ...numericKeys.map((k) => symptomLabels[k] || k), "Cycle Phase", "Notes"];
+    const rows = entries.map((e) => [
+      e.log_date,
+      ...numericKeys.map((k) => String(e[k])),
+      e.cycle_phase ? formatCyclePhase(e.cycle_phase) : "",
+      e.notes ? `"${e.notes.replace(/"/g, '""')}"` : "",
+    ]);
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "symptom-logs.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleExportPdf() {
+    const jsPDF = (await import("jspdf")).default;
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const margin = 15;
+
+    function addFooter() {
+      doc.setFontSize(9);
+      doc.setTextColor(120, 113, 108);
+      doc.text("Living with Endo", pw / 2, ph - 10, { align: "center" });
+    }
+
+    // Title
+    doc.setFont("times", "bold");
+    doc.setFontSize(20);
+    doc.setTextColor(44, 40, 37);
+    doc.text("Symptom Log Summary", pw / 2, 25, { align: "center" });
+
+    // Date range
+    doc.setFont("times", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(120, 113, 108);
+    const rangeLabel = getRangeLabel(refDate, timeRange);
+    doc.text(rangeLabel, pw / 2, 33, { align: "center" });
+
+    let y = 45;
+
+    // Filter entries to current range
+    const { start, end } = getRange(refDate, timeRange);
+    const rangeEntries = entries.filter(
+      (e) => e.log_date >= fmtDate(start) && e.log_date <= fmtDate(end)
+    );
+
+    if (rangeEntries.length === 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(44, 40, 37);
+      doc.text("No entries in this period.", pw / 2, y, { align: "center" });
+      addFooter();
+      doc.save("symptom-log-summary.pdf");
+      return;
+    }
+
+    for (const entry of rangeEntries) {
+      if (y > ph - 30) {
+        addFooter();
+        doc.addPage();
+        y = margin;
+      }
+
+      // Date header
+      doc.setFont("times", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(44, 40, 37);
+      doc.text(entry.log_date, margin, y);
+      y += 6;
+
+      // Non-zero symptoms
+      doc.setFont("times", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(80, 75, 70);
+      const nonZero = numericKeys
+        .filter((k) => entry[k] > 0)
+        .map((k) => `${symptomLabels[k]}: ${entry[k]}/10`);
+
+      if (nonZero.length > 0) {
+        const symptomLine = doc.splitTextToSize(nonZero.join("  ·  "), pw - margin * 2);
+        for (const line of symptomLine) {
+          if (y > ph - 30) { addFooter(); doc.addPage(); y = margin; }
+          doc.text(line, margin, y);
+          y += 5;
+        }
+      }
+
+      if (entry.cycle_phase) {
+        if (y > ph - 30) { addFooter(); doc.addPage(); y = margin; }
+        doc.text(`Cycle: ${formatCyclePhase(entry.cycle_phase)}`, margin, y);
+        y += 5;
+      }
+
+      if (entry.notes) {
+        if (y > ph - 30) { addFooter(); doc.addPage(); y = margin; }
+        const noteLines = doc.splitTextToSize(`Notes: ${entry.notes}`, pw - margin * 2);
+        for (const line of noteLines) {
+          if (y > ph - 30) { addFooter(); doc.addPage(); y = margin; }
+          doc.text(line, margin, y);
+          y += 5;
+        }
+      }
+
+      y += 4; // spacing between entries
+    }
+
+    addFooter();
+    doc.save("symptom-log-summary.pdf");
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -489,6 +630,22 @@ export default function HistoryPage() {
                   className="rounded p-1 text-lg leading-none text-muted hover:bg-surface hover:text-foreground"
                 >
                   ›
+                </button>
+              </div>
+
+              {/* Export buttons */}
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={handleExportCsv}
+                  className="rounded-md border border-border px-4 py-1.5 text-sm font-medium text-foreground hover:bg-surface"
+                >
+                  Export CSV
+                </button>
+                <button
+                  onClick={handleExportPdf}
+                  className="rounded-md border border-border px-4 py-1.5 text-sm font-medium text-foreground hover:bg-surface"
+                >
+                  Export PDF
                 </button>
               </div>
             </div>

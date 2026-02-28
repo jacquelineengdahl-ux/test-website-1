@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 const SYMPTOM_FIELDS = [
@@ -39,6 +39,8 @@ type HealthOverview = {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isWelcome = searchParams.get("welcome") === "1";
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -296,6 +298,8 @@ const [dateOfBirth, setDateOfBirth] = useState("");
     setSaving(false);
     if (upsertError) {
       setError(upsertError.message);
+    } else if (isWelcome) {
+      router.push("/dashboard");
     } else {
       setSuccess("Profile saved.");
     }
@@ -315,6 +319,13 @@ const [dateOfBirth, setDateOfBirth] = useState("");
         <h1 className="text-center font-serif text-2xl font-semibold tracking-tight text-foreground">
           My Profile
         </h1>
+
+        {isWelcome && (
+          <div className="rounded-md border border-accent-green bg-green-50 px-4 py-3 text-center text-sm text-green-800">
+            <p className="font-medium">Welcome! Let&apos;s set up your profile first.</p>
+            <p className="mt-1 text-green-700">Fill in your details below, then head to the dashboard to log your first entry.</p>
+          </div>
+        )}
 
         {/* Profile form */}
         <div className="space-y-3">
@@ -534,7 +545,17 @@ const [dateOfBirth, setDateOfBirth] = useState("");
                 </>
               )}
               {health.totalEntries === 0 && (
-                <p className="text-muted">No symptom logs yet. Start logging to see your health overview.</p>
+                <div className="space-y-3 text-center">
+                  <p className="text-sm text-muted">
+                    No symptom logs yet. Start logging to see your health trends and top symptoms.
+                  </p>
+                  <a
+                    href="/dashboard/log"
+                    className="inline-block rounded-md bg-accent-green px-6 py-2 text-sm font-medium text-white hover:opacity-90"
+                  >
+                    Log your first entry
+                  </a>
+                </div>
               )}
             </div>
           </div>

@@ -25,7 +25,7 @@ export default function AuthCallbackPage() {
       // Detect password recovery flow
       const hashType = hashParams.get("type");
       const isRecovery = hashType === "recovery";
-      const destination = isRecovery ? "/dashboard/settings" : "/dashboard";
+      const destination = isRecovery ? "/dashboard/settings?reset=1" : "/dashboard";
 
       // PKCE flow: exchange code for session
       const code = params.get("code");

@@ -28,7 +28,7 @@ export default function SignUpPage() {
     if (error) {
       setError(error.message);
     } else {
-      router.push("/dashboard");
+      router.push("/profile?welcome=1");
     }
   }
 

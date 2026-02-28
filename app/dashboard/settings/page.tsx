@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 export default function SettingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isReset = searchParams.get("reset") === "1";
+  const passwordSectionRef = useRef<HTMLDivElement>(null);
   const [email, setEmail] = useState("");
   const [provider, setProvider] = useState("");
   const [isEmailUser, setIsEmailUser] = useState(false);
@@ -19,6 +22,14 @@ export default function SettingsPage() {
 
   // Delete account state
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (isReset && passwordSectionRef.current) {
+      passwordSectionRef.current.scrollIntoView({ behavior: "smooth" });
+      const input = passwordSectionRef.current.querySelector("input");
+      input?.focus();
+    }
+  }, [isReset, isEmailUser]);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -81,6 +92,12 @@ export default function SettingsPage() {
           Settings
         </h1>
 
+        {isReset && (
+          <div className="rounded-md border border-accent-green bg-green-50 px-4 py-3 text-center text-sm font-medium text-green-800">
+            Set your new password below
+          </div>
+        )}
+
         {/* Profile link */}
         <div className="space-y-3">
           <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">Profile</h2>
@@ -109,7 +126,7 @@ export default function SettingsPage() {
 
         {/* Change password (email users only) */}
         {isEmailUser && (
-          <div className="space-y-3">
+          <div ref={passwordSectionRef} className="space-y-3">
             <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">Change password</h2>
             <form onSubmit={handleChangePassword} className="space-y-3">
               <div>
