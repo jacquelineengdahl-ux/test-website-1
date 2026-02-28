@@ -490,7 +490,7 @@ function SymptomAreaChart({
   );
 }
 
-/* ─── Bar chart (grouped / side-by-side) ──────────────────── */
+/* ─── Bar chart (stacked) ─────────────────────────────────── */
 
 function SymptomBarChart({
   title,
@@ -548,13 +548,14 @@ function SymptomBarChart({
             wrapperStyle={{ zIndex: 1000 }}
             isAnimationActive={false}
           />
-          {visibleLines.map((line) => (
+          {visibleLines.map((line, idx) => (
             <Bar
               key={line.key}
               dataKey={line.key}
               name={line.label}
+              stackId="stack"
               fill={`url(#grad-${line.key})`}
-              radius={[4, 4, 0, 0]}
+              radius={idx === visibleLines.length - 1 ? [4, 4, 0, 0] : undefined}
               opacity={highlighted && highlighted !== line.key ? 0.15 : 1}
               animationDuration={800}
             />
