@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   LineChart,
@@ -114,6 +114,134 @@ const lifestyleLines = [
   { key: "sleep", label: "Sleep", color: "#c4a8e0" },
 ];
 
+const heatmapGroups = [
+  {
+    label: "Pain",
+    keys: ["leg_pain", "lower_back_pain", "chest_pain", "shoulder_pain", "headache", "pelvic_pain", "bowel_urination_pain", "intercourse_pain"],
+  },
+  {
+    label: "Symptoms",
+    keys: ["bloating", "nausea", "diarrhea", "constipation", "fatigue", "inflammation", "mood"],
+  },
+  {
+    label: "Lifestyle",
+    keys: ["stress", "inactivity", "overexertion", "coffee", "alcohol", "smoking", "diet", "sleep"],
+  },
+];
+
+function getHeatColor(value: number): string {
+  if (value === 0 || value == null) return "rgba(214, 208, 200, 0.15)";
+  if (value <= 1) return "#d5e8d4";
+  if (value <= 2) return "#b6d7a8";
+  if (value <= 3) return "#93c47d";
+  if (value <= 4) return "#f0dc82";
+  if (value <= 5) return "#f0c08a";
+  if (value <= 6) return "#e8a87c";
+  if (value <= 7) return "#e88a6e";
+  if (value <= 8) return "#e06b5e";
+  if (value <= 9) return "#cc4125";
+  return "#a61c00";
+}
+
+function HeatmapGrid({ data }: { data: ChartRow[] }) {
+  const [hoveredCell, setHoveredCell] = useState<{ row: string; col: number; value: number; x: number; y: number } | null>(null);
+
+  if (data.length === 0) {
+    return (
+      <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+        <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">Heatmap</h2>
+        <p className="py-8 text-center text-sm text-muted">No data for this period</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+      <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">Heatmap</h2>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-xs">
+          <thead>
+            <tr>
+              <th className="sticky left-0 z-10 bg-surface pr-2 text-left font-medium text-muted" style={{ minWidth: 120 }} />
+              {data.map((d, i) => (
+                <th key={i} className="px-0.5 pb-1 text-center font-medium text-muted" style={{ minWidth: 28 }}>
+                  {d.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {heatmapGroups.map((group) => (
+              <Fragment key={group.label}>
+                <tr>
+                  <td
+                    colSpan={data.length + 1}
+                    className="sticky left-0 z-10 bg-surface pt-3 pb-1 font-serif text-xs font-semibold tracking-tight text-muted"
+                  >
+                    {group.label}
+                  </td>
+                </tr>
+                {group.keys.map((key) => (
+                  <tr key={key}>
+                    <td className="sticky left-0 z-10 bg-surface pr-2 py-0.5 text-left text-muted" style={{ minWidth: 120 }}>
+                      {symptomLabels[key] || key}
+                    </td>
+                    {data.map((d, colIdx) => {
+                      const val = typeof d[key] === "number" ? (d[key] as number) : 0;
+                      return (
+                        <td
+                          key={colIdx}
+                          className="px-0.5 py-0.5"
+                          onMouseEnter={(e) => {
+                            const rect = (e.target as HTMLElement).getBoundingClientRect();
+                            setHoveredCell({ row: symptomLabels[key] || key, col: colIdx, value: val, x: rect.left + rect.width / 2, y: rect.top });
+                          }}
+                          onMouseLeave={() => setHoveredCell(null)}
+                        >
+                          <div
+                            className="mx-auto rounded-sm transition-colors"
+                            style={{
+                              width: 22,
+                              height: 22,
+                              backgroundColor: getHeatColor(val),
+                            }}
+                          />
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {hoveredCell && (
+        <div
+          className="pointer-events-none fixed z-50 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs shadow-md"
+          style={{
+            left: hoveredCell.x,
+            top: hoveredCell.y - 36,
+            transform: "translateX(-50%)",
+          }}
+        >
+          <span className="font-medium text-foreground">{hoveredCell.row}</span>
+          <span className="text-muted"> · </span>
+          <span className="font-semibold text-foreground">{hoveredCell.value}/10</span>
+        </div>
+      )}
+      {/* Legend */}
+      <div className="mt-3 flex items-center justify-center gap-1 text-xs text-muted">
+        <span>Low</span>
+        {[0, 2, 4, 6, 8, 10].map((v) => (
+          <div key={v} className="rounded-sm" style={{ width: 14, height: 14, backgroundColor: getHeatColor(v) }} />
+        ))}
+        <span>High</span>
+      </div>
+    </div>
+  );
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function CustomTooltip(props: any) {
   const { active, payload, label } = props;
@@ -124,12 +252,14 @@ function CustomTooltip(props: any) {
   return (
     <div
       style={{
-        background: "#faf8f5",
+        background: "rgba(250, 248, 245, 0.85)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
         border: "1px solid #d6d0c8",
-        borderRadius: 6,
+        borderRadius: 10,
         padding: "6px 10px",
         fontSize: 12,
-        boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         zIndex: 1000,
         pointerEvents: "none",
       }}
@@ -182,14 +312,14 @@ function SymptomChart({
   lines: { key: string; label: string; color: string }[];
 }) {
   return (
-    <div className="space-y-2">
+    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2">
       <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">
         {title}
       </h2>
       <ResponsiveContainer width="100%" height={250}>
         <LineChart data={data} margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
-          <XAxis dataKey="log_date" tick={{ fontSize: 11 }} />
-          <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} />
+          <XAxis dataKey="log_date" tick={{ fontSize: 11, fill: "#a8a29e" }} axisLine={false} tickLine={false} />
+          <YAxis domain={[0, 10]} tick={{ fontSize: 11, fill: "#a8a29e" }} axisLine={false} tickLine={false} />
           <Tooltip
             content={(props) => <CustomTooltip {...props} />}
             wrapperStyle={{ zIndex: 1000 }}
@@ -202,9 +332,11 @@ function SymptomChart({
               dataKey={line.key}
               name={line.label}
               stroke={line.color}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-              activeDot={{ r: 6, strokeWidth: 0 }}
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              dot={{ r: 2, strokeWidth: 0 }}
+              activeDot={{ r: 5, strokeWidth: 0 }}
             />
           ))}
         </LineChart>
@@ -225,7 +357,7 @@ function SymptomBarChart({
 }) {
   if (data.length === 0) {
     return (
-      <div className="space-y-2">
+      <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2">
         <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">{title}</h2>
         <p className="py-8 text-center text-sm text-muted">No data for this period</p>
       </div>
@@ -233,27 +365,36 @@ function SymptomBarChart({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2">
       <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">
         {title}
       </h2>
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={320}>
         <BarChart data={data} margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
-          <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} />
+          <defs>
+            {lines.map((line) => (
+              <linearGradient key={line.key} id={`grad-${line.key}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={line.color} stopOpacity={1} />
+                <stop offset="100%" stopColor={line.color} stopOpacity={0.7} />
+              </linearGradient>
+            ))}
+          </defs>
+          <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#a8a29e" }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 11, fill: "#a8a29e" }} axisLine={false} tickLine={false} />
           <Tooltip
             content={(props) => <CustomTooltip {...props} />}
             wrapperStyle={{ zIndex: 1000 }}
             cursor={{ fill: "transparent" }}
             isAnimationActive={false}
           />
-          {lines.map((line) => (
+          {lines.map((line, idx) => (
             <Bar
               key={line.key}
               dataKey={line.key}
               name={line.label}
               stackId="stack"
-              fill={line.color}
+              fill={`url(#grad-${line.key})`}
+              radius={idx === lines.length - 1 ? [4, 4, 0, 0] : undefined}
             />
           ))}
         </BarChart>
@@ -565,7 +706,7 @@ export default function HistoryPage() {
 
   return (
     <div className="flex min-h-screen justify-center py-12">
-      <div className="w-full max-w-2xl space-y-32 px-4">
+      <div className="w-full max-w-2xl space-y-10 px-4">
         <div className="flex items-center justify-between">
           <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">History</h1>
           <a
@@ -650,9 +791,12 @@ export default function HistoryPage() {
               </div>
             </div>
 
+            {/* Heatmap grid */}
+            <HeatmapGrid data={chartData} />
+
             {/* Stacked bar charts */}
-            <div className="space-y-16">
-              <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Trends</h2>
+            <div className="space-y-6">
+              <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground border-b border-border pb-2">Trends</h2>
               <SymptomBarChart title="Pain Levels" data={chartData} lines={painLines} />
               <SymptomBarChart title="Other Symptoms" data={chartData} lines={otherLines} />
               <SymptomBarChart title="Lifestyle Factors" data={chartData} lines={lifestyleLines} />
@@ -660,8 +804,8 @@ export default function HistoryPage() {
 
             {/* Line charts – trends over time (show when 2+ entries) */}
             {chronological.length >= 2 && (
-              <div className="space-y-16">
-                <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Line diagrams</h2>
+              <div className="space-y-6">
+                <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground border-b border-border pb-2">Line diagrams</h2>
                 <SymptomChart title="Pain Levels" data={chronological} lines={painLines} />
                 <SymptomChart title="Other Symptoms" data={chronological} lines={otherLines} />
                 <SymptomChart title="Lifestyle Factors" data={chronological} lines={lifestyleLines} />
