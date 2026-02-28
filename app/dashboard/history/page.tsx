@@ -327,7 +327,7 @@ function ModernTooltip(props: any) {
 
   return (
     <div
-      className="rounded-xl border border-border bg-surface px-3 py-2.5 text-xs shadow-lg"
+      className="rounded-xl border border-border bg-surface px-3 py-2.5 text-xs shadow-lg animate-tooltip-in"
       style={{ backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", pointerEvents: "none" }}
     >
       <p className="mb-1.5 font-semibold text-foreground">{label}</p>
@@ -438,7 +438,7 @@ function SymptomAreaChart({
   );
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2">
+    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">
         {title}
       </h2>
@@ -470,8 +470,8 @@ function SymptomAreaChart({
               stroke={line.color}
               fill={`url(#area-${line.key})`}
               strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4, strokeWidth: 0, fill: line.color }}
+              dot={{ r: 2, fill: line.color, strokeWidth: 0 }}
+              activeDot={{ r: 6, stroke: line.color, strokeWidth: 3, fill: "#fff", strokeOpacity: 0.6 }}
               fillOpacity={highlighted && highlighted !== line.key ? 0.15 : 1}
               strokeOpacity={highlighted && highlighted !== line.key ? 0.15 : 1}
               animationDuration={800}
@@ -514,7 +514,7 @@ function SymptomBarChart({
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2">
+      <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
         <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">{title}</h2>
         <div className="py-8 text-center">
           <EmptyChartIcon />
@@ -525,7 +525,7 @@ function SymptomBarChart({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2">
+    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">
         {title}
       </h2>
@@ -544,7 +544,7 @@ function SymptomBarChart({
           <YAxis tick={{ fontSize: 11, fill: "#a8a29e" }} axisLine={false} tickLine={false} />
           <Tooltip
             content={(props) => <ModernTooltip {...props} colorMap={colorMap} />}
-            cursor={{ fill: "rgba(120, 113, 108, 0.06)" }}
+            cursor={{ fill: "rgba(120, 113, 108, 0.10)" }}
             wrapperStyle={{ zIndex: 1000 }}
             isAnimationActive={false}
           />
@@ -557,6 +557,7 @@ function SymptomBarChart({
               fill={`url(#grad-${line.key})`}
               radius={idx === visibleLines.length - 1 ? [4, 4, 0, 0] : undefined}
               opacity={highlighted && highlighted !== line.key ? 0.15 : 1}
+              activeBar={{ stroke: line.color, strokeWidth: 2 }}
               animationDuration={800}
             />
           ))}
@@ -579,10 +580,11 @@ function HeatmapGrid({ data }: { data: ChartRow[] }) {
   const [hoveredCell, setHoveredCell] = useState<{
     row: string; col: number; value: number; dateLabel: string; x: number; y: number;
   } | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+      <div className="rounded-xl border border-border bg-surface p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
         <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">Heatmap</h2>
         <div className="py-8 text-center">
           <EmptyChartIcon />
@@ -593,7 +595,7 @@ function HeatmapGrid({ data }: { data: ChartRow[] }) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">Heatmap</h2>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-xs">
@@ -618,8 +620,19 @@ function HeatmapGrid({ data }: { data: ChartRow[] }) {
                     {group.label}
                   </td>
                 </tr>
-                {group.keys.map((key) => (
-                  <tr key={key}>
+                {group.keys.map((key) => {
+                  const isRowHighlighted = hoveredRow === key;
+                  const isAnyRowHovered = hoveredRow !== null;
+                  return (
+                  <tr
+                    key={key}
+                    style={{
+                      opacity: isAnyRowHovered && !isRowHighlighted ? 0.4 : 1,
+                      transition: "opacity 0.2s ease",
+                    }}
+                    onMouseEnter={() => setHoveredRow(key)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                  >
                     <td className="sticky left-0 z-10 bg-surface pr-2 py-0.5 text-left text-muted" style={{ minWidth: 120 }}>
                       {symptomLabels[key] || key}
                     </td>
@@ -643,8 +656,9 @@ function HeatmapGrid({ data }: { data: ChartRow[] }) {
                               x: rect.left + rect.width / 2,
                               y: rect.top,
                             });
+                            setHoveredRow(key);
                           }}
-                          onMouseLeave={() => setHoveredCell(null)}
+                          onMouseLeave={() => { setHoveredCell(null); setHoveredRow(null); }}
                         >
                           <div
                             className="mx-auto"
@@ -664,7 +678,8 @@ function HeatmapGrid({ data }: { data: ChartRow[] }) {
                       );
                     })}
                   </tr>
-                ))}
+                  );
+                })}
               </Fragment>
             ))}
           </tbody>
@@ -674,7 +689,7 @@ function HeatmapGrid({ data }: { data: ChartRow[] }) {
       {/* Heatmap tooltip */}
       {hoveredCell && (
         <div
-          className="pointer-events-none fixed z-50 rounded-lg border border-border bg-surface px-3 py-2 text-xs shadow-lg"
+          className="pointer-events-none fixed z-50 rounded-lg border border-border bg-surface px-3 py-2 text-xs shadow-lg animate-tooltip-in"
           style={{
             left: hoveredCell.x,
             top: hoveredCell.y - 52,
@@ -913,7 +928,7 @@ export default function HistoryPage() {
                     <button
                       key={r}
                       onClick={() => { setTimeRange(r); setRefDate(new Date()); }}
-                      className={`px-4 py-1.5 transition-colors ${
+                      className={`px-4 py-1.5 transition-all duration-200 ${
                         timeRange === r
                           ? "bg-accent-green text-white"
                           : "text-foreground hover:bg-surface"
@@ -928,7 +943,7 @@ export default function HistoryPage() {
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={() => setRefDate(navigate(refDate, timeRange, -1))}
-                  className="rounded p-1 text-lg leading-none text-muted hover:bg-surface hover:text-foreground"
+                  className="rounded p-1 text-lg leading-none text-muted transition-all duration-200 hover:scale-125 hover:text-accent-green"
                 >
                   ‹
                 </button>
@@ -937,7 +952,7 @@ export default function HistoryPage() {
                 </span>
                 <button
                   onClick={() => setRefDate(navigate(refDate, timeRange, 1))}
-                  className="rounded p-1 text-lg leading-none text-muted hover:bg-surface hover:text-foreground"
+                  className="rounded p-1 text-lg leading-none text-muted transition-all duration-200 hover:scale-125 hover:text-accent-green"
                 >
                   ›
                 </button>
@@ -946,13 +961,13 @@ export default function HistoryPage() {
               <div className="flex justify-center gap-3">
                 <button
                   onClick={handleExportCsv}
-                  className="rounded-md border border-border px-4 py-1.5 text-sm font-medium text-foreground hover:bg-surface"
+                  className="rounded-md border border-border px-4 py-1.5 text-sm font-medium text-foreground transition-all duration-200 hover:bg-accent-green hover:text-white hover:border-accent-green"
                 >
                   Export CSV
                 </button>
                 <button
                   onClick={handleExportPdf}
-                  className="rounded-md border border-border px-4 py-1.5 text-sm font-medium text-foreground hover:bg-surface"
+                  className="rounded-md border border-border px-4 py-1.5 text-sm font-medium text-foreground transition-all duration-200 hover:bg-accent-green hover:text-white hover:border-accent-green"
                 >
                   Export PDF
                 </button>
@@ -990,13 +1005,29 @@ export default function HistoryPage() {
                     <li key={entry.id}>
                       <button
                         onClick={() => setExpandedId(isOpen ? null : entry.id)}
-                        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-surface"
+                        className="group flex w-full items-center justify-between px-4 py-3 text-left transition-all duration-200 hover:bg-surface hover:pl-5"
+                        style={{ borderLeft: "3px solid transparent", transition: "border-color 0.2s ease, padding-left 0.2s ease, background-color 0.2s ease" }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderLeftColor = "#59a14f"; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderLeftColor = "transparent"; }}
                       >
                         <span className="text-sm font-medium text-foreground">{entry.log_date}</span>
-                        <span className="text-xs text-muted">{isOpen ? "−" : "+"}</span>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          className="shrink-0 text-muted transition-transform duration-300"
+                          style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                        >
+                          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                       </button>
-                      {isOpen && (
-                        <div className="space-y-3 px-4 pb-4">
+                      <div
+                        className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+                        style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
+                      >
+                        <div className="overflow-hidden">
+                        <div className="space-y-3 px-4 pb-4 pt-1">
                           <div className="space-y-1 text-sm text-foreground">
                             <p className="font-serif text-sm font-semibold tracking-tight text-muted">Pain Levels</p>
                             <p>Leg: {entry.leg_pain}/10 · Lower back: {entry.lower_back_pain}/10 · Chest: {entry.chest_pain}/10</p>
@@ -1048,7 +1079,8 @@ export default function HistoryPage() {
                             </button>
                           </div>
                         </div>
-                      )}
+                        </div>
+                      </div>
                     </li>
                   );
                 })}
