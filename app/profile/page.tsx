@@ -707,25 +707,13 @@ export default function ProfilePage() {
                 {treatmentPlan && (
                   <div className="pt-1">
                     <p className="mb-1.5 text-sm text-muted">Medical Treatment Plan</p>
-                    <div className="rounded-lg border border-border bg-background px-4 py-3">
-                      <ul className="list-disc pl-4 space-y-1">
-                        {treatmentPlan.split("\n").filter((l) => l.trim()).map((line, i) => (
-                          <li key={i} className="text-sm leading-relaxed text-foreground">{line.trim()}</li>
-                        ))}
-                      </ul>
-                    </div>
+                    <p className="mt-0.5 whitespace-pre-wrap text-sm text-foreground">{treatmentPlan}</p>
                   </div>
                 )}
                 {supportingTreatment && (
                   <div className="pt-1">
-                    <p className="mb-1.5 text-sm text-muted">Supporting Treatment</p>
-                    <div className="rounded-lg border border-border bg-background px-4 py-3">
-                      <ul className="list-disc pl-4 space-y-1">
-                        {supportingTreatment.split("\n").filter((l) => l.trim()).map((line, i) => (
-                          <li key={i} className="text-sm leading-relaxed text-foreground">{line.trim()}</li>
-                        ))}
-                      </ul>
-                    </div>
+                    <p className="text-sm text-muted">Supporting Treatment</p>
+                    <p className="mt-0.5 whitespace-pre-wrap text-sm text-foreground">{supportingTreatment}</p>
                   </div>
                 )}
                 {healthcareProviders.length > 0 && (
