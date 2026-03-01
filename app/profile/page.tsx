@@ -300,6 +300,28 @@ export default function ProfilePage() {
     setWritingLetter(false);
   }
 
+  function sanitizeForPdf(text: string): string {
+    return text
+      .replace(/[\u2018\u2019\u201A\u02BC]/g, "'")  // smart single quotes
+      .replace(/[\u201C\u201D\u201E]/g, '"')         // smart double quotes
+      .replace(/[\u2013\u2014]/g, "-")               // en/em dashes
+      .replace(/\u2026/g, "...")                      // ellipsis
+      .replace(/\u00B7/g, "-")                        // middle dot
+      .replace(/[\u2022\u25CF\u25CB\u25AA\u25A0]/g, "-") // bullet characters
+      .replace(/[^\x00-\x7F]/g, (ch) => {
+        // Replace any remaining non-ASCII with closest ASCII or remove
+        const map: Record<string, string> = {
+          "\u00E9": "e", "\u00E8": "e", "\u00EA": "e",
+          "\u00E0": "a", "\u00E2": "a", "\u00E4": "a",
+          "\u00F6": "o", "\u00FC": "u", "\u00E5": "a",
+          "\u00C9": "E", "\u00C8": "E",
+          "\u00C0": "A", "\u00C4": "A",
+          "\u00D6": "O", "\u00DC": "U", "\u00C5": "A",
+        };
+        return map[ch] ?? "";
+      });
+  }
+
   async function buildPdf() {
     const jsPDF = (await import("jspdf")).default;
     const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -314,22 +336,25 @@ export default function ProfilePage() {
       doc.text("Living with Endo", pageWidth / 2, pageHeight - 12, { align: "center" });
     }
 
-    doc.setFont("times", "bold");
+    const safeContent = sanitizeForPdf(storyContent || "(No story written yet.)");
+    const safeName = sanitizeForPdf(name);
+
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
     doc.setTextColor(44, 40, 37);
     doc.text("My Endo Story", pageWidth / 2, 30, { align: "center" });
 
-    doc.setFont("times", "normal");
-    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
     doc.setTextColor(120, 113, 108);
-    const meta = [name, new Date().toLocaleDateString()].filter(Boolean).join("  ·  ");
+    const meta = [safeName, new Date().toLocaleDateString()].filter(Boolean).join("  -  ");
     if (meta) doc.text(meta, pageWidth / 2, 38, { align: "center" });
 
-    doc.setFont("times", "normal");
-    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
     doc.setTextColor(44, 40, 37);
 
-    const lines = doc.splitTextToSize(storyContent || "(No story written yet.)", usableWidth);
+    const lines = doc.splitTextToSize(safeContent, usableWidth);
     let y = 50;
 
     for (const line of lines) {
@@ -339,7 +364,7 @@ export default function ProfilePage() {
         y = margin;
       }
       doc.text(line, margin, y);
-      y += 6;
+      y += 5.5;
     }
 
     addFooter();
