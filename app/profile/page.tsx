@@ -707,13 +707,13 @@ export default function ProfilePage() {
                 {treatmentPlan && (
                   <div className="text-sm">
                     <p className="text-muted">Medical Treatment Plan</p>
-                    <p className="mt-1 font-medium text-foreground whitespace-pre-wrap">{treatmentPlan}</p>
+                    <p className="mt-1 font-medium text-foreground text-right whitespace-pre-wrap">{treatmentPlan}</p>
                   </div>
                 )}
                 {supportingTreatment && (
                   <div className="text-sm">
                     <p className="text-muted">Supporting Treatment</p>
-                    <p className="mt-1 font-medium text-foreground whitespace-pre-wrap">{supportingTreatment}</p>
+                    <p className="mt-1 font-medium text-foreground text-right whitespace-pre-wrap">{supportingTreatment}</p>
                   </div>
                 )}
                 {healthcareProviders.length > 0 && (
