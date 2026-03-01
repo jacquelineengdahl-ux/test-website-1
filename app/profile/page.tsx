@@ -369,7 +369,7 @@ export default function ProfilePage() {
 
         {/* ── Large Photo (top, centered) ── */}
         <div className="flex flex-col items-center gap-2">
-          <div className="relative h-28 w-28 overflow-hidden rounded-full border-2 border-border bg-background">
+          <div className="relative h-36 w-36 overflow-hidden rounded-full border-2 border-border bg-background">
             {avatarUrl ? (
               <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
             ) : (
@@ -491,7 +491,7 @@ export default function ProfilePage() {
                 <ViewRow label="Name" value={name || null} />
                 <ViewRow
                   label="Date of birth"
-                  value={dateOfBirth ? `${formatDate(dateOfBirth)}${age !== null ? ` (${age})` : ""}` : null}
+                  value={dateOfBirth ? `${formatDate(dateOfBirth)}${age !== null ? ` (${age} years old)` : ""}` : null}
                 />
                 <ViewRow label="Mobile number" value={mobileNumber || null} />
                 <ViewRow label="Email" value={email || null} />
