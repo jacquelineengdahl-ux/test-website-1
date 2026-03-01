@@ -820,12 +820,20 @@ export default function ProfilePage() {
                 Edit
               </button>
             </div>
-            <div className="mx-6 mb-5 rounded-md border border-border bg-background px-5 py-4">
-              <p className="whitespace-pre-wrap font-serif text-sm leading-relaxed text-foreground">
-                {storyContent}
-              </p>
+            <div className="mx-6 mb-5">
+              <div className="border-t-2 border-accent-green pt-4">
+                {name && (
+                  <p className="font-serif text-base font-semibold text-foreground">{name}</p>
+                )}
+                <p className="text-xs text-muted mb-4">
+                  {new Date().toLocaleDateString("en", { month: "long", day: "numeric", year: "numeric" })}
+                </p>
+                <p className="whitespace-pre-wrap font-serif text-sm leading-7 text-foreground">
+                  {storyContent}
+                </p>
+              </div>
             </div>
-            <div className="border-t border-border px-6 py-3">
+            <div className="border-t border-border px-6 py-3 flex gap-3">
               <button
                 type="button"
                 onClick={handleDownloadPdf}
