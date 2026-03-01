@@ -738,12 +738,15 @@ export default function ProfilePage() {
                 )}
                 {treatmentGoals.length > 0 && (
                   <div className="pt-1">
-                    <p className="text-sm text-muted">Personal Goals &amp; Next Steps in Treatment</p>
-                    <ul className="mt-1 space-y-1 list-disc pl-5">
+                    <p className="mb-2 text-sm text-muted">Personal Goals &amp; Next Steps in Treatment</p>
+                    <div className="space-y-2">
                       {treatmentGoals.map((g, i) => (
-                        <li key={i} className="text-sm text-foreground">{g}</li>
+                        <div key={i} className="flex items-start gap-3 rounded-lg border border-border bg-background px-4 py-3">
+                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-green text-white text-xs">&#10003;</span>
+                          <p className="text-sm text-foreground">{g}</p>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 )}
               </div>
