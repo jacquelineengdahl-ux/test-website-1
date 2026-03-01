@@ -833,17 +833,17 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-            <div className="border-t border-border px-6 py-3 flex gap-3">
+            <div className="border-t border-border px-6 py-3 flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={handleDownloadPdf}
-                className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-background"
+                className="w-full sm:w-auto rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background text-center"
               >
                 Download as PDF
               </button>
               <a
                 href={`mailto:?subject=${encodeURIComponent("My Endo Letter" + (name ? ` — ${name}` : ""))}&body=${encodeURIComponent(storyContent)}`}
-                className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-background"
+                className="w-full sm:w-auto rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background text-center"
               >
                 Email as Attachment
               </a>
