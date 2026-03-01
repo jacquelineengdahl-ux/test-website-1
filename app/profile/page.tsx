@@ -560,6 +560,12 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label htmlFor="treatment-plan" className="mb-1 block text-sm font-medium text-foreground">Medical Treatment Plan</label>
+                  <ul className="mb-2 space-y-0.5 text-sm text-muted list-disc pl-5">
+                    <li>Current medications and dosages</li>
+                    <li>Hormonal treatments (e.g. the pill, GnRH agonists)</li>
+                    <li>Surgical history or upcoming procedures</li>
+                    <li>Pain management prescribed by your doctor</li>
+                  </ul>
                   <textarea
                     id="treatment-plan"
                     rows={3}
