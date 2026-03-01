@@ -742,7 +742,7 @@ export default function ProfilePage() {
                     <div className="space-y-2">
                       {treatmentGoals.map((g, i) => (
                         <div key={i} className="flex items-start gap-3 rounded-lg border border-border bg-background px-4 py-3">
-                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-green text-white text-xs">&#10003;</span>
+                          <span className="mt-0.5 text-accent-green text-sm shrink-0">&rarr;</span>
                           <p className="text-sm text-foreground">{g}</p>
                         </div>
                       ))}
