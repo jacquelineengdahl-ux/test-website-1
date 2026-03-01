@@ -301,25 +301,18 @@ export default function ProfilePage() {
   }
 
   function sanitizeForPdf(text: string): string {
-    return text
-      .replace(/[\u2018\u2019\u201A\u02BC]/g, "'")  // smart single quotes
-      .replace(/[\u201C\u201D\u201E]/g, '"')         // smart double quotes
-      .replace(/[\u2013\u2014]/g, "-")               // en/em dashes
-      .replace(/\u2026/g, "...")                      // ellipsis
-      .replace(/\u00B7/g, "-")                        // middle dot
-      .replace(/[\u2022\u25CF\u25CB\u25AA\u25A0]/g, "-") // bullet characters
-      .replace(/[^\x00-\x7F]/g, (ch) => {
-        // Replace any remaining non-ASCII with closest ASCII or remove
-        const map: Record<string, string> = {
-          "\u00E9": "e", "\u00E8": "e", "\u00EA": "e",
-          "\u00E0": "a", "\u00E2": "a", "\u00E4": "a",
-          "\u00F6": "o", "\u00FC": "u", "\u00E5": "a",
-          "\u00C9": "E", "\u00C8": "E",
-          "\u00C0": "A", "\u00C4": "A",
-          "\u00D6": "O", "\u00DC": "U", "\u00C5": "A",
-        };
-        return map[ch] ?? "";
-      });
+    // Common unicode replacements
+    let s = text
+      .replace(/[\u2018\u2019\u201A\u02BC\u0060\u00B4]/g, "'")
+      .replace(/[\u201C\u201D\u201E\u00AB\u00BB]/g, '"')
+      .replace(/[\u2013\u2014\u2012\u2015]/g, "-")
+      .replace(/\u2026/g, "...")
+      .replace(/[\u00B7\u2022\u25CF\u25CB\u25AA\u25A0\u2023\u25E6]/g, "-")
+      .replace(/\u00A0/g, " ")       // non-breaking space
+      .replace(/[\u200B\u200C\u200D\uFEFF]/g, ""); // zero-width chars
+    // Replace ALL remaining non-ASCII with nothing
+    s = s.replace(/[^\x20-\x7E\n\r\t]/g, "");
+    return s;
   }
 
   async function buildPdf() {
@@ -363,6 +356,9 @@ export default function ProfilePage() {
         doc.addPage();
         y = margin;
       }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(44, 40, 37);
       doc.text(line, margin, y);
       y += 5.5;
     }
