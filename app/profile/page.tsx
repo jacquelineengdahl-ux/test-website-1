@@ -841,6 +841,12 @@ export default function ProfilePage() {
               >
                 Download as PDF
               </button>
+              <a
+                href={`mailto:?subject=${encodeURIComponent("My Endo Letter" + (name ? ` — ${name}` : ""))}&body=${encodeURIComponent(storyContent)}`}
+                className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-background"
+              >
+                Email someone you trust
+              </a>
             </div>
           </div>
         ) : (
