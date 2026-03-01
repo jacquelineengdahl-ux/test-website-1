@@ -718,17 +718,22 @@ export default function ProfilePage() {
                 )}
                 {healthcareProviders.length > 0 && (
                   <div className="pt-1">
-                    <p className="text-sm text-muted">Healthcare providers</p>
-                    <ul className="mt-1 space-y-1">
+                    <p className="mb-2 text-sm text-muted">Healthcare providers</p>
+                    <div className="space-y-2">
                       {healthcareProviders.map((p, i) => (
-                        <li key={i} className="text-sm text-foreground">
-                          {p.clinic && <span className="font-medium">{p.clinic}</span>}
-                          {p.clinic && p.name && <span className="text-muted"> &middot; </span>}
-                          {p.name && <span>{p.name}</span>}
-                          {p.contact && <span className="text-muted"> &middot; {p.contact}</span>}
-                        </li>
+                        <div key={i} className="rounded-lg border border-border bg-background px-4 py-3">
+                          {p.clinic && (
+                            <p className="font-medium text-sm text-foreground">{p.clinic}</p>
+                          )}
+                          {p.name && (
+                            <p className="text-sm text-foreground">{p.name}</p>
+                          )}
+                          {p.contact && (
+                            <p className="text-sm text-muted">{p.contact}</p>
+                          )}
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 )}
                 {treatmentGoals.length > 0 && (
