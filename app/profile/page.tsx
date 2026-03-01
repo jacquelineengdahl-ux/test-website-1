@@ -37,6 +37,11 @@ type HealthOverview = {
   topSymptoms: { label: string; avg: number }[];
 };
 
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en", { month: "long", day: "numeric", year: "numeric" });
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -46,7 +51,7 @@ export default function ProfilePage() {
 
   // Profile form state
   const [name, setName] = useState("");
-const [dateOfBirth, setDateOfBirth] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [country, setCountry] = useState("");
   const [diagnosisDate, setDiagnosisDate] = useState("");
   const [endoStage, setEndoStage] = useState("");
@@ -56,16 +61,18 @@ const [dateOfBirth, setDateOfBirth] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+
+  // View/edit mode
+  const [editing, setEditing] = useState(false);
 
   // Health overview state
   const [health, setHealth] = useState<HealthOverview | null>(null);
 
-  // Story state
+  // Letter state
   const [storyContent, setStoryContent] = useState("");
+  const [storyDraft, setStoryDraft] = useState("");
   const [storySaving, setStorySaving] = useState(false);
-  const [storySaved, setStorySaved] = useState(true);
-  const storyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [writingLetter, setWritingLetter] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -93,6 +100,12 @@ const [dateOfBirth, setDateOfBirth] = useState("");
         setEndoStage(profile.endo_stage ?? "");
         setFirstSymptomDate(profile.first_symptom_date ?? "");
         setAvatarUrl(profile.avatar_url ?? "");
+      }
+
+      // Start in edit mode if welcome flow or no profile data
+      const hasData = profile && (profile.name || profile.country || profile.diagnosis_date);
+      if (isWelcome || !hasData) {
+        setEditing(true);
       }
 
       // Load story
@@ -167,31 +180,28 @@ const [dateOfBirth, setDateOfBirth] = useState("");
     }
 
     init();
-  }, [router]);
+  }, [router, isWelcome]);
 
-  // Cleanup story debounce timer
-  useEffect(() => {
-    return () => {
-      if (storyTimerRef.current) clearTimeout(storyTimerRef.current);
-    };
-  }, []);
+  function handleOpenLetter() {
+    setStoryDraft(storyContent);
+    setWritingLetter(true);
+  }
 
-  function handleStoryChange(value: string) {
-    setStoryContent(value);
-    setStorySaved(false);
+  async function handleSaveLetter() {
+    if (!userId) return;
+    setStorySaving(true);
+    await supabase.from("endo_stories").upsert(
+      { user_id: userId, content: storyDraft, updated_at: new Date().toISOString() },
+      { onConflict: "user_id" }
+    );
+    setStoryContent(storyDraft);
+    setStorySaving(false);
+    setWritingLetter(false);
+  }
 
-    if (storyTimerRef.current) clearTimeout(storyTimerRef.current);
-
-    storyTimerRef.current = setTimeout(async () => {
-      if (!userId) return;
-      setStorySaving(true);
-      await supabase.from("endo_stories").upsert(
-        { user_id: userId, content: value, updated_at: new Date().toISOString() },
-        { onConflict: "user_id" }
-      );
-      setStorySaving(false);
-      setStorySaved(true);
-    }, 2000);
+  function handleCancelLetter() {
+    setStoryDraft("");
+    setWritingLetter(false);
   }
 
   async function handleDownloadPdf() {
@@ -208,20 +218,17 @@ const [dateOfBirth, setDateOfBirth] = useState("");
       doc.text("Living with Endo", pageWidth / 2, pageHeight - 12, { align: "center" });
     }
 
-    // Title
     doc.setFont("times", "bold");
     doc.setFontSize(22);
     doc.setTextColor(44, 40, 37);
     doc.text("My Endo Story", pageWidth / 2, 30, { align: "center" });
 
-    // Author & date
     doc.setFont("times", "normal");
     doc.setFontSize(11);
     doc.setTextColor(120, 113, 108);
     const meta = [name, new Date().toLocaleDateString()].filter(Boolean).join("  ·  ");
     if (meta) doc.text(meta, pageWidth / 2, 38, { align: "center" });
 
-    // Body text
     doc.setFont("times", "normal");
     doc.setFontSize(12);
     doc.setTextColor(44, 40, 37);
@@ -280,7 +287,6 @@ const [dateOfBirth, setDateOfBirth] = useState("");
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    setSuccess("");
     setSaving(true);
 
     const { error: upsertError } = await supabase.from("profiles").upsert({
@@ -301,22 +307,37 @@ const [dateOfBirth, setDateOfBirth] = useState("");
     } else if (isWelcome) {
       router.push("/dashboard");
     } else {
-      setSuccess("Profile saved.");
+      setEditing(false);
     }
+  }
+
+  function handleCancel() {
+    setEditing(false);
+    setError("");
   }
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted">Loading…</p>
+        <p className="text-muted">Loading...</p>
       </div>
     );
   }
 
+  const profileFields = [
+    { label: "Date of birth", value: dateOfBirth ? formatDate(dateOfBirth) : null },
+    { label: "Country", value: country || null },
+    { label: "Diagnosis date", value: diagnosisDate ? formatDate(diagnosisDate) : null },
+    { label: "First symptom", value: firstSymptomDate ? formatDate(firstSymptomDate) : null },
+    { label: "Endo stage", value: endoStage || null },
+  ];
+
+  const hasAnyProfileData = name || profileFields.some((f) => f.value);
+
   return (
     <div className="min-h-screen bg-background py-12">
-      <div className="mx-auto w-full max-w-sm space-y-10 px-4">
-        <h1 className="text-center font-serif text-2xl font-semibold tracking-tight text-foreground">
+      <div className="mx-auto w-full max-w-lg space-y-8 px-4">
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
           My Profile
         </h1>
 
@@ -327,237 +348,337 @@ const [dateOfBirth, setDateOfBirth] = useState("");
           </div>
         )}
 
-        {/* Profile form */}
-        <div className="space-y-3">
-          <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">Profile</h2>
+        {/* ── Profile Card ── */}
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+          {editing ? (
+            /* ── Edit Mode ── */
+            <>
+              <div className="mb-5 flex items-center justify-between">
+                <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Edit Profile</h2>
+                {hasAnyProfileData && !isWelcome && (
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="text-sm text-muted hover:text-foreground"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
 
-          {/* Avatar */}
-          <div className="flex flex-col items-center gap-2">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="relative h-20 w-20 overflow-hidden rounded-full border-2 border-border bg-surface hover:opacity-80 disabled:opacity-50"
-            >
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="Avatar"
-                  className="h-full w-full object-cover"
+              {/* Avatar */}
+              <div className="mb-5 flex flex-col items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="relative h-20 w-20 overflow-hidden rounded-full border-2 border-border bg-background hover:opacity-80 disabled:opacity-50"
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-2xl font-semibold text-muted">
+                      {name ? name[0].toUpperCase() : "?"}
+                    </span>
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
                 />
-              ) : (
-                <span className="flex h-full w-full items-center justify-center text-2xl font-semibold text-muted">
-                  {name ? name[0].toUpperCase() : "?"}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="text-sm text-muted hover:text-foreground disabled:opacity-50"
+                >
+                  {uploading ? "Uploading..." : "Change photo"}
+                </button>
+              </div>
+
+              <form onSubmit={handleSave} className="space-y-3">
+                <div>
+                  <label htmlFor="name" className="mb-1 block text-sm font-medium text-foreground">Name</label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="date-of-birth" className="mb-1 block text-sm font-medium text-foreground">Date of birth</label>
+                  <input
+                    id="date-of-birth"
+                    type="date"
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="country" className="mb-1 block text-sm font-medium text-foreground">Country</label>
+                  <input
+                    id="country"
+                    type="text"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    placeholder="Your country"
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="diagnosis-date" className="mb-1 block text-sm font-medium text-foreground">Diagnosis date</label>
+                  <input
+                    id="diagnosis-date"
+                    type="date"
+                    value={diagnosisDate}
+                    onChange={(e) => setDiagnosisDate(e.target.value)}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="first-symptom-date" className="mb-1 block text-sm font-medium text-foreground">Date of first symptom</label>
+                  <input
+                    id="first-symptom-date"
+                    type="date"
+                    value={firstSymptomDate}
+                    onChange={(e) => setFirstSymptomDate(e.target.value)}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="endo-stage" className="mb-1 block text-sm font-medium text-foreground">Endo stage</label>
+                  <select
+                    id="endo-stage"
+                    value={endoStage}
+                    onChange={(e) => setEndoStage(e.target.value)}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                  >
+                    <option value="">Select...</option>
+                    <option value="Stage I">Stage I</option>
+                    <option value="Stage II">Stage II</option>
+                    <option value="Stage III">Stage III</option>
+                    <option value="Stage IV">Stage IV</option>
+                    <option value="Not sure">Not sure</option>
+                  </select>
+                </div>
+                {error && <p className="text-sm text-red-600">{error}</p>}
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="w-full rounded-md bg-accent-green py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
+                >
+                  {saving ? "Saving..." : "Save profile"}
+                </button>
+              </form>
+            </>
+          ) : (
+            /* ── View Mode ── */
+            <>
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-4">
+                  {/* Avatar */}
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-border bg-background">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-xl font-semibold text-muted">
+                        {name ? name[0].toUpperCase() : "?"}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-serif text-xl font-semibold text-foreground">
+                      {name || "No name set"}
+                    </p>
+                    {country && <p className="text-sm text-muted">{country}</p>}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditing(true)}
+                  className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-background"
+                >
+                  Edit
+                </button>
+              </div>
+
+              {/* Profile details */}
+              {profileFields.some((f) => f.value) && (
+                <div className="mt-5 space-y-2.5 border-t border-border pt-5">
+                  {profileFields.map((field) =>
+                    field.value ? (
+                      <div key={field.label} className="flex justify-between text-sm">
+                        <span className="text-muted">{field.label}</span>
+                        <span className="font-medium text-foreground">{field.value}</span>
+                      </div>
+                    ) : null
+                  )}
+                </div>
               )}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarUpload}
-              className="hidden"
+            </>
+          )}
+        </div>
+
+        {/* ── My Letter ── */}
+        {writingLetter ? (
+          /* Writing mode */
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">
+                My Letter
+              </h2>
+              <button
+                type="button"
+                onClick={handleCancelLetter}
+                className="text-sm text-muted hover:text-foreground"
+              >
+                Cancel
+              </button>
+            </div>
+
+            <textarea
+              rows={12}
+              value={storyDraft}
+              onChange={(e) => setStoryDraft(e.target.value)}
+              placeholder="Start writing your story..."
+              autoFocus
+              className="w-full rounded-md border border-border bg-background px-4 py-3 font-serif text-foreground text-sm leading-relaxed resize-y"
             />
+
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="text-sm text-muted hover:text-foreground disabled:opacity-50"
-            >
-              {uploading ? "Uploading..." : "Change photo"}
-            </button>
-          </div>
-
-          <form onSubmit={handleSave} className="space-y-3">
-            <div>
-              <label htmlFor="name" className="mb-1 block text-sm font-medium text-foreground">
-                Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
-              />
-            </div>
-<div>
-              <label htmlFor="date-of-birth" className="mb-1 block text-sm font-medium text-foreground">
-                Date of birth
-              </label>
-              <input
-                id="date-of-birth"
-                type="date"
-                value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
-              />
-            </div>
-            <div>
-              <label htmlFor="country" className="mb-1 block text-sm font-medium text-foreground">
-                Country
-              </label>
-              <input
-                id="country"
-                type="text"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                placeholder="Your country"
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
-              />
-            </div>
-            <div>
-              <label htmlFor="diagnosis-date" className="mb-1 block text-sm font-medium text-foreground">
-                Diagnosis date
-              </label>
-              <input
-                id="diagnosis-date"
-                type="date"
-                value={diagnosisDate}
-                onChange={(e) => setDiagnosisDate(e.target.value)}
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
-              />
-            </div>
-            <div>
-              <label htmlFor="first-symptom-date" className="mb-1 block text-sm font-medium text-foreground">
-                Date of first symptom
-              </label>
-              <input
-                id="first-symptom-date"
-                type="date"
-                value={firstSymptomDate}
-                onChange={(e) => setFirstSymptomDate(e.target.value)}
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
-              />
-            </div>
-            <div>
-              <label htmlFor="endo-stage" className="mb-1 block text-sm font-medium text-foreground">
-                Endo stage
-              </label>
-              <select
-                id="endo-stage"
-                value={endoStage}
-                onChange={(e) => setEndoStage(e.target.value)}
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
-              >
-                <option value="">Select...</option>
-                <option value="Stage I">Stage I</option>
-                <option value="Stage II">Stage II</option>
-                <option value="Stage III">Stage III</option>
-                <option value="Stage IV">Stage IV</option>
-                <option value="Not sure">Not sure</option>
-              </select>
-            </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            {success && <p className="text-sm text-green-700">{success}</p>}
-            <button
-              type="submit"
-              disabled={saving}
+              onClick={handleSaveLetter}
+              disabled={storySaving}
               className="w-full rounded-md bg-accent-green py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
             >
-              {saving ? "Saving..." : "Save profile"}
-            </button>
-          </form>
-        </div>
-
-        {/* My Endo Story */}
-        <div className="space-y-3">
-          <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">
-            My Endo Story
-          </h2>
-          <p className="text-sm text-muted">
-            A private space to write your story. Share it with loved ones or healthcare providers by downloading as a PDF.
-          </p>
-
-          <details className="text-sm">
-            <summary className="cursor-pointer text-muted hover:text-foreground">
-              Writing prompts to get started
-            </summary>
-            <ul className="mt-2 space-y-1 pl-4 text-muted list-disc">
-              <li>When did you first notice something wasn&apos;t right?</li>
-              <li>What has your journey to diagnosis looked like?</li>
-              <li>How has endo affected your daily life?</li>
-              <li>What do you wish people understood about living with endo?</li>
-              <li>What gives you strength on difficult days?</li>
-            </ul>
-          </details>
-
-          <textarea
-            rows={10}
-            value={storyContent}
-            onChange={(e) => handleStoryChange(e.target.value)}
-            placeholder="Start writing your story..."
-            className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground text-sm leading-relaxed resize-y"
-          />
-
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted">
-              {storySaving
-                ? "Saving..."
-                : storySaved
-                  ? "All changes saved"
-                  : "Unsaved changes"}
-            </span>
-            <button
-              type="button"
-              onClick={handleDownloadPdf}
-              className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-surface"
-            >
-              Download as PDF
+              {storySaving ? "Saving..." : "Save letter"}
             </button>
           </div>
-        </div>
-
-        {/* Health overview */}
-        {health && (
-          <div className="space-y-3">
-            <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">
-              Health overview
-            </h2>
-            <div className="space-y-2 rounded-md border border-border bg-surface px-4 py-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted">Total entries logged</span>
-                <span className="text-foreground">{health.totalEntries}</span>
-              </div>
-              {health.firstLogDate && (
-                <div className="flex justify-between">
-                  <span className="text-muted">First log date</span>
-                  <span className="text-foreground">{health.firstLogDate}</span>
-                </div>
-              )}
-              {health.lastLogDate && (
-                <div className="flex justify-between">
-                  <span className="text-muted">Most recent log date</span>
-                  <span className="text-foreground">{health.lastLogDate}</span>
-                </div>
-              )}
-              {health.topSymptoms.length > 0 && (
-                <>
-                  <hr className="border-border" />
-                  <p className="font-medium text-foreground">Top symptoms</p>
-                  {health.topSymptoms.map((s) => (
-                    <div key={s.label} className="flex justify-between">
-                      <span className="text-muted">{s.label}</span>
-                      <span className="text-foreground">{s.avg.toFixed(1)} avg</span>
-                    </div>
-                  ))}
-                </>
-              )}
-              {health.totalEntries === 0 && (
-                <div className="space-y-3 text-center">
-                  <p className="text-sm text-muted">
-                    No symptom logs yet. Start logging to see your health trends and top symptoms.
-                  </p>
-                  <a
-                    href="/dashboard/log"
-                    className="inline-block rounded-md bg-accent-green px-6 py-2 text-sm font-medium text-white hover:opacity-90"
-                  >
-                    Log your first entry
-                  </a>
-                </div>
-              )}
+        ) : storyContent ? (
+          /* Saved letter view */
+          <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-6 pt-5 pb-3">
+              <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">
+                My Letter
+              </h2>
+              <button
+                type="button"
+                onClick={handleOpenLetter}
+                className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-background"
+              >
+                Edit
+              </button>
             </div>
+            <div className="mx-6 mb-5 rounded-md border border-border bg-background px-5 py-4">
+              <p className="whitespace-pre-wrap font-serif text-sm leading-relaxed text-foreground">
+                {storyContent}
+              </p>
+            </div>
+            <div className="border-t border-border px-6 py-3">
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-background"
+              >
+                Download as PDF
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Empty state — CTA */
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm space-y-4 text-center">
+            <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">
+              My Letter
+            </h2>
+            <p className="text-sm text-muted">
+              Write a personal letter about your journey. Share it with loved ones or healthcare providers.
+            </p>
+            <button
+              type="button"
+              onClick={handleOpenLetter}
+              className="rounded-md bg-accent-green px-5 py-2 text-sm font-medium text-white hover:opacity-90"
+            >
+              Write a letter about your Endometriosis journey
+            </button>
+            <ul className="space-y-1 text-left text-sm text-muted list-disc pl-5 pt-1">
+              <li>When did you first notice something wasn&apos;t right?</li>
+              <li>What has your journey to diagnosis looked like?</li>
+              <li>What are your symptoms?</li>
+              <li>What treatments have you tried and consider trying? How do they feel?</li>
+              <li>How has endo affected your daily life?</li>
+              <li>What do you wish people understood about living with endometriosis?</li>
+              <li>What gives you strength on difficult days?</li>
+              <li>Reflections &amp; lessons from your Endometriosis journey</li>
+            </ul>
+          </div>
+        )}
+
+        {/* ── Health Overview ── */}
+        {health && (
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm space-y-3">
+            <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">
+              Health Overview
+            </h2>
+
+            {health.totalEntries === 0 ? (
+              <div className="space-y-3 py-2 text-center">
+                <p className="text-sm text-muted">
+                  No symptom logs yet. Start logging to see your health trends.
+                </p>
+                <a
+                  href="/dashboard/log"
+                  className="inline-block rounded-md bg-accent-green px-6 py-2 text-sm font-medium text-white hover:opacity-90"
+                >
+                  Log your first entry
+                </a>
+              </div>
+            ) : (
+              <div className="space-y-2.5 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted">Total entries</span>
+                  <span className="font-medium text-foreground">{health.totalEntries}</span>
+                </div>
+                {health.firstLogDate && (
+                  <div className="flex justify-between">
+                    <span className="text-muted">First log</span>
+                    <span className="font-medium text-foreground">{formatDate(health.firstLogDate)}</span>
+                  </div>
+                )}
+                {health.lastLogDate && (
+                  <div className="flex justify-between">
+                    <span className="text-muted">Most recent log</span>
+                    <span className="font-medium text-foreground">{formatDate(health.lastLogDate)}</span>
+                  </div>
+                )}
+                {health.topSymptoms.length > 0 && (
+                  <>
+                    <hr className="border-border" />
+                    <p className="font-medium text-foreground">Top symptoms</p>
+                    {health.topSymptoms.map((s) => (
+                      <div key={s.label} className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-muted">{s.label}</span>
+                          <span className="font-medium text-foreground">{s.avg.toFixed(1)} avg</span>
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-border">
+                          <div
+                            className="h-1.5 rounded-full bg-accent-green"
+                            style={{ width: `${(s.avg / 10) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
