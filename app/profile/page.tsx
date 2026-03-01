@@ -708,7 +708,11 @@ export default function ProfilePage() {
                   <div className="pt-1">
                     <p className="mb-1.5 text-sm text-muted">Medical Treatment Plan</p>
                     <div className="rounded-lg border border-border bg-background px-4 py-3">
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{treatmentPlan}</p>
+                      <ul className="list-disc pl-4 space-y-1">
+                        {treatmentPlan.split("\n").filter((l) => l.trim()).map((line, i) => (
+                          <li key={i} className="text-sm leading-relaxed text-foreground">{line.trim()}</li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
                 )}
@@ -716,7 +720,11 @@ export default function ProfilePage() {
                   <div className="pt-1">
                     <p className="mb-1.5 text-sm text-muted">Supporting Treatment</p>
                     <div className="rounded-lg border border-border bg-background px-4 py-3">
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{supportingTreatment}</p>
+                      <ul className="list-disc pl-4 space-y-1">
+                        {supportingTreatment.split("\n").filter((l) => l.trim()).map((line, i) => (
+                          <li key={i} className="text-sm leading-relaxed text-foreground">{line.trim()}</li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
                 )}
