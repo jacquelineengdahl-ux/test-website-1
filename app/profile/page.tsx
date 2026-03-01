@@ -48,13 +48,12 @@ interface Provider {
   contact: string;
 }
 
-const GOAL_PRESETS = [
-  "Stabilise mood",
-  "Pain management",
-  "Try new treatment",
-  "Surgery",
-  "Fertility support",
-  "Lifestyle changes",
+const GOAL_PROMPTS = [
+  "What symptoms do you most want to manage or reduce?",
+  "Are there treatments or therapies you'd like to explore?",
+  "What lifestyle changes could support your wellbeing?",
+  "What would you like to communicate to your healthcare team?",
+  "What does a good quality of life look like for you right now?",
 ];
 
 export default function ProfilePage() {
@@ -81,7 +80,6 @@ export default function ProfilePage() {
   const [treatmentPlan, setTreatmentPlan] = useState("");
   const [healthcareProviders, setHealthcareProviders] = useState<Provider[]>([]);
   const [treatmentGoals, setTreatmentGoals] = useState<string[]>([]);
-  const [customGoal, setCustomGoal] = useState("");
 
   // Edit modes
   const [editingPersonal, setEditingPersonal] = useState(false);
@@ -222,12 +220,6 @@ export default function ProfilePage() {
     setError("");
     setSavingEndo(true);
 
-    // Add custom goal if typed
-    let goals = [...treatmentGoals];
-    if (customGoal.trim() && !goals.includes(customGoal.trim())) {
-      goals.push(customGoal.trim());
-    }
-
     const { error: upsertError } = await supabase.from("profiles").upsert({
       id: userId,
       first_symptom_date: firstSymptomDate || null,
@@ -235,7 +227,7 @@ export default function ProfilePage() {
       endo_stage: endoStage || null,
       treatment_plan: treatmentPlan || null,
       healthcare_providers: healthcareProviders,
-      treatment_goals: goals,
+      treatment_goals: treatmentGoals.filter((g) => g.trim() !== ""),
       updated_at: new Date().toISOString(),
     });
 
@@ -243,8 +235,7 @@ export default function ProfilePage() {
     if (upsertError) {
       setError(upsertError.message);
     } else {
-      setTreatmentGoals(goals);
-      setCustomGoal("");
+      setTreatmentGoals(treatmentGoals.filter((g) => g.trim() !== ""));
       if (isWelcome && !editingPersonal) {
         router.push("/dashboard");
       } else {
@@ -268,11 +259,19 @@ export default function ProfilePage() {
     setHealthcareProviders(healthcareProviders.filter((_, i) => i !== index));
   }
 
-  // ── Goal toggle ──
-  function toggleGoal(goal: string) {
-    setTreatmentGoals((prev) =>
-      prev.includes(goal) ? prev.filter((g) => g !== goal) : [...prev, goal]
-    );
+  // ── Goal helpers ──
+  function addGoal() {
+    setTreatmentGoals([...treatmentGoals, ""]);
+  }
+
+  function updateGoal(index: number, value: string) {
+    const updated = [...treatmentGoals];
+    updated[index] = value;
+    setTreatmentGoals(updated);
+  }
+
+  function removeGoal(index: number) {
+    setTreatmentGoals(treatmentGoals.filter((_, i) => i !== index));
   }
 
   // ── Letter handlers ──
@@ -611,66 +610,39 @@ export default function ProfilePage() {
 
                 {/* Goals */}
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-foreground">Goals / next steps</label>
-                  <div className="flex flex-wrap gap-2">
-                    {GOAL_PRESETS.map((goal) => (
-                      <button
-                        key={goal}
-                        type="button"
-                        onClick={() => toggleGoal(goal)}
-                        className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                          treatmentGoals.includes(goal)
-                            ? "border-accent-green bg-accent-green text-white"
-                            : "border-border text-foreground hover:border-accent-green"
-                        }`}
-                      >
-                        {goal}
-                      </button>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Personal Goals &amp; Next Steps in Treatment</label>
+                  <ul className="mb-3 space-y-0.5 text-sm text-muted list-disc pl-5">
+                    {GOAL_PROMPTS.map((prompt) => (
+                      <li key={prompt}>{prompt}</li>
+                    ))}
+                  </ul>
+                  <div className="space-y-2">
+                    {treatmentGoals.map((g, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={g}
+                          onChange={(e) => updateGoal(i, e.target.value)}
+                          placeholder="Enter a goal or next step..."
+                          className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeGoal(i)}
+                          className="shrink-0 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-red-600 hover:border-red-300"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     ))}
                   </div>
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      type="text"
-                      value={customGoal}
-                      onChange={(e) => setCustomGoal(e.target.value)}
-                      placeholder="Other goal..."
-                      className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (customGoal.trim() && !treatmentGoals.includes(customGoal.trim())) {
-                          setTreatmentGoals([...treatmentGoals, customGoal.trim()]);
-                          setCustomGoal("");
-                        }
-                      }}
-                      className="rounded-md border border-border px-3 py-1.5 text-sm text-foreground hover:bg-background"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  {/* Show custom (non-preset) goals as removable pills */}
-                  {treatmentGoals.filter((g) => !GOAL_PRESETS.includes(g)).length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {treatmentGoals
-                        .filter((g) => !GOAL_PRESETS.includes(g))
-                        .map((g) => (
-                          <span
-                            key={g}
-                            className="inline-flex items-center gap-1 rounded-full border border-accent-green bg-accent-green px-3 py-0.5 text-sm text-white"
-                          >
-                            {g}
-                            <button
-                              type="button"
-                              onClick={() => setTreatmentGoals(treatmentGoals.filter((x) => x !== g))}
-                              className="ml-0.5 hover:opacity-70"
-                            >
-                              &times;
-                            </button>
-                          </span>
-                        ))}
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    onClick={addGoal}
+                    className="mt-2 text-sm text-accent-green hover:underline"
+                  >
+                    + Add goal
+                  </button>
                 </div>
 
                 <button
@@ -720,17 +692,12 @@ export default function ProfilePage() {
                 )}
                 {treatmentGoals.length > 0 && (
                   <div className="pt-1">
-                    <p className="mb-1.5 text-sm text-muted">Goals / next steps</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {treatmentGoals.map((g) => (
-                        <span
-                          key={g}
-                          className="rounded-full border border-border bg-background px-3 py-0.5 text-sm text-foreground"
-                        >
-                          {g}
-                        </span>
+                    <p className="text-sm text-muted">Personal Goals &amp; Next Steps in Treatment</p>
+                    <ul className="mt-1 space-y-1 list-disc pl-5">
+                      {treatmentGoals.map((g, i) => (
+                        <li key={i} className="text-sm text-foreground">{g}</li>
                       ))}
-                    </div>
+                    </ul>
                   </div>
                 )}
               </div>
