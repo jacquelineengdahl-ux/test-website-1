@@ -300,7 +300,7 @@ export default function ProfilePage() {
     setWritingLetter(false);
   }
 
-  async function handleDownloadPdf() {
+  async function buildPdf() {
     const jsPDF = (await import("jspdf")).default;
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -343,7 +343,29 @@ export default function ProfilePage() {
     }
 
     addFooter();
+    return doc;
+  }
+
+  async function handleDownloadPdf() {
+    const doc = await buildPdf();
     doc.save("my-endo-story.pdf");
+  }
+
+  async function handleEmailPdf() {
+    const doc = await buildPdf();
+    const blob = doc.output("blob");
+    const file = new File([blob], "my-endo-story.pdf", { type: "application/pdf" });
+
+    if (navigator.canShare?.({ files: [file] })) {
+      await navigator.share({
+        title: "My Endo Letter" + (name ? ` — ${name}` : ""),
+        files: [file],
+      });
+    } else {
+      // Fallback: download PDF and open mailto
+      doc.save("my-endo-story.pdf");
+      window.location.href = `mailto:?subject=${encodeURIComponent("My Endo Letter" + (name ? ` — ${name}` : ""))}&body=${encodeURIComponent("Please find my letter attached.")}`;
+    }
   }
 
   // ── Loading ──
@@ -841,12 +863,13 @@ export default function ProfilePage() {
               >
                 Download as PDF
               </button>
-              <a
-                href={`mailto:?subject=${encodeURIComponent("My Endo Letter" + (name ? ` — ${name}` : ""))}&body=${encodeURIComponent(storyContent)}`}
+              <button
+                type="button"
+                onClick={handleEmailPdf}
                 className="w-full sm:w-auto rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background text-center"
               >
                 Email as Attachment
-              </a>
+              </button>
             </div>
           </div>
         ) : (
