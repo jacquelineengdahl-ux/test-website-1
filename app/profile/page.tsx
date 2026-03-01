@@ -19,6 +19,30 @@ function calcAge(dateStr: string): number | null {
   return age;
 }
 
+function timeToDiagnosis(symptomDate: string, diagDate: string): string | null {
+  if (!symptomDate || !diagDate) return null;
+  const s = new Date(symptomDate + "T00:00:00");
+  const d = new Date(diagDate + "T00:00:00");
+  if (d <= s) return null;
+  let years = d.getFullYear() - s.getFullYear();
+  let months = d.getMonth() - s.getMonth();
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  if (d.getDate() < s.getDate()) {
+    months--;
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+  }
+  const parts: string[] = [];
+  if (years > 0) parts.push(`${years} ${years === 1 ? "year" : "years"}`);
+  if (months > 0) parts.push(`${months} ${months === 1 ? "month" : "months"}`);
+  return parts.length > 0 ? parts.join(", ") : "Less than a month";
+}
+
 interface Provider {
   name: string;
   contact: string;
@@ -53,6 +77,7 @@ export default function ProfilePage() {
   // Endo state
   const [firstSymptomDate, setFirstSymptomDate] = useState("");
   const [diagnosisDate, setDiagnosisDate] = useState("");
+  const [endoStage, setEndoStage] = useState("");
   const [treatmentPlan, setTreatmentPlan] = useState("");
   const [healthcareProviders, setHealthcareProviders] = useState<Provider[]>([]);
   const [treatmentGoals, setTreatmentGoals] = useState<string[]>([]);
@@ -99,6 +124,7 @@ export default function ProfilePage() {
         setCountry(profile.country ?? "");
         setFirstSymptomDate(profile.first_symptom_date ?? "");
         setDiagnosisDate(profile.diagnosis_date ?? "");
+        setEndoStage(profile.endo_stage ?? "");
         setTreatmentPlan(profile.treatment_plan ?? "");
         setHealthcareProviders(profile.healthcare_providers ?? []);
         setTreatmentGoals(profile.treatment_goals ?? []);
@@ -206,6 +232,7 @@ export default function ProfilePage() {
       id: userId,
       first_symptom_date: firstSymptomDate || null,
       diagnosis_date: diagnosisDate || null,
+      endo_stage: endoStage || null,
       treatment_plan: treatmentPlan || null,
       healthcare_providers: healthcareProviders,
       treatment_goals: goals,
@@ -514,6 +541,22 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
+                  <label htmlFor="endo-stage" className="mb-1 block text-sm font-medium text-foreground">Endo stage</label>
+                  <select
+                    id="endo-stage"
+                    value={endoStage}
+                    onChange={(e) => setEndoStage(e.target.value)}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                  >
+                    <option value="">Select...</option>
+                    <option value="Stage I">Stage I</option>
+                    <option value="Stage II">Stage II</option>
+                    <option value="Stage III">Stage III</option>
+                    <option value="Stage IV">Stage IV</option>
+                    <option value="Not sure">Not sure</option>
+                  </select>
+                </div>
+                <div>
                   <label htmlFor="treatment-plan" className="mb-1 block text-sm font-medium text-foreground">Current treatment plan</label>
                   <textarea
                     id="treatment-plan"
@@ -654,6 +697,8 @@ export default function ProfilePage() {
               <div className="mt-4 space-y-2.5">
                 <ViewRow label="Date of first symptom" value={firstSymptomDate ? formatDate(firstSymptomDate) : null} />
                 <ViewRow label="Date of diagnosis" value={diagnosisDate ? formatDate(diagnosisDate) : null} />
+                <ViewRow label="Time to diagnosis" value={timeToDiagnosis(firstSymptomDate, diagnosisDate)} />
+                <ViewRow label="Endo stage" value={endoStage || null} />
                 {treatmentPlan && (
                   <div className="pt-1">
                     <p className="text-sm text-muted">Current treatment plan</p>
