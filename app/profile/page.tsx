@@ -4,39 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-const SYMPTOM_FIELDS = [
-  { key: "leg_pain", label: "Leg pain" },
-  { key: "lower_back_pain", label: "Lower back pain" },
-  { key: "chest_pain", label: "Chest pain" },
-  { key: "shoulder_pain", label: "Shoulder pain" },
-  { key: "headache", label: "Headache" },
-  { key: "pelvic_pain", label: "Pelvic pain" },
-  { key: "bowel_urination_pain", label: "Bowel/urination pain" },
-  { key: "intercourse_pain", label: "Intercourse pain" },
-  { key: "bloating", label: "Bloating" },
-  { key: "nausea", label: "Nausea" },
-  { key: "diarrhea", label: "Diarrhea" },
-  { key: "constipation", label: "Constipation" },
-  { key: "fatigue", label: "Fatigue" },
-  { key: "inflammation", label: "Inflammation" },
-  { key: "mood", label: "Mood" },
-  { key: "stress", label: "Stress" },
-  { key: "inactivity", label: "Inactivity" },
-  { key: "overexertion", label: "Overexertion" },
-  { key: "coffee", label: "Coffee intake" },
-  { key: "alcohol", label: "Alcohol intake" },
-  { key: "smoking", label: "Smoking" },
-  { key: "diet", label: "Diet" },
-  { key: "sleep", label: "Sleep" },
-] as const;
-
-type HealthOverview = {
-  totalEntries: number;
-  firstLogDate: string | null;
-  lastLogDate: string | null;
-  topSymptoms: { label: string; avg: number }[];
-};
-
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
   return d.toLocaleDateString("en", { month: "long", day: "numeric", year: "numeric" });
@@ -64,9 +31,6 @@ export default function ProfilePage() {
 
   // View/edit mode
   const [editing, setEditing] = useState(false);
-
-  // Health overview state
-  const [health, setHealth] = useState<HealthOverview | null>(null);
 
   // Letter state
   const [storyContent, setStoryContent] = useState("");
@@ -119,63 +83,6 @@ export default function ProfilePage() {
         setStoryContent(story.content ?? "");
       }
 
-      // Load health overview
-      const { count } = await supabase
-        .from("symptom_logs")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", uid);
-
-      const totalEntries = count ?? 0;
-
-      let firstLogDate: string | null = null;
-      let lastLogDate: string | null = null;
-      let topSymptoms: { label: string; avg: number }[] = [];
-
-      if (totalEntries > 0) {
-        const { data: firstRow } = await supabase
-          .from("symptom_logs")
-          .select("log_date")
-          .eq("user_id", uid)
-          .order("log_date", { ascending: true })
-          .limit(1)
-          .single();
-
-        const { data: lastRow } = await supabase
-          .from("symptom_logs")
-          .select("log_date")
-          .eq("user_id", uid)
-          .order("log_date", { ascending: false })
-          .limit(1)
-          .single();
-
-        firstLogDate = firstRow?.log_date ?? null;
-        lastLogDate = lastRow?.log_date ?? null;
-
-        // Fetch all logs to compute averages
-        const { data: logs } = await supabase
-          .from("symptom_logs")
-          .select(SYMPTOM_FIELDS.map((f) => f.key).join(","))
-          .eq("user_id", uid);
-
-        if (logs && logs.length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const rows = logs as any[];
-          const averages = SYMPTOM_FIELDS.map((field) => {
-            const sum = rows.reduce(
-              (acc: number, log) => acc + (Number(log[field.key]) || 0),
-              0
-            );
-            return { label: field.label, avg: sum / rows.length };
-          })
-            .filter((s) => s.avg > 0)
-            .sort((a, b) => b.avg - a.avg)
-            .slice(0, 5);
-
-          topSymptoms = averages;
-        }
-      }
-
-      setHealth({ totalEntries, firstLogDate, lastLogDate, topSymptoms });
       setLoading(false);
     }
 
@@ -620,67 +527,6 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* ── Health Overview ── */}
-        {health && (
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm space-y-3">
-            <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">
-              Health Overview
-            </h2>
-
-            {health.totalEntries === 0 ? (
-              <div className="space-y-3 py-2 text-center">
-                <p className="text-sm text-muted">
-                  No symptom logs yet. Start logging to see your health trends.
-                </p>
-                <a
-                  href="/dashboard/log"
-                  className="inline-block rounded-md bg-accent-green px-6 py-2 text-sm font-medium text-white hover:opacity-90"
-                >
-                  Log your first entry
-                </a>
-              </div>
-            ) : (
-              <div className="space-y-2.5 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted">Total entries</span>
-                  <span className="font-medium text-foreground">{health.totalEntries}</span>
-                </div>
-                {health.firstLogDate && (
-                  <div className="flex justify-between">
-                    <span className="text-muted">First log</span>
-                    <span className="font-medium text-foreground">{formatDate(health.firstLogDate)}</span>
-                  </div>
-                )}
-                {health.lastLogDate && (
-                  <div className="flex justify-between">
-                    <span className="text-muted">Most recent log</span>
-                    <span className="font-medium text-foreground">{formatDate(health.lastLogDate)}</span>
-                  </div>
-                )}
-                {health.topSymptoms.length > 0 && (
-                  <>
-                    <hr className="border-border" />
-                    <p className="font-medium text-foreground">Top symptoms</p>
-                    {health.topSymptoms.map((s) => (
-                      <div key={s.label} className="space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-muted">{s.label}</span>
-                          <span className="font-medium text-foreground">{s.avg.toFixed(1)} avg</span>
-                        </div>
-                        <div className="h-1.5 w-full rounded-full bg-border">
-                          <div
-                            className="h-1.5 rounded-full bg-accent-green"
-                            style={{ width: `${(s.avg / 10) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
