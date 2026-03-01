@@ -705,15 +705,15 @@ export default function ProfilePage() {
                 <ViewRow label="Time to diagnosis" value={timeToDiagnosis(firstSymptomDate, diagnosisDate)} />
                 <ViewRow label="Endo stage" value={endoStage || null} />
                 {treatmentPlan && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted shrink-0">Medical Treatment Plan</span>
-                    <span className="font-medium text-foreground text-right whitespace-pre-wrap">{treatmentPlan}</span>
+                  <div className="text-sm">
+                    <p className="text-muted">Medical Treatment Plan</p>
+                    <p className="mt-1 font-medium text-foreground whitespace-pre-wrap">{treatmentPlan}</p>
                   </div>
                 )}
                 {supportingTreatment && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted shrink-0">Supporting Treatment</span>
-                    <span className="font-medium text-foreground text-right whitespace-pre-wrap">{supportingTreatment}</span>
+                  <div className="text-sm">
+                    <p className="text-muted">Supporting Treatment</p>
+                    <p className="mt-1 font-medium text-foreground whitespace-pre-wrap">{supportingTreatment}</p>
                   </div>
                 )}
                 {healthcareProviders.length > 0 && (
