@@ -9,6 +9,30 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString("en", { month: "long", day: "numeric", year: "numeric" });
 }
 
+function calcAge(dateStr: string): number | null {
+  if (!dateStr) return null;
+  const birth = new Date(dateStr + "T00:00:00");
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+interface Provider {
+  name: string;
+  contact: string;
+}
+
+const GOAL_PRESETS = [
+  "Stabilise mood",
+  "Pain management",
+  "Try new treatment",
+  "Surgery",
+  "Fertility support",
+  "Lifestyle changes",
+];
+
 export default function ProfilePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -16,21 +40,32 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Profile form state
+  // Personal info state
   const [name, setName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [country, setCountry] = useState("");
-  const [diagnosisDate, setDiagnosisDate] = useState("");
-  const [endoStage, setEndoStage] = useState("");
-  const [firstSymptomDate, setFirstSymptomDate] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
-  // View/edit mode
-  const [editing, setEditing] = useState(false);
+  // Endo state
+  const [firstSymptomDate, setFirstSymptomDate] = useState("");
+  const [diagnosisDate, setDiagnosisDate] = useState("");
+  const [treatmentPlan, setTreatmentPlan] = useState("");
+  const [healthcareProviders, setHealthcareProviders] = useState<Provider[]>([]);
+  const [treatmentGoals, setTreatmentGoals] = useState<string[]>([]);
+  const [customGoal, setCustomGoal] = useState("");
+
+  // Edit modes
+  const [editingPersonal, setEditingPersonal] = useState(false);
+  const [editingEndo, setEditingEndo] = useState(false);
+
+  // Save / error
+  const [savingPersonal, setSavingPersonal] = useState(false);
+  const [savingEndo, setSavingEndo] = useState(false);
+  const [error, setError] = useState("");
 
   // Letter state
   const [storyContent, setStoryContent] = useState("");
@@ -48,6 +83,7 @@ export default function ProfilePage() {
 
       const uid = data.user.id;
       setUserId(uid);
+      setEmail(data.user.email ?? "");
 
       // Load profile
       const { data: profile } = await supabase
@@ -59,17 +95,21 @@ export default function ProfilePage() {
       if (profile) {
         setName(profile.name ?? "");
         setDateOfBirth(profile.date_of_birth ?? "");
+        setMobileNumber(profile.mobile_number ?? "");
         setCountry(profile.country ?? "");
-        setDiagnosisDate(profile.diagnosis_date ?? "");
-        setEndoStage(profile.endo_stage ?? "");
         setFirstSymptomDate(profile.first_symptom_date ?? "");
+        setDiagnosisDate(profile.diagnosis_date ?? "");
+        setTreatmentPlan(profile.treatment_plan ?? "");
+        setHealthcareProviders(profile.healthcare_providers ?? []);
+        setTreatmentGoals(profile.treatment_goals ?? []);
         setAvatarUrl(profile.avatar_url ?? "");
       }
 
       // Start in edit mode if welcome flow or no profile data
       const hasData = profile && (profile.name || profile.country || profile.diagnosis_date);
       if (isWelcome || !hasData) {
-        setEditing(true);
+        setEditingPersonal(true);
+        setEditingEndo(true);
       }
 
       // Load story
@@ -89,6 +129,126 @@ export default function ProfilePage() {
     init();
   }, [router, isWelcome]);
 
+  // ── Avatar upload ──
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+
+    setUploading(true);
+    setError("");
+
+    const ext = file.name.split(".").pop();
+    const path = `${userId}/avatar.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true });
+
+    if (uploadError) {
+      setError(uploadError.message);
+      setUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(path);
+
+    const url = `${urlData.publicUrl}?t=${Date.now()}`;
+    setAvatarUrl(url);
+
+    await supabase
+      .from("profiles")
+      .upsert({ id: userId, avatar_url: url, updated_at: new Date().toISOString() });
+
+    setUploading(false);
+  }
+
+  // ── Save personal info ──
+  async function handleSavePersonal(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSavingPersonal(true);
+
+    const { error: upsertError } = await supabase.from("profiles").upsert({
+      id: userId,
+      name: name || null,
+      date_of_birth: dateOfBirth || null,
+      mobile_number: mobileNumber || null,
+      country: country || null,
+      avatar_url: avatarUrl || null,
+      updated_at: new Date().toISOString(),
+    });
+
+    setSavingPersonal(false);
+    if (upsertError) {
+      setError(upsertError.message);
+    } else if (isWelcome && !editingEndo) {
+      router.push("/dashboard");
+    } else {
+      setEditingPersonal(false);
+    }
+  }
+
+  // ── Save endo info ──
+  async function handleSaveEndo(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSavingEndo(true);
+
+    // Add custom goal if typed
+    let goals = [...treatmentGoals];
+    if (customGoal.trim() && !goals.includes(customGoal.trim())) {
+      goals.push(customGoal.trim());
+    }
+
+    const { error: upsertError } = await supabase.from("profiles").upsert({
+      id: userId,
+      first_symptom_date: firstSymptomDate || null,
+      diagnosis_date: diagnosisDate || null,
+      treatment_plan: treatmentPlan || null,
+      healthcare_providers: healthcareProviders,
+      treatment_goals: goals,
+      updated_at: new Date().toISOString(),
+    });
+
+    setSavingEndo(false);
+    if (upsertError) {
+      setError(upsertError.message);
+    } else {
+      setTreatmentGoals(goals);
+      setCustomGoal("");
+      if (isWelcome && !editingPersonal) {
+        router.push("/dashboard");
+      } else {
+        setEditingEndo(false);
+      }
+    }
+  }
+
+  // ── Healthcare providers helpers ──
+  function addProvider() {
+    setHealthcareProviders([...healthcareProviders, { name: "", contact: "" }]);
+  }
+
+  function updateProvider(index: number, field: keyof Provider, value: string) {
+    const updated = [...healthcareProviders];
+    updated[index] = { ...updated[index], [field]: value };
+    setHealthcareProviders(updated);
+  }
+
+  function removeProvider(index: number) {
+    setHealthcareProviders(healthcareProviders.filter((_, i) => i !== index));
+  }
+
+  // ── Goal toggle ──
+  function toggleGoal(goal: string) {
+    setTreatmentGoals((prev) =>
+      prev.includes(goal) ? prev.filter((g) => g !== goal) : [...prev, goal]
+    );
+  }
+
+  // ── Letter handlers ──
   function handleOpenLetter() {
     setStoryDraft(storyContent);
     setWritingLetter(true);
@@ -157,72 +317,7 @@ export default function ProfilePage() {
     doc.save("my-endo-story.pdf");
   }
 
-  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !userId) return;
-
-    setUploading(true);
-    setError("");
-
-    const ext = file.name.split(".").pop();
-    const path = `${userId}/avatar.${ext}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(path, file, { upsert: true });
-
-    if (uploadError) {
-      setError(uploadError.message);
-      setUploading(false);
-      return;
-    }
-
-    const { data: urlData } = supabase.storage
-      .from("avatars")
-      .getPublicUrl(path);
-
-    const url = `${urlData.publicUrl}?t=${Date.now()}`;
-    setAvatarUrl(url);
-
-    await supabase
-      .from("profiles")
-      .upsert({ id: userId, avatar_url: url, updated_at: new Date().toISOString() });
-
-    setUploading(false);
-  }
-
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setSaving(true);
-
-    const { error: upsertError } = await supabase.from("profiles").upsert({
-      id: userId,
-      name: name || null,
-      date_of_birth: dateOfBirth || null,
-      country: country || null,
-      diagnosis_date: diagnosisDate || null,
-      first_symptom_date: firstSymptomDate || null,
-      endo_stage: endoStage || null,
-      avatar_url: avatarUrl || null,
-      updated_at: new Date().toISOString(),
-    });
-
-    setSaving(false);
-    if (upsertError) {
-      setError(upsertError.message);
-    } else if (isWelcome) {
-      router.push("/dashboard");
-    } else {
-      setEditing(false);
-    }
-  }
-
-  function handleCancel() {
-    setEditing(false);
-    setError("");
-  }
-
+  // ── Loading ──
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -231,15 +326,7 @@ export default function ProfilePage() {
     );
   }
 
-  const profileFields = [
-    { label: "Date of birth", value: dateOfBirth ? formatDate(dateOfBirth) : null },
-    { label: "Country", value: country || null },
-    { label: "Diagnosis date", value: diagnosisDate ? formatDate(diagnosisDate) : null },
-    { label: "First symptom", value: firstSymptomDate ? formatDate(firstSymptomDate) : null },
-    { label: "Endo stage", value: endoStage || null },
-  ];
-
-  const hasAnyProfileData = name || profileFields.some((f) => f.value);
+  const age = calcAge(dateOfBirth);
 
   return (
     <div className="min-h-screen bg-background py-12">
@@ -255,58 +342,58 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* ── Profile Card ── */}
+        {/* ── Large Photo (top, centered) ── */}
+        <div className="flex flex-col items-center gap-2">
+          <div className="relative h-28 w-28 overflow-hidden rounded-full border-2 border-border bg-background">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center text-3xl font-semibold text-muted">
+                {name ? name[0].toUpperCase() : "?"}
+              </span>
+            )}
+          </div>
+          {name && (
+            <p className="font-serif text-xl font-semibold text-foreground">{name}</p>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarUpload}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="text-sm text-muted hover:text-foreground disabled:opacity-50"
+          >
+            {uploading ? "Uploading..." : "Change photo"}
+          </button>
+        </div>
+
+        {error && (
+          <p className="text-center text-sm text-red-600">{error}</p>
+        )}
+
+        {/* ── Personal Info Card ── */}
         <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-          {editing ? (
-            /* ── Edit Mode ── */
+          {editingPersonal ? (
             <>
               <div className="mb-5 flex items-center justify-between">
-                <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Edit Profile</h2>
-                {hasAnyProfileData && !isWelcome && (
+                <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Personal Info</h2>
+                {!isWelcome && (
                   <button
                     type="button"
-                    onClick={handleCancel}
+                    onClick={() => setEditingPersonal(false)}
                     className="text-sm text-muted hover:text-foreground"
                   >
                     Cancel
                   </button>
                 )}
               </div>
-
-              {/* Avatar */}
-              <div className="mb-5 flex flex-col items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="relative h-20 w-20 overflow-hidden rounded-full border-2 border-border bg-background hover:opacity-80 disabled:opacity-50"
-                >
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="flex h-full w-full items-center justify-center text-2xl font-semibold text-muted">
-                      {name ? name[0].toUpperCase() : "?"}
-                    </span>
-                  )}
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="text-sm text-muted hover:text-foreground disabled:opacity-50"
-                >
-                  {uploading ? "Uploading..." : "Change photo"}
-                </button>
-              </div>
-
-              <form onSubmit={handleSave} className="space-y-3">
+              <form onSubmit={handleSavePersonal} className="space-y-3">
                 <div>
                   <label htmlFor="name" className="mb-1 block text-sm font-medium text-foreground">Name</label>
                   <input
@@ -329,6 +416,21 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
+                  <label htmlFor="mobile-number" className="mb-1 block text-sm font-medium text-foreground">Mobile number</label>
+                  <input
+                    id="mobile-number"
+                    type="tel"
+                    value={mobileNumber}
+                    onChange={(e) => setMobileNumber(e.target.value)}
+                    placeholder="Your mobile number"
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Email</label>
+                  <p className="rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-muted">{email}</p>
+                </div>
+                <div>
                   <label htmlFor="country" className="mb-1 block text-sm font-medium text-foreground">Country</label>
                   <input
                     id="country"
@@ -339,16 +441,58 @@ export default function ProfilePage() {
                     className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
                   />
                 </div>
-                <div>
-                  <label htmlFor="diagnosis-date" className="mb-1 block text-sm font-medium text-foreground">Diagnosis date</label>
-                  <input
-                    id="diagnosis-date"
-                    type="date"
-                    value={diagnosisDate}
-                    onChange={(e) => setDiagnosisDate(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
-                  />
-                </div>
+                <button
+                  type="submit"
+                  disabled={savingPersonal}
+                  className="w-full rounded-md bg-accent-green py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
+                >
+                  {savingPersonal ? "Saving..." : "Save"}
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Personal Info</h2>
+                <button
+                  type="button"
+                  onClick={() => setEditingPersonal(true)}
+                  className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-background"
+                >
+                  Edit
+                </button>
+              </div>
+              <div className="mt-4 space-y-2.5">
+                <ViewRow label="Name" value={name || null} />
+                <ViewRow
+                  label="Date of birth"
+                  value={dateOfBirth ? `${formatDate(dateOfBirth)}${age !== null ? ` (${age})` : ""}` : null}
+                />
+                <ViewRow label="Mobile number" value={mobileNumber || null} />
+                <ViewRow label="Email" value={email || null} />
+                <ViewRow label="Country" value={country || null} />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* ── Endometriosis Card ── */}
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+          {editingEndo ? (
+            <>
+              <div className="mb-5 flex items-center justify-between">
+                <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Endometriosis</h2>
+                {!isWelcome && (
+                  <button
+                    type="button"
+                    onClick={() => setEditingEndo(false)}
+                    className="text-sm text-muted hover:text-foreground"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+              <form onSubmit={handleSaveEndo} className="space-y-3">
                 <div>
                   <label htmlFor="first-symptom-date" className="mb-1 block text-sm font-medium text-foreground">Date of first symptom</label>
                   <input
@@ -360,75 +504,191 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="endo-stage" className="mb-1 block text-sm font-medium text-foreground">Endo stage</label>
-                  <select
-                    id="endo-stage"
-                    value={endoStage}
-                    onChange={(e) => setEndoStage(e.target.value)}
+                  <label htmlFor="diagnosis-date" className="mb-1 block text-sm font-medium text-foreground">Date of diagnosis</label>
+                  <input
+                    id="diagnosis-date"
+                    type="date"
+                    value={diagnosisDate}
+                    onChange={(e) => setDiagnosisDate(e.target.value)}
                     className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
-                  >
-                    <option value="">Select...</option>
-                    <option value="Stage I">Stage I</option>
-                    <option value="Stage II">Stage II</option>
-                    <option value="Stage III">Stage III</option>
-                    <option value="Stage IV">Stage IV</option>
-                    <option value="Not sure">Not sure</option>
-                  </select>
+                  />
                 </div>
-                {error && <p className="text-sm text-red-600">{error}</p>}
+                <div>
+                  <label htmlFor="treatment-plan" className="mb-1 block text-sm font-medium text-foreground">Current treatment plan</label>
+                  <textarea
+                    id="treatment-plan"
+                    rows={3}
+                    value={treatmentPlan}
+                    onChange={(e) => setTreatmentPlan(e.target.value)}
+                    placeholder="Describe your current treatment..."
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground resize-y"
+                  />
+                </div>
+
+                {/* Healthcare providers */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Healthcare providers</label>
+                  <div className="space-y-2">
+                    {healthcareProviders.map((p, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <div className="flex-1 space-y-1">
+                          <input
+                            type="text"
+                            value={p.name}
+                            onChange={(e) => updateProvider(i, "name", e.target.value)}
+                            placeholder="Name"
+                            className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+                          />
+                          <input
+                            type="text"
+                            value={p.contact}
+                            onChange={(e) => updateProvider(i, "contact", e.target.value)}
+                            placeholder="Contact info"
+                            className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeProvider(i)}
+                          className="mt-1 shrink-0 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-red-600 hover:border-red-300"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addProvider}
+                    className="mt-2 text-sm text-accent-green hover:underline"
+                  >
+                    + Add provider
+                  </button>
+                </div>
+
+                {/* Goals */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">Goals / next steps</label>
+                  <div className="flex flex-wrap gap-2">
+                    {GOAL_PRESETS.map((goal) => (
+                      <button
+                        key={goal}
+                        type="button"
+                        onClick={() => toggleGoal(goal)}
+                        className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                          treatmentGoals.includes(goal)
+                            ? "border-accent-green bg-accent-green text-white"
+                            : "border-border text-foreground hover:border-accent-green"
+                        }`}
+                      >
+                        {goal}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="text"
+                      value={customGoal}
+                      onChange={(e) => setCustomGoal(e.target.value)}
+                      placeholder="Other goal..."
+                      className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (customGoal.trim() && !treatmentGoals.includes(customGoal.trim())) {
+                          setTreatmentGoals([...treatmentGoals, customGoal.trim()]);
+                          setCustomGoal("");
+                        }
+                      }}
+                      className="rounded-md border border-border px-3 py-1.5 text-sm text-foreground hover:bg-background"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {/* Show custom (non-preset) goals as removable pills */}
+                  {treatmentGoals.filter((g) => !GOAL_PRESETS.includes(g)).length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {treatmentGoals
+                        .filter((g) => !GOAL_PRESETS.includes(g))
+                        .map((g) => (
+                          <span
+                            key={g}
+                            className="inline-flex items-center gap-1 rounded-full border border-accent-green bg-accent-green px-3 py-0.5 text-sm text-white"
+                          >
+                            {g}
+                            <button
+                              type="button"
+                              onClick={() => setTreatmentGoals(treatmentGoals.filter((x) => x !== g))}
+                              className="ml-0.5 hover:opacity-70"
+                            >
+                              &times;
+                            </button>
+                          </span>
+                        ))}
+                    </div>
+                  )}
+                </div>
+
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={savingEndo}
                   className="w-full rounded-md bg-accent-green py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
                 >
-                  {saving ? "Saving..." : "Save profile"}
+                  {savingEndo ? "Saving..." : "Save"}
                 </button>
               </form>
             </>
           ) : (
-            /* ── View Mode ── */
             <>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-4">
-                  {/* Avatar */}
-                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-border bg-background">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center text-xl font-semibold text-muted">
-                        {name ? name[0].toUpperCase() : "?"}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-serif text-xl font-semibold text-foreground">
-                      {name || "No name set"}
-                    </p>
-                    {country && <p className="text-sm text-muted">{country}</p>}
-                  </div>
-                </div>
+              <div className="flex items-center justify-between">
+                <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Endometriosis</h2>
                 <button
                   type="button"
-                  onClick={() => setEditing(true)}
+                  onClick={() => setEditingEndo(true)}
                   className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-background"
                 >
                   Edit
                 </button>
               </div>
-
-              {/* Profile details */}
-              {profileFields.some((f) => f.value) && (
-                <div className="mt-5 space-y-2.5 border-t border-border pt-5">
-                  {profileFields.map((field) =>
-                    field.value ? (
-                      <div key={field.label} className="flex justify-between text-sm">
-                        <span className="text-muted">{field.label}</span>
-                        <span className="font-medium text-foreground">{field.value}</span>
-                      </div>
-                    ) : null
-                  )}
-                </div>
-              )}
+              <div className="mt-4 space-y-2.5">
+                <ViewRow label="Date of first symptom" value={firstSymptomDate ? formatDate(firstSymptomDate) : null} />
+                <ViewRow label="Date of diagnosis" value={diagnosisDate ? formatDate(diagnosisDate) : null} />
+                {treatmentPlan && (
+                  <div className="pt-1">
+                    <p className="text-sm text-muted">Current treatment plan</p>
+                    <p className="mt-0.5 whitespace-pre-wrap text-sm text-foreground">{treatmentPlan}</p>
+                  </div>
+                )}
+                {healthcareProviders.length > 0 && (
+                  <div className="pt-1">
+                    <p className="text-sm text-muted">Healthcare providers</p>
+                    <ul className="mt-1 space-y-1">
+                      {healthcareProviders.map((p, i) => (
+                        <li key={i} className="text-sm text-foreground">
+                          <span className="font-medium">{p.name}</span>
+                          {p.contact && <span className="text-muted"> &middot; {p.contact}</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {treatmentGoals.length > 0 && (
+                  <div className="pt-1">
+                    <p className="mb-1.5 text-sm text-muted">Goals / next steps</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {treatmentGoals.map((g) => (
+                        <span
+                          key={g}
+                          className="rounded-full border border-border bg-background px-3 py-0.5 text-sm text-foreground"
+                        >
+                          {g}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -528,6 +788,17 @@ export default function ProfilePage() {
         )}
 
       </div>
+    </div>
+  );
+}
+
+/* ── Reusable view-mode row ── */
+function ViewRow({ label, value }: { label: string; value: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex justify-between text-sm">
+      <span className="text-muted">{label}</span>
+      <span className="font-medium text-foreground">{value}</span>
     </div>
   );
 }
