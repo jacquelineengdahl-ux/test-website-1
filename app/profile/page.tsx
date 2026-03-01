@@ -706,14 +706,18 @@ export default function ProfilePage() {
                 <ViewRow label="Endo stage" value={endoStage || null} />
                 {treatmentPlan && (
                   <div className="pt-1">
-                    <p className="text-sm text-muted">Medical Treatment Plan</p>
-                    <p className="mt-0.5 whitespace-pre-wrap text-sm text-foreground">{treatmentPlan}</p>
+                    <p className="mb-1.5 text-sm font-medium text-foreground">Medical Treatment Plan</p>
+                    <div className="rounded-lg border border-border bg-background px-4 py-3">
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{treatmentPlan}</p>
+                    </div>
                   </div>
                 )}
                 {supportingTreatment && (
                   <div className="pt-1">
-                    <p className="text-sm text-muted">Supporting Treatment</p>
-                    <p className="mt-0.5 whitespace-pre-wrap text-sm text-foreground">{supportingTreatment}</p>
+                    <p className="mb-1.5 text-sm font-medium text-foreground">Supporting Treatment</p>
+                    <div className="rounded-lg border border-border bg-background px-4 py-3">
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{supportingTreatment}</p>
+                    </div>
                   </div>
                 )}
                 {healthcareProviders.length > 0 && (
