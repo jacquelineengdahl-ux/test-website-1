@@ -44,6 +44,7 @@ function timeToDiagnosis(symptomDate: string, diagDate: string): string | null {
 }
 
 interface Provider {
+  clinic: string;
   name: string;
   contact: string;
 }
@@ -245,7 +246,7 @@ export default function ProfilePage() {
 
   // ── Healthcare providers helpers ──
   function addProvider() {
-    setHealthcareProviders([...healthcareProviders, { name: "", contact: "" }]);
+    setHealthcareProviders([...healthcareProviders, { clinic: "", name: "", contact: "" }]);
   }
 
   function updateProvider(index: number, field: keyof Provider, value: string) {
@@ -575,16 +576,23 @@ export default function ProfilePage() {
                         <div className="flex-1 space-y-1">
                           <input
                             type="text"
+                            value={p.clinic}
+                            onChange={(e) => updateProvider(i, "clinic", e.target.value)}
+                            placeholder="Name of clinic"
+                            className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+                          />
+                          <input
+                            type="text"
                             value={p.name}
                             onChange={(e) => updateProvider(i, "name", e.target.value)}
-                            placeholder="Name"
+                            placeholder="Name of doctor"
                             className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
                           />
                           <input
                             type="text"
                             value={p.contact}
                             onChange={(e) => updateProvider(i, "contact", e.target.value)}
-                            placeholder="Contact info"
+                            placeholder="Contact details"
                             className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
                           />
                         </div>
@@ -682,7 +690,9 @@ export default function ProfilePage() {
                     <ul className="mt-1 space-y-1">
                       {healthcareProviders.map((p, i) => (
                         <li key={i} className="text-sm text-foreground">
-                          <span className="font-medium">{p.name}</span>
+                          {p.clinic && <span className="font-medium">{p.clinic}</span>}
+                          {p.clinic && p.name && <span className="text-muted"> &middot; </span>}
+                          {p.name && <span>{p.name}</span>}
                           {p.contact && <span className="text-muted"> &middot; {p.contact}</span>}
                         </li>
                       ))}
