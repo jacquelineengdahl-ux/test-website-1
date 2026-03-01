@@ -721,16 +721,24 @@ export default function ProfilePage() {
                     <p className="mb-2 text-sm text-muted">Healthcare providers</p>
                     <div className="space-y-2">
                       {healthcareProviders.map((p, i) => (
-                        <div key={i} className="rounded-lg border border-border bg-background px-4 py-3">
-                          {p.clinic && (
-                            <p className="font-medium text-sm text-foreground">{p.clinic}</p>
-                          )}
-                          {p.name && (
-                            <p className="text-sm text-foreground">{p.name}</p>
-                          )}
-                          {p.contact && (
-                            <p className="text-sm text-muted">{p.contact}</p>
-                          )}
+                        <div key={i} className="flex items-start gap-3 rounded-lg border border-border bg-background px-4 py-3">
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="mt-0.5 shrink-0 text-accent-green">
+                            <path d="M3 7V17H17V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M1 7L10 2L19 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M8 17V12H12V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M10 9V11M9 10H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                          </svg>
+                          <div>
+                            {p.clinic && (
+                              <p className="font-medium text-sm text-foreground">{p.clinic}</p>
+                            )}
+                            {p.name && (
+                              <p className="text-sm text-foreground">{p.name}</p>
+                            )}
+                            {p.contact && (
+                              <p className="text-sm text-muted">{p.contact}</p>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
