@@ -50,10 +50,9 @@ interface Provider {
 
 const GOAL_PROMPTS = [
   "What symptoms do you most want to manage or reduce?",
-  "Are there treatments or therapies you'd like to explore?",
+  "Are there any treatments or therapies you'd like to explore?",
   "What lifestyle changes could support your wellbeing?",
-  "What would you like to communicate to your healthcare team?",
-  "What does a good quality of life look like for you right now?",
+  "Is there any additional clinic you want to contact?",
 ];
 
 export default function ProfilePage() {
