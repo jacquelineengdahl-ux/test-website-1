@@ -78,6 +78,7 @@ export default function ProfilePage() {
   const [diagnosisDate, setDiagnosisDate] = useState("");
   const [endoStage, setEndoStage] = useState("");
   const [treatmentPlan, setTreatmentPlan] = useState("");
+  const [supportingTreatment, setSupportingTreatment] = useState("");
   const [healthcareProviders, setHealthcareProviders] = useState<Provider[]>([]);
   const [treatmentGoals, setTreatmentGoals] = useState<string[]>([]);
 
@@ -124,6 +125,7 @@ export default function ProfilePage() {
         setDiagnosisDate(profile.diagnosis_date ?? "");
         setEndoStage(profile.endo_stage ?? "");
         setTreatmentPlan(profile.treatment_plan ?? "");
+        setSupportingTreatment(profile.supporting_treatment ?? "");
         setHealthcareProviders(profile.healthcare_providers ?? []);
         setTreatmentGoals(profile.treatment_goals ?? []);
         setAvatarUrl(profile.avatar_url ?? "");
@@ -226,6 +228,7 @@ export default function ProfilePage() {
       diagnosis_date: diagnosisDate || null,
       endo_stage: endoStage || null,
       treatment_plan: treatmentPlan || null,
+      supporting_treatment: supportingTreatment || null,
       healthcare_providers: healthcareProviders,
       treatment_goals: treatmentGoals.filter((g) => g.trim() !== ""),
       updated_at: new Date().toISOString(),
@@ -556,13 +559,30 @@ export default function ProfilePage() {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="treatment-plan" className="mb-1 block text-sm font-medium text-foreground">Current treatment plan</label>
+                  <label htmlFor="treatment-plan" className="mb-1 block text-sm font-medium text-foreground">Medical Treatment Plan</label>
                   <textarea
                     id="treatment-plan"
                     rows={3}
                     value={treatmentPlan}
                     onChange={(e) => setTreatmentPlan(e.target.value)}
-                    placeholder="Describe your current treatment..."
+                    placeholder="Describe your current medical treatment..."
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground resize-y"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="supporting-treatment" className="mb-1 block text-sm font-medium text-foreground">Supporting Treatment</label>
+                  <ul className="mb-2 space-y-0.5 text-sm text-muted list-disc pl-5">
+                    <li>Supplements you are taking or considering</li>
+                    <li>Dietary changes (e.g. anti-inflammatory, gluten-free)</li>
+                    <li>Lifestyle practices (e.g. exercise, sleep, stress management)</li>
+                    <li>Alternative therapies (e.g. acupuncture, physiotherapy, yoga)</li>
+                  </ul>
+                  <textarea
+                    id="supporting-treatment"
+                    rows={3}
+                    value={supportingTreatment}
+                    onChange={(e) => setSupportingTreatment(e.target.value)}
+                    placeholder="Describe any supporting treatments..."
                     className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground resize-y"
                   />
                 </div>
@@ -680,8 +700,14 @@ export default function ProfilePage() {
                 <ViewRow label="Endo stage" value={endoStage || null} />
                 {treatmentPlan && (
                   <div className="pt-1">
-                    <p className="text-sm text-muted">Current treatment plan</p>
+                    <p className="text-sm text-muted">Medical Treatment Plan</p>
                     <p className="mt-0.5 whitespace-pre-wrap text-sm text-foreground">{treatmentPlan}</p>
+                  </div>
+                )}
+                {supportingTreatment && (
+                  <div className="pt-1">
+                    <p className="text-sm text-muted">Supporting Treatment</p>
+                    <p className="mt-0.5 whitespace-pre-wrap text-sm text-foreground">{supportingTreatment}</p>
                   </div>
                 )}
                 {healthcareProviders.length > 0 && (
