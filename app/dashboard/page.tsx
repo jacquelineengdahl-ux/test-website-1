@@ -126,6 +126,13 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col items-center justify-center space-y-6 py-24">
       <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+
+      {/* Disclaimer banner */}
+      <div className="w-full max-w-md rounded-lg border border-border bg-surface px-5 py-3 text-center text-xs leading-5 text-muted">
+        This is a self-tracking and reflection tool to support daily awareness
+        and communication with your healthcare provider. It does not provide
+        medical advice or diagnoses.
+      </div>
       {hasLogs ? (
         <>
           {email && <p className="text-muted">Welcome back, {displayName || email}</p>}
