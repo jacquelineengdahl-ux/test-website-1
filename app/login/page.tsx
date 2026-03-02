@@ -140,6 +140,15 @@ export default function LoginPage() {
             Sign up
           </a>
         </p>
+
+        <div className="flex justify-center gap-4 text-xs text-muted">
+          <a href="/privacy" className="text-accent-green underline hover:opacity-80">
+            Privacy Policy
+          </a>
+          <a href="/terms" className="text-accent-green underline hover:opacity-80">
+            Terms of Use
+          </a>
+        </div>
       </div>
     </div>
   );

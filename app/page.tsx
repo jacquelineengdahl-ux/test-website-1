@@ -220,8 +220,31 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Disclaimer */}
+      <div className="w-full border-t border-border bg-background px-6 py-8">
+        <div className="mx-auto max-w-lg text-center text-xs leading-5 text-muted">
+          <p className="font-serif text-sm font-medium text-foreground">
+            Important notice
+          </p>
+          <p className="mt-2">
+            livingwithendo is a personal self-tracking and reflection tool. It is
+            not a medical device, does not provide medical advice, and is not
+            intended to diagnose, treat, or replace professional healthcare.
+            Always consult a qualified healthcare provider for medical decisions.
+          </p>
+        </div>
+      </div>
+
       <footer className="flex flex-col items-center gap-2 py-24 text-center text-sm text-muted">
         <p>Your data stays yours — stored securely with end-to-end authentication.</p>
+        <div className="flex gap-4">
+          <Link href="/privacy" className="text-accent-green underline hover:opacity-80">
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className="text-accent-green underline hover:opacity-80">
+            Terms of Use
+          </Link>
+        </div>
         <p>&copy; 2026 livingwithendo</p>
       </footer>
     </div>

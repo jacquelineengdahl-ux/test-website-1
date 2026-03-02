@@ -27,6 +27,18 @@ export default function AuthCallbackPage() {
       const isRecovery = hashType === "recovery";
       const destination = isRecovery ? "/dashboard/settings?reset=1" : "/dashboard";
 
+      // Record GDPR consent timestamp for new users (no-op if already set)
+      async function recordConsentIfNew() {
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData.user) {
+          await supabase
+            .from("profiles")
+            .update({ consented_at: new Date().toISOString() })
+            .eq("id", userData.user.id)
+            .is("consented_at", null);
+        }
+      }
+
       // PKCE flow: exchange code for session
       const code = params.get("code");
       if (code) {
@@ -35,6 +47,7 @@ export default function AuthCallbackPage() {
           setError(error.message);
           return;
         }
+        await recordConsentIfNew();
         router.push(destination);
         return;
       }
@@ -42,6 +55,7 @@ export default function AuthCallbackPage() {
       // Implicit flow: tokens in hash, auto-detected by supabase client
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        await recordConsentIfNew();
         router.push(destination);
         return;
       }

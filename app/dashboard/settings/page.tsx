@@ -82,6 +82,7 @@ export default function SettingsPage() {
       await supabase.from("endo_stories").delete().eq("user_id", data.user.id);
     }
     await supabase.auth.signOut();
+    localStorage.clear();
     router.replace("/");
   }
 
@@ -168,6 +169,58 @@ export default function SettingsPage() {
           </div>
         )}
 
+        {/* Your data */}
+        <div className="space-y-3">
+          <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">Your data</h2>
+          <p className="text-sm text-muted">
+            Download all your symptom log data as a CSV file.
+          </p>
+          <button
+            type="button"
+            onClick={async () => {
+              const { data: userData } = await supabase.auth.getUser();
+              if (!userData.user) return;
+
+              const { data: logs } = await supabase
+                .from("symptom_logs")
+                .select("*")
+                .eq("user_id", userData.user.id)
+                .order("date", { ascending: true });
+
+              if (!logs || logs.length === 0) {
+                alert("No symptom log data to export.");
+                return;
+              }
+
+              const headers = Object.keys(logs[0]);
+              const csvRows = [
+                headers.join(","),
+                ...logs.map((row) =>
+                  headers
+                    .map((h) => {
+                      const val = row[h];
+                      if (val === null || val === undefined) return "";
+                      const str = typeof val === "object" ? JSON.stringify(val) : String(val);
+                      return `"${str.replace(/"/g, '""')}"`;
+                    })
+                    .join(",")
+                ),
+              ];
+
+              const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "livingwithendo-data.csv";
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="w-full rounded-md border border-border py-2 text-sm font-medium text-foreground hover:bg-surface"
+          >
+            Export data
+          </button>
+        </div>
+
         {/* Danger zone */}
         <div className="space-y-3">
           <h2 className="font-serif text-lg font-semibold tracking-tight text-red-600">Danger zone</h2>
@@ -183,6 +236,16 @@ export default function SettingsPage() {
               {deleting ? "Deleting..." : "Delete account"}
             </button>
           </div>
+        </div>
+
+        {/* Legal links */}
+        <div className="flex justify-center gap-4 pt-4 text-sm">
+          <a href="/privacy" className="text-accent-green underline hover:opacity-80">
+            Privacy Policy
+          </a>
+          <a href="/terms" className="text-accent-green underline hover:opacity-80">
+            Terms of Use
+          </a>
         </div>
       </div>
     </div>

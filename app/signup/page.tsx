@@ -11,10 +11,16 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (!consentChecked) {
+      setError("You must agree to the Terms of Use and Privacy Policy.");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -28,6 +34,14 @@ export default function SignUpPage() {
     if (error) {
       setError(error.message);
     } else {
+      // Record GDPR consent timestamp
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user) {
+        await supabase
+          .from("profiles")
+          .update({ consented_at: new Date().toISOString() })
+          .eq("id", userData.user.id);
+      }
       router.push("/profile?welcome=1");
     }
   }
@@ -82,6 +96,26 @@ export default function SignUpPage() {
             />
           </div>
 
+          <label className="flex items-start gap-2 text-sm text-muted">
+            <input
+              type="checkbox"
+              checked={consentChecked}
+              onChange={(e) => setConsentChecked(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-accent-green"
+            />
+            <span>
+              I agree to the{" "}
+              <a href="/terms" className="text-accent-green underline" target="_blank" rel="noopener noreferrer">
+                Terms of Use
+              </a>{" "}
+              and{" "}
+              <a href="/privacy" className="text-accent-green underline" target="_blank" rel="noopener noreferrer">
+                Privacy Policy
+              </a>
+              , including the processing of my health data.
+            </span>
+          </label>
+
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <button
@@ -109,7 +143,8 @@ export default function SignUpPage() {
               },
             });
           }}
-          className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-surface py-2 font-medium text-foreground hover:opacity-90"
+          disabled={!consentChecked}
+          className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-surface py-2 font-medium text-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
             <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
