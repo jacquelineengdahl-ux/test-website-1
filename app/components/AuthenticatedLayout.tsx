@@ -11,18 +11,16 @@ export default function AuthenticatedLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [loading, setLoading] = useState(true);
-  const [authenticated, setAuthenticated] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Lightweight non-blocking fallback auth check (defense-in-depth).
+  // Middleware handles the real protection; this catches edge cases
+  // like an expired session after the page was already served.
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setAuthenticated(true);
-      } else {
+      if (!data.user) {
         router.replace("/login");
       }
-      setLoading(false);
     });
   }, [router]);
 
@@ -35,16 +33,6 @@ export default function AuthenticatedLayout({
     await supabase.auth.signOut();
     router.replace("/");
   }
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted">Loading…</p>
-      </div>
-    );
-  }
-
-  if (!authenticated) return null;
 
   const links = [
     { href: "/dashboard", label: "Welcome" },
