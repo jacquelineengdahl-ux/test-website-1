@@ -45,6 +45,7 @@ function LogForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
+  const isFirst = searchParams.get("first") === "1";
 
   const [userId, setUserId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -212,7 +213,7 @@ function LogForm() {
     if (result.error) {
       setError(result.error.message);
     } else {
-      router.push("/dashboard/history");
+      router.push("/dashboard");
     }
   }
 
@@ -230,6 +231,15 @@ function LogForm() {
         <h1 className="text-center font-serif text-2xl font-semibold tracking-tight text-foreground">
           {editId ? "Edit entry" : "Log symptoms"}
         </h1>
+
+        {isFirst && (
+          <div className="rounded-md border border-accent-green bg-green-50 px-4 py-3 text-center text-sm text-green-800">
+            <p className="font-medium">Profile saved!</p>
+            <p className="mt-1 text-green-700">
+              Now let&apos;s log how you&apos;re feeling today.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-16">
           <div>

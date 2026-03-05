@@ -96,6 +96,7 @@ export default function ProfilePage() {
   const [storyDraft, setStoryDraft] = useState("");
   const [storySaving, setStorySaving] = useState(false);
   const [writingLetter, setWritingLetter] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -145,8 +146,8 @@ export default function ProfilePage() {
         .eq("user_id", uid)
         .maybeSingle();
 
-      if (story) {
-        setStoryContent(story.content ?? "");
+      if (story && story.content) {
+        setStoryContent(story.content);
       }
 
       setLoading(false);
@@ -154,6 +155,20 @@ export default function ProfilePage() {
 
     init();
   }, [router, isWelcome]);
+
+  // ── Generate PDF preview when letter or name changes ──
+  useEffect(() => {
+    if (!loading && storyContent) {
+      generatePdfPreview(storyContent);
+    }
+    return () => {
+      setPdfUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storyContent, name, loading]);
 
   // ── Avatar upload ──
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -210,7 +225,7 @@ export default function ProfilePage() {
     if (upsertError) {
       setError(upsertError.message);
     } else if (isWelcome && !editingEndo) {
-      router.push("/dashboard");
+      router.push("/dashboard/log?first=1");
     } else {
       setEditingPersonal(false);
     }
@@ -240,7 +255,7 @@ export default function ProfilePage() {
     } else {
       setTreatmentGoals(treatmentGoals.filter((g) => g.trim() !== ""));
       if (isWelcome && !editingPersonal) {
-        router.push("/dashboard");
+        router.push("/dashboard/log?first=1");
       } else {
         setEditingEndo(false);
       }
@@ -275,6 +290,20 @@ export default function ProfilePage() {
 
   function removeGoal(index: number) {
     setTreatmentGoals(treatmentGoals.filter((_, i) => i !== index));
+  }
+
+  // ── Generate PDF preview ──
+  async function generatePdfPreview(content: string) {
+    if (!content) {
+      setPdfUrl(null);
+      return;
+    }
+    const doc = await buildPdfFromContent(content);
+    const blob = doc.output("blob");
+    setPdfUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(blob);
+    });
   }
 
   // ── Letter handlers ──
@@ -315,7 +344,7 @@ export default function ProfilePage() {
     return s;
   }
 
-  async function buildPdf() {
+  async function buildPdfFromContent(content: string) {
     const jsPDF = (await import("jspdf")).default;
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -329,7 +358,7 @@ export default function ProfilePage() {
       doc.text("Living with Endo", pageWidth / 2, pageHeight - 12, { align: "center" });
     }
 
-    const safeContent = sanitizeForPdf(storyContent || "(No story written yet.)");
+    const safeContent = sanitizeForPdf(content || "(No story written yet.)");
     const safeName = sanitizeForPdf(name);
 
     doc.setFont("helvetica", "bold");
@@ -365,6 +394,10 @@ export default function ProfilePage() {
 
     addFooter();
     return doc;
+  }
+
+  async function buildPdf() {
+    return buildPdfFromContent(storyContent);
   }
 
   async function handleDownloadPdf() {
@@ -849,47 +882,73 @@ export default function ProfilePage() {
             </button>
           </div>
         ) : storyContent ? (
-          /* Saved letter view */
+          /* Saved letter view — prompts + PDF attachment + action buttons */
           <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-6 pt-5 pb-3">
-              <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">
+            <div className="p-6 space-y-4">
+              <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground text-center">
                 My Letter
               </h2>
-              <button
-                type="button"
-                onClick={handleOpenLetter}
-                className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-background"
-              >
-                Edit
-              </button>
+              <p className="text-sm text-muted text-center">
+                Write a personal letter about your journey. Share it with loved ones or healthcare providers.
+              </p>
+              <ul className="space-y-1 text-left text-sm text-muted list-disc pl-5 pt-1">
+                <li>When did you first notice something wasn&apos;t right?</li>
+                <li>What has your journey to diagnosis looked like?</li>
+                <li>What are your symptoms?</li>
+                <li>What treatments have you tried and consider trying? How do they feel?</li>
+                <li>How has endo affected your daily life?</li>
+                <li>What do you wish people understood about living with endometriosis?</li>
+                <li>What gives you strength on difficult days?</li>
+                <li>Reflections &amp; lessons from your Endometriosis journey</li>
+              </ul>
+
+              {/* PDF attachment card */}
+              {pdfUrl && (
+                <a
+                  href={pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 transition-colors hover:bg-surface"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50">
+                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                      <path d="M5 2h8l5 5v13a1 1 0 01-1 1H5a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="#e15759" strokeWidth="1.5" strokeLinejoin="round" />
+                      <path d="M13 2v5h5" stroke="#e15759" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <text x="6" y="17" fill="#e15759" fontSize="5.5" fontWeight="bold" fontFamily="Helvetica">PDF</text>
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">my-endo-story.pdf</p>
+                    <p className="text-xs text-muted">Tap to preview</p>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-muted">
+                    <path d="M3 8.5V13a1 1 0 001 1h8a1 1 0 001-1V8.5M8 2v8M8 2l3 3M8 2L5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </a>
+              )}
             </div>
-            <div className="mx-6 mb-5">
-              <div className="border-t-2 border-accent-green pt-4">
-                {name && (
-                  <p className="font-serif text-base font-semibold text-foreground">{name}</p>
-                )}
-                <p className="text-xs text-muted mb-4">
-                  {new Date().toLocaleDateString("en", { month: "long", day: "numeric", year: "numeric" })}
-                </p>
-                <p className="whitespace-pre-wrap font-serif text-sm leading-7 text-foreground">
-                  {storyContent}
-                </p>
-              </div>
-            </div>
+
             <div className="border-t border-border px-6 py-3 flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 type="button"
+                onClick={handleOpenLetter}
+                className="flex-1 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background text-center"
+              >
+                Update Letter
+              </button>
+              <button
+                type="button"
                 onClick={handleDownloadPdf}
-                className="w-full sm:w-auto rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background text-center"
+                className="flex-1 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background text-center"
               >
                 Download as PDF
               </button>
               <button
                 type="button"
                 onClick={handleEmailPdf}
-                className="w-full sm:w-auto rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background text-center"
+                className="flex-1 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background text-center"
               >
-                Email as Attachment
+                Send as Attachment
               </button>
             </div>
           </div>

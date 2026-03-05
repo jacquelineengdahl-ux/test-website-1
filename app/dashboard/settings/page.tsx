@@ -221,6 +221,20 @@ export default function SettingsPage() {
           </button>
         </div>
 
+        {/* Feedback */}
+        <div className="space-y-3">
+          <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">Feedback</h2>
+          <p className="text-sm text-muted">
+            We&apos;d love to hear from you. Tell us what&apos;s working, what&apos;s not, or what you&apos;d like to see next.
+          </p>
+          <a
+            href={`mailto:feedback@livingwithendo.app?subject=${encodeURIComponent("Feedback — Living with Endo")}&body=${encodeURIComponent("Hi,\n\nHere's my feedback:\n\n")}`}
+            className="inline-block w-full rounded-md border border-border py-2 text-center text-sm font-medium text-foreground hover:bg-surface"
+          >
+            Send feedback
+          </a>
+        </div>
+
         {/* Danger zone */}
         <div className="space-y-3">
           <h2 className="font-serif text-lg font-semibold tracking-tight text-red-600">Danger zone</h2>
