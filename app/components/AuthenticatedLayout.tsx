@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import FeedbackButton from "./FeedbackButton";
 
 export default function AuthenticatedLayout({
   children,
@@ -109,6 +110,7 @@ export default function AuthenticatedLayout({
         )}
       </nav>
       <main>{children}</main>
+      <FeedbackButton />
     </div>
   );
 }
