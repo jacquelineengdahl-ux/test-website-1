@@ -77,6 +77,7 @@ export default function ProfilePage() {
   const [firstSymptomDate, setFirstSymptomDate] = useState("");
   const [diagnosisDate, setDiagnosisDate] = useState("");
   const [endoStage, setEndoStage] = useState("");
+  const [hormonalTreatment, setHormonalTreatment] = useState("");
   const [treatmentPlan, setTreatmentPlan] = useState("");
   const [supportingTreatment, setSupportingTreatment] = useState("");
   const [healthcareProviders, setHealthcareProviders] = useState<Provider[]>([]);
@@ -125,6 +126,7 @@ export default function ProfilePage() {
         setFirstSymptomDate(profile.first_symptom_date ?? "");
         setDiagnosisDate(profile.diagnosis_date ?? "");
         setEndoStage(profile.endo_stage ?? "");
+        setHormonalTreatment(profile.hormonal_treatment ?? "");
         setTreatmentPlan(profile.treatment_plan ?? "");
         setSupportingTreatment(profile.supporting_treatment ?? "");
         setHealthcareProviders(profile.healthcare_providers ?? []);
@@ -242,6 +244,7 @@ export default function ProfilePage() {
       first_symptom_date: firstSymptomDate || null,
       diagnosis_date: diagnosisDate || null,
       endo_stage: endoStage || null,
+      hormonal_treatment: hormonalTreatment || null,
       treatment_plan: treatmentPlan || null,
       supporting_treatment: supportingTreatment || null,
       healthcare_providers: healthcareProviders,
@@ -434,16 +437,19 @@ export default function ProfilePage() {
   const age = calcAge(dateOfBirth);
 
   return (
-    <div className="min-h-screen bg-background py-12">
-      <div className="mx-auto w-full max-w-lg space-y-8 px-4">
-        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-          My Profile
-        </h1>
+    <div className="min-h-screen bg-background py-10 md:py-16 px-4 md:px-6">
+      <div className="mx-auto w-full max-w-lg space-y-8">
+        <div>
+          <p className="section-label">Account</p>
+          <h1 className="font-serif text-3xl font-light text-foreground">
+            My Profile
+          </h1>
+        </div>
 
         {isWelcome && (
-          <div className="rounded-md border border-accent-green bg-green-50 px-4 py-3 text-center text-sm text-green-800">
+          <div className="rounded-xl border border-accent-green bg-accent-green/10 px-4 py-3 text-center text-sm text-foreground">
             <p className="font-medium">Welcome! Let&apos;s set up your profile first.</p>
-            <p className="mt-1 text-green-700">Fill in your details below, then head to the dashboard to log your first entry.</p>
+            <p className="mt-1 text-muted">Fill in your details below, then head to the dashboard to log your first entry.</p>
           </div>
         )}
 
@@ -479,11 +485,11 @@ export default function ProfilePage() {
         </div>
 
         {error && (
-          <p className="text-center text-sm text-red-600">{error}</p>
+          <div className="rounded-lg bg-red-50 px-4 py-2.5 text-center text-sm text-red-700">{error}</div>
         )}
 
         {/* ── Personal Info Card ── */}
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+        <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
           {editingPersonal ? (
             <>
               <div className="mb-5 flex items-center justify-between">
@@ -500,56 +506,56 @@ export default function ProfilePage() {
               </div>
               <form onSubmit={handleSavePersonal} className="space-y-3">
                 <div>
-                  <label htmlFor="name" className="mb-1 block text-sm font-medium text-foreground">Name</label>
+                  <label htmlFor="name" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Name</label>
                   <input
                     id="name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label htmlFor="date-of-birth" className="mb-1 block text-sm font-medium text-foreground">Date of birth</label>
+                  <label htmlFor="date-of-birth" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Date of birth</label>
                   <input
                     id="date-of-birth"
                     type="date"
                     value={dateOfBirth}
                     onChange={(e) => setDateOfBirth(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label htmlFor="mobile-number" className="mb-1 block text-sm font-medium text-foreground">Mobile number</label>
+                  <label htmlFor="mobile-number" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Mobile number</label>
                   <input
                     id="mobile-number"
                     type="tel"
                     value={mobileNumber}
                     onChange={(e) => setMobileNumber(e.target.value)}
                     placeholder="Your mobile number"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">Email</label>
-                  <p className="rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-muted">{email}</p>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Email</label>
+                  <p className="rounded-xl border border-border bg-background/50 px-4 py-3 text-sm text-muted">{email}</p>
                 </div>
                 <div>
-                  <label htmlFor="country" className="mb-1 block text-sm font-medium text-foreground">Country</label>
+                  <label htmlFor="country" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Country</label>
                   <input
                     id="country"
                     type="text"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
                     placeholder="Your country"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={savingPersonal}
-                  className="w-full rounded-md bg-accent-green py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
+                  className="w-full rounded-full bg-foreground py-2 font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
                 >
                   {savingPersonal ? "Saving..." : "Save"}
                 </button>
@@ -582,7 +588,7 @@ export default function ProfilePage() {
         </div>
 
         {/* ── Endometriosis Card ── */}
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+        <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
           {editingEndo ? (
             <>
               <div className="mb-5 flex items-center justify-between">
@@ -599,32 +605,32 @@ export default function ProfilePage() {
               </div>
               <form onSubmit={handleSaveEndo} className="space-y-3">
                 <div>
-                  <label htmlFor="first-symptom-date" className="mb-1 block text-sm font-medium text-foreground">Date of first symptom</label>
+                  <label htmlFor="first-symptom-date" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Date of first symptom</label>
                   <input
                     id="first-symptom-date"
                     type="date"
                     value={firstSymptomDate}
                     onChange={(e) => setFirstSymptomDate(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label htmlFor="diagnosis-date" className="mb-1 block text-sm font-medium text-foreground">Date of diagnosis</label>
+                  <label htmlFor="diagnosis-date" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Date of diagnosis</label>
                   <input
                     id="diagnosis-date"
                     type="date"
                     value={diagnosisDate}
                     onChange={(e) => setDiagnosisDate(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label htmlFor="endo-stage" className="mb-1 block text-sm font-medium text-foreground">Endo stage</label>
+                  <label htmlFor="endo-stage" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Endo stage</label>
                   <select
                     id="endo-stage"
                     value={endoStage}
                     onChange={(e) => setEndoStage(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
                   >
                     <option value="">Select...</option>
                     <option value="Stage I">Stage I</option>
@@ -635,7 +641,28 @@ export default function ProfilePage() {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="treatment-plan" className="mb-1 block text-sm font-medium text-foreground">Medical Treatment Plan</label>
+                  <label htmlFor="hormonal-treatment" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Hormonal Treatment</label>
+                  <select
+                    id="hormonal-treatment"
+                    value={hormonalTreatment}
+                    onChange={(e) => setHormonalTreatment(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                  >
+                    <option value="">None / not currently on treatment</option>
+                    <option value="Combined pill">Combined pill (estrogen + progestogen)</option>
+                    <option value="Progestogen-only pill">Progestogen-only pill (mini pill)</option>
+                    <option value="Hormonal IUD">Hormonal IUD (e.g. Mirena)</option>
+                    <option value="GnRH agonist">GnRH agonist (e.g. Zoladex, Lupron)</option>
+                    <option value="GnRH antagonist">GnRH antagonist (e.g. Orilissa / Elagolix)</option>
+                    <option value="Depo injection">Depo injection</option>
+                    <option value="Hormonal patch">Hormonal patch</option>
+                    <option value="Vaginal ring">Vaginal ring</option>
+                    <option value="HRT / Add-back therapy">HRT / Add-back therapy</option>
+                    <option value="Other hormonal treatment">Other hormonal treatment</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="treatment-plan" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Medical Treatment Plan</label>
                   <ul className="mb-2 space-y-0.5 text-sm text-muted list-disc pl-5">
                     <li>Current medications and dosages</li>
                     <li>Hormonal treatments (e.g. the pill, GnRH agonists)</li>
@@ -648,11 +675,11 @@ export default function ProfilePage() {
                     value={treatmentPlan}
                     onChange={(e) => setTreatmentPlan(e.target.value)}
                     placeholder="Describe your current medical treatment..."
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground resize-y"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground resize-y focus:border-accent-green focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label htmlFor="supporting-treatment" className="mb-1 block text-sm font-medium text-foreground">Supporting Treatment</label>
+                  <label htmlFor="supporting-treatment" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Supporting Treatment</label>
                   <ul className="mb-2 space-y-0.5 text-sm text-muted list-disc pl-5">
                     <li>Supplements you are taking or considering</li>
                     <li>Dietary changes (e.g. anti-inflammatory, gluten-free)</li>
@@ -665,13 +692,13 @@ export default function ProfilePage() {
                     value={supportingTreatment}
                     onChange={(e) => setSupportingTreatment(e.target.value)}
                     placeholder="Describe any supporting treatments..."
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground resize-y"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground resize-y focus:border-accent-green focus:outline-none"
                   />
                 </div>
 
                 {/* Healthcare providers */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">Healthcare providers</label>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Healthcare providers</label>
                   <div className="space-y-2">
                     {healthcareProviders.map((p, i) => (
                       <div key={i} className="flex items-start gap-2">
@@ -681,21 +708,21 @@ export default function ProfilePage() {
                             value={p.clinic}
                             onChange={(e) => updateProvider(i, "clinic", e.target.value)}
                             placeholder="Name of clinic"
-                            className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+                            className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-accent-green focus:outline-none"
                           />
                           <input
                             type="text"
                             value={p.name}
                             onChange={(e) => updateProvider(i, "name", e.target.value)}
                             placeholder="Name of doctor"
-                            className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+                            className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-accent-green focus:outline-none"
                           />
                           <input
                             type="text"
                             value={p.contact}
                             onChange={(e) => updateProvider(i, "contact", e.target.value)}
                             placeholder="Contact details"
-                            className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+                            className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-accent-green focus:outline-none"
                           />
                         </div>
                         <button
@@ -719,7 +746,7 @@ export default function ProfilePage() {
 
                 {/* Goals */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">Personal Goals &amp; Next Steps in Treatment</label>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Personal Goals &amp; Next Steps in Treatment</label>
                   <ul className="mb-3 space-y-0.5 text-sm text-muted list-disc pl-5">
                     {GOAL_PROMPTS.map((prompt) => (
                       <li key={prompt}>{prompt}</li>
@@ -733,7 +760,7 @@ export default function ProfilePage() {
                           value={g}
                           onChange={(e) => updateGoal(i, e.target.value)}
                           placeholder="Enter a goal or next step..."
-                          className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+                          className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-accent-green focus:outline-none"
                         />
                         <button
                           type="button"
@@ -757,7 +784,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={savingEndo}
-                  className="w-full rounded-md bg-accent-green py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
+                  className="w-full rounded-full bg-foreground py-2 font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
                 >
                   {savingEndo ? "Saving..." : "Save"}
                 </button>
@@ -780,10 +807,11 @@ export default function ProfilePage() {
                 <ViewRow label="Date of diagnosis" value={diagnosisDate ? formatDate(diagnosisDate) : null} />
                 <ViewRow label="Time to diagnosis" value={timeToDiagnosis(firstSymptomDate, diagnosisDate)} />
                 <ViewRow label="Endo stage" value={endoStage || null} />
+                <ViewRow label="Hormonal treatment" value={hormonalTreatment || null} />
                 {treatmentPlan && (
                   <div className="text-sm">
                     <p className="text-muted mb-1.5">Medical Treatment Plan</p>
-                    <div className="rounded-lg border border-border bg-background px-4 py-3">
+                    <div className="rounded-xl border border-border bg-background px-4 py-3">
                       <p className="whitespace-pre-wrap leading-relaxed text-foreground">{treatmentPlan}</p>
                     </div>
                   </div>
@@ -791,7 +819,7 @@ export default function ProfilePage() {
                 {supportingTreatment && (
                   <div className="text-sm">
                     <p className="text-muted mb-1.5">Supporting Treatment</p>
-                    <div className="rounded-lg border border-border bg-background px-4 py-3">
+                    <div className="rounded-xl border border-border bg-background px-4 py-3">
                       <p className="whitespace-pre-wrap leading-relaxed text-foreground">{supportingTreatment}</p>
                     </div>
                   </div>
@@ -801,7 +829,7 @@ export default function ProfilePage() {
                     <p className="mb-2 text-sm text-muted">Healthcare providers</p>
                     <div className="space-y-2">
                       {healthcareProviders.map((p, i) => (
-                        <div key={i} className="flex items-start gap-3 rounded-lg border border-border bg-background px-4 py-3">
+                        <div key={i} className="flex items-start gap-3 rounded-xl border border-border bg-background px-4 py-3">
                           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="mt-0.5 shrink-0 text-accent-green">
                             <path d="M3 7V17H17V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             <path d="M1 7L10 2L19 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -829,7 +857,7 @@ export default function ProfilePage() {
                     <p className="mb-2 text-sm text-muted">Personal Goals &amp; Next Steps in Treatment</p>
                     <div className="space-y-2">
                       {treatmentGoals.map((g, i) => (
-                        <div key={i} className="flex items-start gap-3 rounded-lg border border-border bg-background px-4 py-3">
+                        <div key={i} className="flex items-start gap-3 rounded-xl border border-border bg-background px-4 py-3">
                           <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-green/10">
                             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-accent-green">
                               <path d="M2.5 6H9.5M9.5 6L6.5 3M9.5 6L6.5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -849,7 +877,7 @@ export default function ProfilePage() {
         {/* ── My Letter ── */}
         {writingLetter ? (
           /* Writing mode */
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm space-y-4">
+          <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">
                 My Letter
@@ -869,21 +897,21 @@ export default function ProfilePage() {
               onChange={(e) => setStoryDraft(e.target.value)}
               placeholder="Start writing your story..."
               autoFocus
-              className="w-full rounded-md border border-border bg-background px-4 py-3 font-serif text-foreground text-sm leading-relaxed resize-y"
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 font-serif text-foreground text-sm leading-relaxed resize-y focus:border-accent-green focus:outline-none"
             />
 
             <button
               type="button"
               onClick={handleSaveLetter}
               disabled={storySaving}
-              className="w-full rounded-md bg-accent-green py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
+              className="w-full rounded-full bg-foreground py-2 font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
             >
               {storySaving ? "Saving..." : "Save letter"}
             </button>
           </div>
         ) : storyContent ? (
           /* Saved letter view — prompts + PDF attachment + action buttons */
-          <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-border bg-surface shadow-sm overflow-hidden">
             <div className="p-6 space-y-4">
               <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground text-center">
                 My Letter
@@ -908,7 +936,7 @@ export default function ProfilePage() {
                   href={pdfUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 transition-colors hover:bg-surface"
+                  className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 transition-colors hover:bg-surface"
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50">
                     <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
@@ -964,7 +992,7 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={handleOpenLetter}
-              className="rounded-md bg-accent-green px-5 py-2 text-sm font-medium text-white hover:opacity-90"
+              className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
             >
               Write a letter about your Endometriosis journey
             </button>

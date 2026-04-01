@@ -26,6 +26,8 @@ interface LogEntry {
   headache: number;
   pelvic_pain: number;
   bowel_urination_pain: number;
+  bowel_pain: number;
+  urination_pain: number;
   intercourse_pain: number;
   bloating: number;
   nausea: number;
@@ -54,22 +56,24 @@ const symptomLabels: Record<string, string> = {
   headache: "Headache",
   pelvic_pain: "Pelvic Pain",
   bowel_urination_pain: "Bowel/Urination Pain",
+  bowel_pain: "Bowel Pain",
+  urination_pain: "Urination Pain",
   intercourse_pain: "Intercourse Pain",
   bloating: "Bloating",
   nausea: "Nausea",
   diarrhea: "Diarrhea",
   constipation: "Constipation",
   fatigue: "Fatigue",
-  inflammation: "Inflammation",
+  inflammation: "Full Body Inflammation",
   mood: "Mood",
   stress: "Stress",
   inactivity: "Inactivity",
   overexertion: "Overexertion",
-  coffee: "Coffee",
+  coffee: "Caffeine",
   alcohol: "Alcohol",
   smoking: "Smoking",
   diet: "Diet",
-  sleep: "Sleep",
+  sleep: "Sleep Quality",
 };
 
 const cyclePhaseLabels: Record<string, string> = {
@@ -78,6 +82,7 @@ const cyclePhaseLabels: Record<string, string> = {
   ovulation: "Ovulation",
   luteal: "Luteal phase",
   on_pill: "On the pill",
+  on_hormonal_treatment: "On Hormonal Treatment",
 };
 
 function formatCyclePhase(phase: string): string {
@@ -86,8 +91,8 @@ function formatCyclePhase(phase: string): string {
 }
 
 const numericKeys = [
-  "leg_pain","lower_back_pain","chest_pain","shoulder_pain","headache",
-  "pelvic_pain","bowel_urination_pain","intercourse_pain","bloating","nausea",
+  "pelvic_pain","lower_back_pain","leg_pain","chest_pain","shoulder_pain","headache",
+  "bowel_urination_pain","bowel_pain","urination_pain","intercourse_pain","bloating","nausea",
   "diarrhea","constipation","fatigue","inflammation","mood","stress",
   "inactivity","overexertion","coffee","alcohol","smoking","diet","sleep",
 ] as const;
@@ -95,19 +100,20 @@ const numericKeys = [
 /* ─── Tableau 10 palette ──────────────────────────────── */
 
 const T10 = [
-  "#4e79a7", "#f28e2b", "#e15759", "#76b7b2", "#59a14f",
-  "#edc948", "#b07aa1", "#ff9da7", "#9c755f", "#bab0ac",
+  "#92A8C8", "#E4B5B5", "#C4685A", "#D4836E", "#E0CBA8",
+  "#A8C49A", "#8DAE7E", "#B09AD4", "#D8AD82", "#E0C878",
 ];
 
 const painLines = [
-  { key: "leg_pain", label: "Leg", color: T10[0] },
-  { key: "lower_back_pain", label: "Lower back", color: T10[1] },
-  { key: "chest_pain", label: "Chest", color: T10[2] },
-  { key: "shoulder_pain", label: "Shoulder", color: T10[3] },
-  { key: "headache", label: "Headache", color: T10[4] },
-  { key: "pelvic_pain", label: "Pelvic", color: T10[5] },
-  { key: "bowel_urination_pain", label: "Bowel/urination", color: T10[6] },
-  { key: "intercourse_pain", label: "Intercourse", color: T10[7] },
+  { key: "pelvic_pain", label: "Pelvic", color: T10[0] },
+  { key: "lower_back_pain", label: "Lower Back", color: T10[1] },
+  { key: "leg_pain", label: "Leg", color: T10[2] },
+  { key: "headache", label: "Headache", color: T10[3] },
+  { key: "chest_pain", label: "Chest", color: T10[4] },
+  { key: "shoulder_pain", label: "Shoulder", color: T10[5] },
+  { key: "bowel_pain", label: "Bowel", color: T10[6] },
+  { key: "urination_pain", label: "Urination", color: T10[7] },
+  { key: "intercourse_pain", label: "Intercourse", color: T10[8] },
 ];
 
 const otherLines = [
@@ -116,7 +122,7 @@ const otherLines = [
   { key: "diarrhea", label: "Diarrhea", color: T10[2] },
   { key: "constipation", label: "Constipation", color: T10[3] },
   { key: "fatigue", label: "Fatigue", color: T10[4] },
-  { key: "inflammation", label: "Inflammation", color: T10[5] },
+  { key: "inflammation", label: "Full Body Inflammation", color: T10[5] },
   { key: "mood", label: "Mood", color: T10[6] },
 ];
 
@@ -124,11 +130,11 @@ const lifestyleLines = [
   { key: "stress", label: "Stress", color: T10[0] },
   { key: "inactivity", label: "Inactivity", color: T10[1] },
   { key: "overexertion", label: "Overexertion", color: T10[2] },
-  { key: "coffee", label: "Coffee", color: T10[3] },
+  { key: "coffee", label: "Caffeine", color: T10[3] },
   { key: "alcohol", label: "Alcohol", color: T10[4] },
   { key: "smoking", label: "Smoking", color: T10[5] },
   { key: "diet", label: "Diet", color: T10[6] },
-  { key: "sleep", label: "Sleep", color: T10[7] },
+  { key: "sleep", label: "Sleep Quality", color: T10[7] },
 ];
 
 const seriesColorMap: Record<string, string> = {};
@@ -139,30 +145,30 @@ const seriesColorMap: Record<string, string> = {};
 const heatmapGroups = [
   {
     label: "Pain",
-    keys: ["leg_pain", "lower_back_pain", "chest_pain", "shoulder_pain", "headache", "pelvic_pain", "bowel_urination_pain", "intercourse_pain"],
+    keys: ["pelvic_pain", "lower_back_pain", "leg_pain", "headache", "chest_pain", "shoulder_pain", "bowel_pain", "urination_pain", "intercourse_pain"],
   },
   {
-    label: "Symptoms",
+    label: "Other Symptoms",
     keys: ["bloating", "nausea", "diarrhea", "constipation", "fatigue", "inflammation", "mood"],
   },
   {
-    label: "Lifestyle",
+    label: "Lifestyle Triggers",
     keys: ["stress", "inactivity", "overexertion", "coffee", "alcohol", "smoking", "diet", "sleep"],
   },
 ];
 
 function getHeatColor(value: number): string {
   if (value === 0 || value == null) return "rgba(214, 208, 200, 0.12)";
-  if (value <= 1) return "#c7e3be";
-  if (value <= 2) return "#a1d29a";
-  if (value <= 3) return "#7bbf6e";
-  if (value <= 4) return "#f0dc6e";
-  if (value <= 5) return "#f0b84a";
-  if (value <= 6) return "#eb9a3e";
-  if (value <= 7) return "#e67c3a";
-  if (value <= 8) return "#dc5840";
-  if (value <= 9) return "#c43a31";
-  return "#a61c00";
+  if (value <= 1) return "rgba(184, 148, 63, 0.2)";
+  if (value <= 2) return "rgba(184, 148, 63, 0.35)";
+  if (value <= 3) return "rgba(184, 148, 63, 0.55)";
+  if (value <= 4) return "rgba(212, 180, 101, 0.65)";
+  if (value <= 5) return "rgba(184, 120, 88, 0.5)";
+  if (value <= 6) return "rgba(184, 120, 88, 0.6)";
+  if (value <= 7) return "rgba(184, 120, 88, 0.7)";
+  if (value <= 8) return "rgba(184, 120, 88, 0.8)";
+  if (value <= 9) return "rgba(184, 120, 88, 0.9)";
+  return "rgba(184, 120, 88, 1)";
 }
 
 type TimeRange = "D" | "W" | "M" | "3M" | "6M" | "Y" | "All";
@@ -544,7 +550,7 @@ function SymptomAreaChart({
   );
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-2 card-hover">
       <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">
         {title}
       </h2>
@@ -620,7 +626,7 @@ function SymptomBarChart({
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-2 card-hover">
         <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">{title}</h2>
         <div className="py-8 text-center">
           <EmptyChartIcon />
@@ -631,7 +637,7 @@ function SymptomBarChart({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-2 card-hover">
       <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">
         {title}
       </h2>
@@ -690,7 +696,7 @@ function HeatmapGrid({ data }: { data: ChartRow[] }) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm card-hover">
         <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">Heatmap</h2>
         <div className="py-8 text-center">
           <EmptyChartIcon />
@@ -701,7 +707,7 @@ function HeatmapGrid({ data }: { data: ChartRow[] }) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm card-hover">
       <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">Heatmap</h2>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-xs">
@@ -898,29 +904,7 @@ export default function OverviewPage() {
   const stats = useMemo(() => {
     const entriesThisMonth = current30.length;
 
-    let streak = 0;
-    if (entriesThisMonth > 0) {
-      const logDates = new Set(current30.map((e) => e.log_date));
-      const check = new Date(today);
-      if (!logDates.has(fmtDate(check))) {
-        check.setDate(check.getDate() - 1);
-      }
-      while (logDates.has(fmtDate(check))) {
-        streak++;
-        check.setDate(check.getDate() - 1);
-      }
-    }
-
-    let lastLoggedLabel = "\u2014";
-    if (entries.length > 0) {
-      const sorted = [...entries].sort((a, b) => b.log_date.localeCompare(a.log_date));
-      const lastDate = sorted[0].log_date;
-      const diff = daysBetween(new Date(lastDate + "T00:00:00"), today);
-      if (diff <= 0) lastLoggedLabel = "Today";
-      else if (diff === 1) lastLoggedLabel = "1 day ago";
-      else lastLoggedLabel = `${diff} days ago`;
-    }
-
+    // Average severity
     let avgSeverity = 0;
     if (current30.length > 0) {
       let sum = 0;
@@ -937,8 +921,46 @@ export default function OverviewPage() {
       avgSeverity = count > 0 ? Math.round((sum / count) * 10) / 10 : 0;
     }
 
-    return { entriesThisMonth, streak, lastLoggedLabel, avgSeverity };
-  }, [current30, entries, today]);
+    // Top recurring symptom (most days with value > 0)
+    let topRecurring = "\u2014";
+    if (current30.length > 0) {
+      const symptomKeys = numericKeys.filter((k) => !["inactivity", "overexertion", "coffee", "alcohol", "smoking", "diet", "sleep", "stress"].includes(k));
+      const freq: Record<string, number> = {};
+      for (const entry of current30) {
+        for (const key of symptomKeys) {
+          if (((entry[key as keyof LogEntry] as number) ?? 0) > 0) {
+            freq[key] = (freq[key] || 0) + 1;
+          }
+        }
+      }
+      const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+      if (sorted.length > 0) {
+        topRecurring = symptomLabels[sorted[0][0]] || sorted[0][0];
+      }
+    }
+
+    // Highest pain (single worst score in 30 days)
+    let highestPain = "\u2014";
+    if (current30.length > 0) {
+      const painKeys = ["pelvic_pain", "lower_back_pain", "leg_pain", "chest_pain", "shoulder_pain", "headache", "bowel_pain", "urination_pain", "bowel_urination_pain", "intercourse_pain"] as const;
+      let maxVal = 0;
+      let maxKey = "";
+      for (const entry of current30) {
+        for (const key of painKeys) {
+          const val = (entry[key as keyof LogEntry] as number) ?? 0;
+          if (val > maxVal) {
+            maxVal = val;
+            maxKey = key;
+          }
+        }
+      }
+      if (maxVal > 0) {
+        highestPain = `${symptomLabels[maxKey] || maxKey} (${maxVal}/10)`;
+      }
+    }
+
+    return { entriesThisMonth, avgSeverity, topRecurring, highestPain };
+  }, [current30]);
 
   /* ── 7-day area chart data ── */
 
@@ -1197,7 +1219,10 @@ export default function OverviewPage() {
     return (
       <div className="flex min-h-screen justify-center py-12">
         <div className="w-full max-w-2xl px-4">
-          <h1 className="mb-8 font-serif text-2xl font-semibold tracking-tight text-foreground">Log Overview</h1>
+          <div className="mb-8">
+            <p className="section-label">Dashboard</p>
+            <h1 className="font-serif text-3xl font-light text-foreground">Log Overview</h1>
+          </div>
           <div className="mx-auto max-w-md space-y-4 rounded-md border border-border bg-surface px-8 py-10 text-center">
             <h2 className="font-serif text-lg font-semibold text-foreground">No entries yet</h2>
             <p className="text-sm text-muted">
@@ -1205,7 +1230,7 @@ export default function OverviewPage() {
             </p>
             <a
               href="/dashboard/log"
-              className="inline-block rounded-md bg-accent-green px-6 py-2 text-sm font-medium text-white hover:opacity-90"
+              className="inline-block rounded-full bg-foreground px-6 py-2 text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
             >
               Log your first entry
             </a>
@@ -1216,19 +1241,22 @@ export default function OverviewPage() {
   }
 
   return (
-    <div className="flex min-h-screen justify-center py-12">
-      <div className="w-full max-w-2xl space-y-10 px-4">
+    <div className="flex min-h-screen justify-center py-10 md:py-16 px-4 md:px-6">
+      <div className="w-full max-w-2xl space-y-10">
         <div className="flex items-center justify-between">
-          <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Log Overview</h1>
+          <div>
+            <p className="section-label">Dashboard</p>
+            <h1 className="font-serif text-3xl font-light text-foreground">Log Overview</h1>
+          </div>
           <a
             href="/dashboard/log"
-            className="rounded-md bg-accent-green px-3 py-1 text-sm font-medium text-white hover:opacity-90"
+            className="rounded-full bg-foreground px-3 py-1 text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
           >
             + New entry
           </a>
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <div className="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">{error}</div>}
 
         {/* ═══════════════════════════════════════════════════
             AT A GLANCE (from Summary)
@@ -1238,15 +1266,15 @@ export default function OverviewPage() {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {[
             { value: stats.entriesThisMonth, label: "Entries this month" },
-            { value: `${stats.streak}d`, label: "Logging streak" },
-            { value: stats.lastLoggedLabel, label: "Last logged" },
             { value: stats.avgSeverity, label: "Avg severity" },
+            { value: stats.topRecurring, label: "Top recurring symptom", small: true },
+            { value: stats.highestPain, label: "Highest pain (30 days)", small: true },
           ].map((card) => (
             <div
               key={card.label}
-              className="rounded-md border border-border bg-surface px-4 py-4 text-center"
+              className="card-hover rounded-2xl border border-border bg-surface px-4 py-4 text-center"
             >
-              <p className="font-serif text-2xl font-semibold text-foreground">{card.value}</p>
+              <p className={`font-serif font-semibold text-foreground ${("small" in card && card.small) ? "text-sm leading-snug" : "text-2xl"}`}>{card.value}</p>
               <p className="mt-1 text-xs text-muted">{card.label}</p>
             </div>
           ))}
@@ -1254,7 +1282,7 @@ export default function OverviewPage() {
 
         {/* Recent Trends (7-Day Area Chart) */}
         {summaryChartLines.length > 0 && (
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-2xl border border-border bg-surface p-6 card-hover">
             <h2 className="mb-3 text-center font-serif text-lg font-semibold tracking-tight text-muted">
               Recent Trends (7 Days)
             </h2>
@@ -1309,7 +1337,7 @@ export default function OverviewPage() {
 
         {/* Top Symptoms with Trend Arrows */}
         {topSymptomTrends.length > 0 && (
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-2xl border border-border bg-surface p-6 card-hover">
             <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">
               Top Symptoms
             </h2>
@@ -1322,8 +1350,15 @@ export default function OverviewPage() {
                   </span>
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border">
                     <div
-                      className="h-full rounded-full bg-accent-green transition-all duration-500"
-                      style={{ width: `${(item.avg / 10) * 100}%` }}
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${(item.avg / 10) * 100}%`,
+                        backgroundColor:
+                          item.avg <= 2 ? "#A8C49A"
+                          : item.avg <= 5 ? "#E0C878"
+                          : item.avg <= 7 ? "#D4836E"
+                          : "#C4685A",
+                      }}
                     />
                   </div>
                   <span className="shrink-0" title={item.trend === "up" ? "Worsening" : item.trend === "down" ? "Improving" : "Stable"}>
@@ -1340,57 +1375,28 @@ export default function OverviewPage() {
           </div>
         )}
 
-        {/* Weekly Overview Strip */}
-        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-          <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">
-            Weekly Overview
-          </h2>
-          <div className="flex justify-center gap-2">
-            {weeklyStrip.map((day, i) => (
-              <div key={i} className="flex flex-col items-center gap-1.5">
-                <div
-                  className="rounded-md"
-                  style={{
-                    width: 40,
-                    height: 40,
-                    backgroundColor: day.hasData ? getHeatColor(day.avg) : "rgba(214, 208, 200, 0.12)",
-                    border: day.hasData ? "none" : "1px dashed rgba(168, 162, 158, 0.4)",
-                  }}
-                />
-                <span className="text-xs text-muted">{day.label}</span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 flex items-center justify-center gap-0.5 text-xs text-muted">
-            <span className="mr-1">0</span>
-            {Array.from({ length: 11 }, (_, v) => (
-              <div key={v} className="rounded-[3px]" style={{ width: 14, height: 14, backgroundColor: getHeatColor(v) }} />
-            ))}
-            <span className="ml-1">10</span>
-          </div>
-        </div>
-
         {/* ═══════════════════════════════════════════════════
-            DETAILED HISTORY (from History)
+            DETAILED HISTORY
             ═══════════════════════════════════════════════════ */}
 
         <div className="border-t border-border pt-8">
-          <h2 className="font-serif text-xl font-semibold tracking-tight text-foreground">
-            Detailed History
+          <p className="section-label mb-2">Detailed History</p>
+          <h2 className="font-serif text-2xl font-light text-foreground">
+            Trends Over Time
           </h2>
         </div>
 
         {/* Time range selector */}
         <div className="space-y-3">
           <div className="flex justify-center">
-            <div className="inline-flex overflow-hidden rounded-md border border-border text-sm font-medium">
+            <div className="inline-flex gap-1 text-sm font-medium">
               {timeRangeOptions.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => { setTimeRange(opt.value); setRefDate(new Date()); }}
-                  className={`px-3 py-1.5 transition-all duration-200 ${
+                  className={`rounded-full px-3 py-1.5 transition-all duration-200 ${
                     timeRange === opt.value
-                      ? "bg-accent-green text-white"
+                      ? "bg-foreground text-surface"
                       : "text-foreground hover:bg-surface"
                   }`}
                 >
@@ -1404,7 +1410,7 @@ export default function OverviewPage() {
             <div className="flex items-center justify-center gap-4">
               <button
                 onClick={() => setRefDate(navigate(refDate, timeRange, -1))}
-                className="rounded p-1 text-lg leading-none text-muted transition-all duration-200 hover:scale-125 hover:text-accent-green"
+                className="rounded-full p-1.5 text-lg leading-none text-muted transition-all duration-200 hover:scale-110 hover:text-foreground"
               >
                 ‹
               </button>
@@ -1413,7 +1419,7 @@ export default function OverviewPage() {
               </span>
               <button
                 onClick={() => setRefDate(navigate(refDate, timeRange, 1))}
-                className="rounded p-1 text-lg leading-none text-muted transition-all duration-200 hover:scale-125 hover:text-accent-green"
+                className="rounded-full p-1.5 text-lg leading-none text-muted transition-all duration-200 hover:scale-110 hover:text-foreground"
               >
                 ›
               </button>
@@ -1423,44 +1429,35 @@ export default function OverviewPage() {
           <div className="flex justify-center gap-3">
             <button
               onClick={handleExportCsv}
-              className="rounded-md border border-border px-4 py-1.5 text-sm font-medium text-foreground transition-all duration-200 hover:bg-accent-green hover:text-white hover:border-accent-green"
+              className="rounded-full border border-border px-5 py-2 text-sm font-medium text-foreground transition-all hover:bg-foreground hover:text-surface"
             >
               Export CSV
             </button>
             <button
               onClick={handleExportPdf}
-              className="rounded-md border border-border px-4 py-1.5 text-sm font-medium text-foreground transition-all duration-200 hover:bg-accent-green hover:text-white hover:border-accent-green"
+              className="rounded-full border border-border px-5 py-2 text-sm font-medium text-foreground transition-all hover:bg-foreground hover:text-surface"
             >
               Export PDF
             </button>
           </div>
         </div>
 
-        {/* Heatmap grid */}
-        <HeatmapGrid data={chartData} />
-
-        {/* Grouped bar charts */}
-        <div className="space-y-6">
-          <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground border-b border-border pb-2">Trends</h2>
-          <SymptomBarChart title="Pain Levels" data={chartData} lines={painLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
-          <SymptomBarChart title="Other Symptoms" data={chartData} lines={otherLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
-          <SymptomBarChart title="Lifestyle Factors" data={chartData} lines={lifestyleLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
-        </div>
-
         {/* Area charts – trends over time (show when 2+ entries) */}
         {chronological.length >= 2 && (
           <div className="space-y-6">
-            <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground border-b border-border pb-2">Trends Over Time</h2>
             <SymptomAreaChart title="Pain Levels" data={chronological} lines={painLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
             <SymptomAreaChart title="Other Symptoms" data={chronological} lines={otherLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
-            <SymptomAreaChart title="Lifestyle Factors" data={chronological} lines={lifestyleLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
+            <SymptomAreaChart title="Lifestyle Triggers" data={chronological} lines={lifestyleLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
           </div>
         )}
+
+        {/* Heatmap – deep dive at the bottom */}
+        <HeatmapGrid data={chartData} />
 
         {/* Daily logs – clickable accordion */}
         <div className="space-y-2">
           <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Daily logs</h2>
-          <ul className="divide-y divide-border overflow-hidden rounded-md border border-border">
+          <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
             {entries.map((entry) => {
               const isOpen = expandedId === entry.id;
               return (
@@ -1469,7 +1466,7 @@ export default function OverviewPage() {
                     onClick={() => setExpandedId(isOpen ? null : entry.id)}
                     className="group flex w-full items-center justify-between px-4 py-3 text-left transition-all duration-200 hover:bg-surface hover:pl-5"
                     style={{ borderLeft: "3px solid transparent", transition: "border-color 0.2s ease, padding-left 0.2s ease, background-color 0.2s ease" }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderLeftColor = "#59a14f"; }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderLeftColor = "var(--accent-green)"; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderLeftColor = "transparent"; }}
                   >
                     <span className="text-sm font-medium text-foreground">{entry.log_date}</span>
@@ -1492,9 +1489,9 @@ export default function OverviewPage() {
                     <div className="space-y-3 px-4 pb-4 pt-1">
                       <div className="space-y-1 text-sm text-foreground">
                         <p className="font-serif text-sm font-semibold tracking-tight text-muted">Pain Levels</p>
-                        <p>Leg: {entry.leg_pain}/10 · Lower back: {entry.lower_back_pain}/10 · Chest: {entry.chest_pain}/10</p>
-                        <p>Shoulder: {entry.shoulder_pain}/10 · Headache: {entry.headache}/10 · Pelvic: {entry.pelvic_pain}/10</p>
-                        <p>Bowel/urination: {entry.bowel_urination_pain}/10 · Intercourse: {entry.intercourse_pain}/10</p>
+                        <p>Pelvic: {entry.pelvic_pain}/10 · Lower Back: {entry.lower_back_pain}/10 · Leg: {entry.leg_pain}/10</p>
+                        <p>Headache: {entry.headache}/10 · Chest: {entry.chest_pain}/10 · Shoulder: {entry.shoulder_pain}/10</p>
+                        <p>Bowel: {entry.bowel_pain ?? entry.bowel_urination_pain}/10 · Urination: {entry.urination_pain ?? entry.bowel_urination_pain}/10 · Intercourse: {entry.intercourse_pain}/10</p>
                       </div>
                       <div className="space-y-1 text-sm text-foreground">
                         <p className="font-serif text-sm font-semibold tracking-tight text-muted">Other Symptoms</p>
@@ -1503,10 +1500,10 @@ export default function OverviewPage() {
                         <p>Mood: {entry.mood}/10</p>
                       </div>
                       <div className="space-y-1 text-sm text-foreground">
-                        <p className="font-serif text-sm font-semibold tracking-tight text-muted">Lifestyle Factors</p>
+                        <p className="font-serif text-sm font-semibold tracking-tight text-muted">Lifestyle Triggers</p>
                         <p>Stress: {entry.stress}/10 · Inactivity: {entry.inactivity}/10 · Overexertion: {entry.overexertion}/10</p>
-                        <p>Coffee: {entry.coffee}/10 · Alcohol: {entry.alcohol}/10 · Smoking: {entry.smoking}/10</p>
-                        <p>Diet: {entry.diet}/10 · Sleep: {entry.sleep}/10</p>
+                        <p>Caffeine: {entry.coffee}/10 · Alcohol: {entry.alcohol}/10 · Smoking: {entry.smoking}/10</p>
+                        <p>Diet: {entry.diet}/10 · Sleep Quality: {entry.sleep}/10</p>
                       </div>
                       {entry.cycle_phase && (
                         <p className="text-sm text-foreground">Cycle: {formatCyclePhase(entry.cycle_phase)}</p>
@@ -1517,7 +1514,7 @@ export default function OverviewPage() {
                       <div className="flex gap-3 pt-2">
                         <a
                           href={`/dashboard/log?id=${entry.id}`}
-                          className="rounded-md border border-border px-3 py-1 text-xs font-medium text-foreground hover:bg-surface"
+                          className="rounded-full border border-border px-4 py-1.5 text-xs font-medium text-foreground transition-all hover:bg-surface"
                         >
                           Edit
                         </a>
@@ -1535,7 +1532,7 @@ export default function OverviewPage() {
                               setExpandedId(null);
                             }
                           }}
-                          className="rounded-md border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                          className="rounded-full border border-red-200 px-4 py-1.5 text-xs font-medium text-red-600 transition-all hover:bg-red-50"
                         >
                           Delete
                         </button>

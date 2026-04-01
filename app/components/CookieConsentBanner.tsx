@@ -31,7 +31,7 @@ export default function CookieConsentBanner() {
         </p>
         <button
           onClick={handleAccept}
-          className="shrink-0 rounded-md bg-accent-green px-5 py-2 text-sm font-medium text-white hover:opacity-90"
+          className="shrink-0 rounded-full bg-foreground px-5 py-2 text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
         >
           Got it
         </button>

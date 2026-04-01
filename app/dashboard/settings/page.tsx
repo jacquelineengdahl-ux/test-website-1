@@ -87,21 +87,24 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen justify-center py-12">
-      <div className="w-full max-w-sm space-y-10 px-4">
-        <h1 className="text-center font-serif text-2xl font-semibold tracking-tight text-foreground">
-          Settings
-        </h1>
+    <div className="flex min-h-screen justify-center py-10 md:py-16 px-4 md:px-6">
+      <div className="w-full max-w-sm space-y-10">
+        <div className="text-center">
+          <p className="section-label">Account</p>
+          <h1 className="font-serif text-3xl font-light text-foreground">
+            Settings
+          </h1>
+        </div>
 
         {isReset && (
-          <div className="rounded-md border border-accent-green bg-green-50 px-4 py-3 text-center text-sm font-medium text-green-800">
+          <div className="rounded-xl border border-accent-green bg-accent-green/10 px-4 py-3 text-center text-sm font-medium text-foreground">
             Set your new password below
           </div>
         )}
 
         {/* Profile link */}
         <div className="space-y-3">
-          <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">Profile</h2>
+          <h2 className="font-serif text-xl font-semibold text-foreground">Profile</h2>
           <a
             href="/profile"
             className="inline-block text-sm font-medium text-accent-green hover:opacity-80"
@@ -112,8 +115,8 @@ export default function SettingsPage() {
 
         {/* Account info */}
         <div className="space-y-3">
-          <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">Account</h2>
-          <div className="space-y-2 rounded-md border border-border bg-surface px-4 py-3 text-sm">
+          <h2 className="font-serif text-xl font-semibold text-foreground">Account</h2>
+          <div className="space-y-2 rounded-2xl border border-border bg-surface px-4 py-3 text-sm">
             <div className="flex justify-between">
               <span className="text-muted">Email</span>
               <span className="text-foreground">{email}</span>
@@ -128,10 +131,10 @@ export default function SettingsPage() {
         {/* Change password (email users only) */}
         {isEmailUser && (
           <div ref={passwordSectionRef} className="space-y-3">
-            <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">Change password</h2>
+            <h2 className="font-serif text-xl font-semibold text-foreground">Change password</h2>
             <form onSubmit={handleChangePassword} className="space-y-3">
               <div>
-                <label htmlFor="new-password" className="mb-1 block text-sm font-medium text-foreground">
+                <label htmlFor="new-password" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">
                   New password
                 </label>
                 <input
@@ -140,11 +143,11 @@ export default function SettingsPage() {
                   required
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
+                  className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
                 />
               </div>
               <div>
-                <label htmlFor="confirm-password" className="mb-1 block text-sm font-medium text-foreground">
+                <label htmlFor="confirm-password" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">
                   Confirm new password
                 </label>
                 <input
@@ -153,15 +156,15 @@ export default function SettingsPage() {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground"
+                  className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
                 />
               </div>
-              {passwordError && <p className="text-sm text-red-600">{passwordError}</p>}
-              {passwordSuccess && <p className="text-sm text-green-700">{passwordSuccess}</p>}
+              {passwordError && <div className="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">{passwordError}</div>}
+              {passwordSuccess && <div className="rounded-lg bg-accent-green/10 px-4 py-2.5 text-sm text-foreground">{passwordSuccess}</div>}
               <button
                 type="submit"
                 disabled={savingPassword}
-                className="w-full rounded-md bg-accent-green py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
+                className="w-full rounded-full bg-foreground py-2 font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
               >
                 {savingPassword ? "Updating..." : "Update password"}
               </button>
@@ -171,7 +174,7 @@ export default function SettingsPage() {
 
         {/* Your data */}
         <div className="space-y-3">
-          <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">Your data</h2>
+          <h2 className="font-serif text-xl font-semibold text-foreground">Your data</h2>
           <p className="text-sm text-muted">
             Download all your symptom log data as a CSV file.
           </p>
@@ -223,7 +226,7 @@ export default function SettingsPage() {
 
         {/* Feedback */}
         <div className="space-y-3">
-          <h2 className="font-serif text-lg font-semibold tracking-tight text-muted">Feedback</h2>
+          <h2 className="font-serif text-xl font-semibold text-foreground">Feedback</h2>
           <p className="text-sm text-muted">
             We&apos;d love to hear from you. Tell us what&apos;s working, what&apos;s not, or what you&apos;d like to see next.
           </p>
@@ -238,7 +241,7 @@ export default function SettingsPage() {
         {/* Danger zone */}
         <div className="space-y-3">
           <h2 className="font-serif text-lg font-semibold tracking-tight text-red-600">Danger zone</h2>
-          <div className="rounded-md border border-red-200 px-4 py-4">
+          <div className="rounded-2xl border border-red-200 px-4 py-4">
             <p className="mb-3 text-sm text-muted">
               This will permanently delete all your symptom logs and sign you out.
             </p>

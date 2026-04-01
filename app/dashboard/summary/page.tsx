@@ -78,22 +78,22 @@ const symptomLabels: Record<string, string> = {
 };
 
 const T10 = [
-  "#4e79a7", "#f28e2b", "#e15759", "#76b7b2", "#59a14f",
-  "#edc948", "#b07aa1", "#ff9da7", "#9c755f", "#bab0ac",
+  "#92A8C8", "#E4B5B5", "#C4685A", "#D4836E", "#E0CBA8",
+  "#A8C49A", "#8DAE7E", "#B09AD4", "#D8AD82", "#E0C878",
 ];
 
 function getHeatColor(value: number): string {
   if (value === 0 || value == null) return "rgba(214, 208, 200, 0.12)";
-  if (value <= 1) return "#c7e3be";
-  if (value <= 2) return "#a1d29a";
-  if (value <= 3) return "#7bbf6e";
-  if (value <= 4) return "#f0dc6e";
-  if (value <= 5) return "#f0b84a";
-  if (value <= 6) return "#eb9a3e";
-  if (value <= 7) return "#e67c3a";
-  if (value <= 8) return "#dc5840";
-  if (value <= 9) return "#c43a31";
-  return "#a61c00";
+  if (value <= 1) return "rgba(184, 148, 63, 0.2)";
+  if (value <= 2) return "rgba(184, 148, 63, 0.35)";
+  if (value <= 3) return "rgba(184, 148, 63, 0.55)";
+  if (value <= 4) return "rgba(212, 180, 101, 0.65)";
+  if (value <= 5) return "rgba(184, 120, 88, 0.5)";
+  if (value <= 6) return "rgba(184, 120, 88, 0.6)";
+  if (value <= 7) return "rgba(184, 120, 88, 0.7)";
+  if (value <= 8) return "rgba(184, 120, 88, 0.8)";
+  if (value <= 9) return "rgba(184, 120, 88, 0.9)";
+  return "rgba(184, 120, 88, 1)";
 }
 
 /* ─── Helpers ────────────────────────────────────────────── */
@@ -422,9 +422,12 @@ export default function SummaryPage() {
 
   if (entries.length === 0) {
     return (
-      <div className="flex min-h-screen justify-center py-12">
-        <div className="w-full max-w-2xl px-4">
-          <h1 className="mb-8 font-serif text-2xl font-semibold tracking-tight text-foreground">Summary</h1>
+      <div className="flex min-h-screen justify-center py-10 md:py-16 px-4 md:px-6">
+        <div className="w-full max-w-2xl">
+          <div className="mb-8">
+            <p className="section-label">Dashboard</p>
+            <h1 className="font-serif text-3xl font-light text-foreground">Summary</h1>
+          </div>
           <div className="mx-auto max-w-md space-y-4 rounded-md border border-border bg-surface px-8 py-10 text-center">
             <h2 className="font-serif text-lg font-semibold text-foreground">No entries yet</h2>
             <p className="text-sm text-muted">
@@ -432,7 +435,7 @@ export default function SummaryPage() {
             </p>
             <a
               href="/dashboard/log"
-              className="inline-block rounded-md bg-accent-green px-6 py-2 text-sm font-medium text-white hover:opacity-90"
+              className="inline-block rounded-full bg-foreground px-6 py-2 text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
             >
               Log your first entry
             </a>
@@ -443,9 +446,12 @@ export default function SummaryPage() {
   }
 
   return (
-    <div className="flex min-h-screen justify-center py-12">
-      <div className="w-full max-w-2xl space-y-8 px-4">
-        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Summary</h1>
+    <div className="flex min-h-screen justify-center py-10 md:py-16 px-4 md:px-6">
+      <div className="w-full max-w-2xl space-y-8">
+        <div>
+          <p className="section-label">Dashboard</p>
+          <h1 className="font-serif text-3xl font-light text-foreground">Summary</h1>
+        </div>
 
         {/* ── Section 1: Quick Stats ── */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -457,7 +463,7 @@ export default function SummaryPage() {
           ].map((card) => (
             <div
               key={card.label}
-              className="rounded-md border border-border bg-surface px-4 py-4 text-center"
+              className="rounded-2xl border border-border bg-surface px-4 py-4 text-center"
             >
               <p className="font-serif text-2xl font-semibold text-foreground">{card.value}</p>
               <p className="mt-1 text-xs text-muted">{card.label}</p>
@@ -467,7 +473,7 @@ export default function SummaryPage() {
 
         {/* ── Section 2: Recent Trends (7-Day Area Chart) ── */}
         {chartLines.length > 0 && (
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-2xl border border-border bg-surface p-6 card-hover">
             <h2 className="mb-3 text-center font-serif text-lg font-semibold tracking-tight text-muted">
               Recent Trends (7 Days)
             </h2>
@@ -523,7 +529,7 @@ export default function SummaryPage() {
 
         {/* ── Section 3: Top Symptoms with Trend Arrows ── */}
         {topSymptomTrends.length > 0 && (
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-2xl border border-border bg-surface p-6 card-hover">
             <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">
               Top Symptoms
             </h2>
@@ -555,7 +561,7 @@ export default function SummaryPage() {
         )}
 
         {/* ── Section 4: Weekly Overview Strip ── */}
-        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+        <div className="rounded-2xl border border-border bg-surface p-6 card-hover">
           <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">
             Weekly Overview
           </h2>

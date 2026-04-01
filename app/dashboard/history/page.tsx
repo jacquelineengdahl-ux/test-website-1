@@ -85,8 +85,8 @@ function formatCyclePhase(phase: string): string {
 
 /* ─── Tableau 10 palette ──────────────────────────────────── */
 const T10 = [
-  "#4e79a7", "#f28e2b", "#e15759", "#76b7b2", "#59a14f",
-  "#edc948", "#b07aa1", "#ff9da7", "#9c755f", "#bab0ac",
+  "#92A8C8", "#E4B5B5", "#C4685A", "#D4836E", "#E0CBA8",
+  "#A8C49A", "#8DAE7E", "#B09AD4", "#D8AD82", "#E0C878",
 ];
 
 const painLines = [
@@ -144,16 +144,16 @@ const heatmapGroups = [
 
 function getHeatColor(value: number): string {
   if (value === 0 || value == null) return "rgba(214, 208, 200, 0.12)";
-  if (value <= 1) return "#c7e3be";
-  if (value <= 2) return "#a1d29a";
-  if (value <= 3) return "#7bbf6e";
-  if (value <= 4) return "#f0dc6e";
-  if (value <= 5) return "#f0b84a";
-  if (value <= 6) return "#eb9a3e";
-  if (value <= 7) return "#e67c3a";
-  if (value <= 8) return "#dc5840";
-  if (value <= 9) return "#c43a31";
-  return "#a61c00";
+  if (value <= 1) return "rgba(184, 148, 63, 0.2)";
+  if (value <= 2) return "rgba(184, 148, 63, 0.35)";
+  if (value <= 3) return "rgba(184, 148, 63, 0.55)";
+  if (value <= 4) return "rgba(212, 180, 101, 0.65)";
+  if (value <= 5) return "rgba(184, 120, 88, 0.5)";
+  if (value <= 6) return "rgba(184, 120, 88, 0.6)";
+  if (value <= 7) return "rgba(184, 120, 88, 0.7)";
+  if (value <= 8) return "rgba(184, 120, 88, 0.8)";
+  if (value <= 9) return "rgba(184, 120, 88, 0.9)";
+  return "rgba(184, 120, 88, 1)";
 }
 
 type TimeRange = "D" | "W" | "M" | "Y";
@@ -438,7 +438,7 @@ function SymptomAreaChart({
   );
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-2 card-hover">
       <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">
         {title}
       </h2>
@@ -514,7 +514,7 @@ function SymptomBarChart({
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-2 card-hover">
         <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">{title}</h2>
         <div className="py-8 text-center">
           <EmptyChartIcon />
@@ -525,7 +525,7 @@ function SymptomBarChart({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-2 card-hover">
       <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">
         {title}
       </h2>
@@ -584,7 +584,7 @@ function HeatmapGrid({ data }: { data: ChartRow[] }) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm card-hover">
         <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">Heatmap</h2>
         <div className="py-8 text-center">
           <EmptyChartIcon />
@@ -595,7 +595,7 @@ function HeatmapGrid({ data }: { data: ChartRow[] }) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm card-hover">
       <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">Heatmap</h2>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-xs">
@@ -891,19 +891,22 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex min-h-screen justify-center py-12">
-      <div className="w-full max-w-2xl space-y-10 px-4">
+    <div className="flex min-h-screen justify-center py-10 md:py-16 px-4 md:px-6">
+      <div className="w-full max-w-2xl space-y-10">
         <div className="flex items-center justify-between">
-          <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">History</h1>
+          <div>
+            <p className="section-label">Dashboard</p>
+            <h1 className="font-serif text-3xl font-light text-foreground">History</h1>
+          </div>
           <a
             href="/dashboard/log"
-            className="rounded-md bg-accent-green px-3 py-1 text-sm font-medium text-white hover:opacity-90"
+            className="rounded-full bg-foreground px-3 py-1 text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
           >
             + New entry
           </a>
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <div className="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">{error}</div>}
 
         {entries.length === 0 ? (
           <div className="mx-auto max-w-md space-y-4 rounded-md border border-border bg-surface px-8 py-10 text-center">
@@ -913,7 +916,7 @@ export default function HistoryPage() {
             </p>
             <a
               href="/dashboard/log"
-              className="inline-block rounded-md bg-accent-green px-6 py-2 text-sm font-medium text-white hover:opacity-90"
+              className="inline-block rounded-full bg-foreground px-6 py-2 text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
             >
               Log your first entry
             </a>
@@ -923,12 +926,12 @@ export default function HistoryPage() {
             {/* Time range selector */}
             <div className="space-y-3">
               <div className="flex justify-center">
-                <div className="inline-flex overflow-hidden rounded-md border border-border text-sm font-medium">
+                <div className="inline-flex gap-1 text-sm font-medium">
                   {(["D", "W", "M", "Y"] as TimeRange[]).map((r) => (
                     <button
                       key={r}
                       onClick={() => { setTimeRange(r); setRefDate(new Date()); }}
-                      className={`px-4 py-1.5 transition-all duration-200 ${
+                      className={`rounded-full px-4 py-1.5 transition-all duration-200 ${
                         timeRange === r
                           ? "bg-accent-green text-white"
                           : "text-foreground hover:bg-surface"
@@ -998,7 +1001,7 @@ export default function HistoryPage() {
             {/* Daily logs – clickable accordion */}
             <div className="space-y-2">
               <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Daily logs</h2>
-              <ul className="divide-y divide-border overflow-hidden rounded-md border border-border">
+              <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
                 {entries.map((entry) => {
                   const isOpen = expandedId === entry.id;
                   return (

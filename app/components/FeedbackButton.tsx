@@ -70,7 +70,7 @@ export default function FeedbackButton() {
           <div className="absolute inset-0 bg-foreground/20 backdrop-blur-sm" />
 
           {/* Panel */}
-          <div className="relative w-full max-w-md rounded-t-xl sm:rounded-xl border border-border bg-background p-6 shadow-xl">
+          <div className="relative w-full max-w-md rounded-t-2xl sm:rounded-2xl border border-border bg-background p-6 shadow-xl">
             {/* Close button */}
             <button
               onClick={() => setOpen(false)}
@@ -129,13 +129,13 @@ export default function FeedbackButton() {
                   placeholder="What's on your mind?"
                   rows={4}
                   required
-                  className="w-full resize-none rounded-lg border border-border bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted/60 focus:border-accent-green focus:outline-none"
+                  className="w-full resize-none rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted/60 focus:border-accent-green focus:outline-none"
                 />
 
                 <button
                   type="submit"
                   disabled={sending || !message.trim()}
-                  className="w-full rounded-md bg-accent-green py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+                  className="w-full rounded-full bg-foreground py-2.5 text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
                 >
                   {sending ? "Sending..." : "Send feedback"}
                 </button>

@@ -138,7 +138,7 @@ export default function WaitlistPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-accent-green py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
+            className="w-full rounded-full bg-foreground py-2 font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
           >
             {loading ? "Joining…" : "Join the waitlist"}
           </button>

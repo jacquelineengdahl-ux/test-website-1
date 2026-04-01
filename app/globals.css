@@ -1,14 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf8f5;
-  --foreground: #2c2825;
-  --accent-green: #7a8c6e;
-  --accent-clay: #a3897a;
-  --accent-ink: #4a5568;
-  --border-color: #d6d0c8;
-  --text-muted: #78716c;
-  --surface: #f0ece6;
+  --background: #faf8f4;
+  --foreground: #2c2520;
+  --accent-green: #b8943f;
+  --accent-clay: #b87858;
+  --accent-ink: #4a4038;
+  --border-color: #d6cec4;
+  --text-muted: #8a7f74;
+  --surface: #f6f1ea;
+  --gold-light: #d4b465;
+  --terracotta-light: #cc9478;
+  --charcoal-light: #4a4038;
 }
 
 @theme inline {
@@ -20,6 +23,9 @@
   --color-border: var(--border-color);
   --color-muted: var(--text-muted);
   --color-surface: var(--surface);
+  --color-gold-light: var(--gold-light);
+  --color-terracotta-light: var(--terracotta-light);
+  --color-charcoal-light: var(--charcoal-light);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--font-source-serif);
@@ -29,12 +35,15 @@
   :root {
     --background: #1a1816;
     --foreground: #e8e2da;
-    --accent-green: #8fa580;
-    --accent-clay: #b89f8e;
+    --accent-green: #d4b465;
+    --accent-clay: #cc9478;
     --accent-ink: #8da2bf;
     --border-color: #3a3530;
     --text-muted: #9c958d;
     --surface: #242120;
+    --gold-light: #e0c470;
+    --terracotta-light: #d4a088;
+    --charcoal-light: #6b6058;
   }
 }
 
@@ -57,4 +66,21 @@ body {
 
 .animate-tooltip-in {
   animation: tooltip-in 0.2s ease-out;
+}
+
+.card-hover {
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              box-shadow 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 48px rgba(44, 37, 32, 0.1);
+}
+
+.section-label {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-green);
 }

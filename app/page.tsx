@@ -1,251 +1,422 @@
 import Link from "next/link";
-
-const features = [
-  {
-    title: "Daily symptom logging",
-    description:
-      "Record pain levels, digestion, lifestyle factors, and cycle phase — all in one place.",
-    color: "#f2a0a0",
-  },
-  {
-    title: "Visual trend tracking",
-    description:
-      "Stacked bar charts and line graphs surface patterns across days, weeks, months, or years.",
-    color: "#f0c08a",
-  },
-  {
-    title: "Body-literacy insights",
-    description:
-      "Connections between lifestyle factors and symptom flare-ups, made visible over time.",
-    color: "#a0dab0",
-  },
-  {
-    title: "Doctor-ready exports",
-    description:
-      "Generate clear summaries of your symptoms and trends to bring to your next medical appointment.",
-    color: "#88d4c8",
-  },
-  {
-    title: "Community support",
-    description:
-      "Connect with others who understand what you're going through — share experiences, not advice.",
-    color: "#92c4e8",
-  },
-  {
-    title: "Research & treatment updates",
-    description:
-      "Stay informed on the latest endometriosis research, treatments, and clinical developments.",
-    color: "#c4a8e0",
-  },
-];
+import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="relative flex flex-col items-center bg-gradient-to-b from-[#ece7df] via-background to-background font-sans">
-      {/* Journey line — spans entire page */}
-      <svg
-        className="pointer-events-none absolute left-0 top-0 z-0 h-full w-full opacity-[0.13]"
-        viewBox="0 0 400 1000"
-        fill="none"
-        preserveAspectRatio="none"
-      >
-        <path d="M320 0 C280 40, 200 80, 130 70 C60 60, 20 120, 60 180 C100 240, 250 250, 300 300 C350 350, 380 400, 340 460 C300 520, 150 530, 80 570 C10 610, 30 680, 100 720 C170 760, 320 770, 360 820 C400 870, 350 940, 300 1000" stroke="#c9a88a" strokeWidth="2" strokeLinecap="round" />
-        <path d="M330 0 C290 45, 210 90, 140 82 C70 74, 30 130, 68 188 C106 246, 255 258, 308 310 C358 358, 385 408, 348 468 C308 528, 158 540, 90 578 C22 616, 40 688, 108 728 C176 768, 325 778, 368 830 C408 878, 358 948, 310 1000" stroke="#d4b896" strokeWidth="1.4" strokeLinecap="round" />
-        <path d="M310 0 C270 35, 190 72, 120 62 C50 52, 10 112, 52 172 C94 232, 242 244, 292 292 C342 342, 372 392, 332 452 C292 512, 142 522, 72 562 C2 602, 22 672, 92 712 C162 752, 312 762, 352 812 C392 862, 342 932, 292 1000" stroke="#b8917a" strokeWidth="1" strokeLinecap="round" />
-      </svg>
-
-      {/* Hero — full viewport, centered */}
-      <section className="relative flex min-h-screen w-full flex-col items-center justify-center gap-6 overflow-hidden px-6 text-center">
-        {/* Warm washes */}
-        <div className="pointer-events-none absolute -left-40 -top-20 h-[700px] w-[700px] rounded-full bg-[#c9a88a] opacity-[0.12] blur-[120px]" />
-        <div className="pointer-events-none absolute -right-32 top-[10%] h-[600px] w-[600px] rounded-full bg-[#d4b896] opacity-[0.10] blur-[110px]" />
-        <div className="pointer-events-none absolute -left-20 bottom-[5%] h-[500px] w-[500px] rounded-full bg-[#8fa580] opacity-[0.08] blur-[100px]" />
-
-        {/* Soft circles cluster — top left */}
-        <svg
-          className="pointer-events-none absolute -left-10 -top-[10%] h-[400px] w-[400px] opacity-[0.10]"
-          viewBox="0 0 200 200"
-          fill="none"
+    <div className="flex flex-col font-sans">
+      {/* ─── NAV ─── */}
+      <nav className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between border-b border-border bg-surface/85 px-6 py-4 backdrop-blur-[24px] md:px-12">
+        <Link href="/" className="font-serif text-xl font-semibold text-foreground">
+          Living with Endo
+        </Link>
+        <div className="hidden items-center gap-8 md:flex">
+          <a href="#features" className="text-sm text-foreground/65 transition-opacity hover:text-foreground">Features</a>
+          <a href="#about" className="text-sm text-foreground/65 transition-opacity hover:text-foreground">About</a>
+          <a href="#how-it-works" className="text-sm text-foreground/65 transition-opacity hover:text-foreground">How It Works</a>
+        </div>
+        <Link
+          href="/signup"
+          className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
         >
-          <circle cx="120" cy="80" r="45" stroke="#d4b896" strokeWidth="1.2" />
-          <circle cx="100" cy="100" r="60" stroke="#c9a88a" strokeWidth="0.8" />
-          <circle cx="140" cy="110" r="30" stroke="#b8917a" strokeWidth="1" />
-          <circle cx="90" cy="70" r="20" fill="#d4b896" fillOpacity="0.15" />
-        </svg>
+          Get Started
+        </Link>
+      </nav>
 
-        {/* Dot scatter — bottom left */}
-        <svg
-          className="pointer-events-none absolute bottom-[20%] left-[5%] h-[300px] w-[300px] opacity-[0.15]"
-          viewBox="0 0 100 100"
-          fill="#c9a88a"
-        >
-          <circle cx="20" cy="30" r="3" />
-          <circle cx="35" cy="50" r="2" />
-          <circle cx="15" cy="60" r="4" />
-          <circle cx="45" cy="35" r="2.5" />
-          <circle cx="30" cy="75" r="3.5" />
-          <circle cx="50" cy="65" r="2" />
-          <circle cx="25" cy="45" r="1.5" />
-          <circle cx="40" cy="80" r="3" />
-          <circle cx="55" cy="50" r="1.8" />
-          <circle cx="18" cy="85" r="2.5" />
-        </svg>
-
-        <h1 className="font-serif text-5xl font-semibold tracking-tight text-foreground sm:text-6xl">
-          livingwithendo
-        </h1>
-        <div className="h-px w-16 bg-accent-clay" />
-        <p className="max-w-md text-lg leading-8 text-muted">
-          Track, understand, and take control of your symptoms.
-        </p>
-        <div className="flex gap-4 pt-2 text-base font-medium">
-          <Link
-            href="/signup"
-            className="flex h-12 items-center justify-center rounded-md bg-accent-green px-6 text-white transition-colors hover:opacity-90"
-          >
-            Create an account
-          </Link>
-          <Link
-            href="/login"
-            className="flex h-12 items-center justify-center rounded-md border border-border px-6 text-foreground transition-colors hover:bg-surface"
-          >
-            Log in
-          </Link>
+      {/* ─── HERO ─── */}
+      <section className="relative grid min-h-screen items-center gap-8 overflow-hidden bg-surface px-6 pt-28 pb-16 md:grid-cols-2 md:gap-16 md:px-12">
+        <div className="pointer-events-none absolute -right-32 -top-32 h-[500px] w-[500px] rounded-full bg-accent-green/[0.06] blur-[100px]" />
+        <div className="relative z-10">
+          <p className="section-label mb-5">Welcome to Living with Endo</p>
+          <h1 className="font-serif text-4xl font-light leading-[1.15] text-foreground md:text-5xl lg:text-[3.5rem]">
+            Your home for{" "}
+            <span className="font-semibold">living with endometriosis</span>
+          </h1>
+          <p className="mt-5 max-w-[440px] text-base leading-7 text-muted">
+            Track your symptoms, gain insights over time, gather your medical
+            information in one place, facilitate communication with loved ones
+            &mdash; and coming soon, join a community of endo women and stay up
+            to date with latest research &amp; treatments.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-4">
+            <Link
+              href="/signup"
+              className="rounded-full bg-foreground px-7 py-3 text-base font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              Start Tracking
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-full border-[1.5px] border-foreground px-7 py-3 text-base font-medium text-foreground transition-all hover:bg-foreground hover:text-surface"
+            >
+              Log In
+            </Link>
+          </div>
+        </div>
+        <div className="relative z-10 hidden overflow-hidden rounded-3xl shadow-2xl md:block">
+          <Image
+            src="/images/endo-couch.png"
+            alt="Woman experiencing endometriosis symptoms"
+            width={600}
+            height={500}
+            className="h-[500px] w-full object-cover"
+            priority
+          />
         </div>
       </section>
 
-      {/* Below the fold */}
-      <main className="relative flex w-full max-w-2xl flex-col items-center gap-32 px-6 pb-24 sm:px-16">
-        {/* Decorative — circles behind about text */}
-        <svg
-          className="pointer-events-none absolute -right-16 bottom-[10%] h-[350px] w-[350px] opacity-[0.08]"
-          viewBox="0 0 200 200"
-          fill="none"
-        >
-          <circle cx="100" cy="100" r="50" stroke="#b8917a" strokeWidth="1" />
-          <circle cx="100" cy="100" r="75" stroke="#d4b896" strokeWidth="0.7" />
-          <circle cx="120" cy="80" r="25" fill="#c9a88a" fillOpacity="0.1" />
-        </svg>
+      {/* ─── PHOTO STRIP ─── */}
+      <section className="grid grid-cols-2 md:grid-cols-4">
+        {[
+          { src: "/images/endo-bed-side.png", alt: "Woman lying in pain" },
+          { src: "/images/endo-sitting-bed.png", alt: "Woman sitting on bed" },
+          { src: "/images/endo-leaning-back.png", alt: "Woman leaning back in pain" },
+          { src: "/images/endo-red-fabric.png", alt: "Woman with red fabric" },
+        ].map((img) => (
+          <div key={img.src} className="relative h-[200px] overflow-hidden md:h-[300px]">
+            <Image
+              src={img.src}
+              alt={img.alt}
+              fill
+              className="object-cover grayscale-[20%] transition-all duration-500 hover:scale-[1.03] hover:grayscale-0"
+            />
+          </div>
+        ))}
+      </section>
 
-        {/* Decorative — dot scatter */}
-        <svg
-          className="pointer-events-none absolute bottom-[30%] right-[2%] h-[250px] w-[250px] opacity-[0.12]"
-          viewBox="0 0 100 100"
-          fill="#b8917a"
-        >
-          <circle cx="70" cy="25" r="2.5" />
-          <circle cx="85" cy="40" r="1.8" />
-          <circle cx="75" cy="55" r="3" />
-          <circle cx="90" cy="65" r="2" />
-          <circle cx="80" cy="80" r="2.5" />
-          <circle cx="65" cy="70" r="1.5" />
-        </svg>
-
-        {/* Feature cards */}
-        <section className="relative z-10 flex w-full flex-col items-center gap-8">
-          <h2 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-            How it works
+      {/* ─── FEATURES ─── */}
+      <section id="features" className="px-6 py-20 md:px-12 md:py-28">
+        <div className="mx-auto max-w-[1100px]">
+          <p className="section-label mb-3">What We Offer</p>
+          <h2 className="font-serif text-3xl font-light text-foreground md:text-4xl">
+            Tools designed with empathy
           </h2>
-          <div className="grid w-full gap-8 sm:grid-cols-2">
-            {features.map((feature) => (
+          <p className="mt-3 max-w-[480px] text-base leading-7 text-muted">
+            Everything you need to understand your body better, all in one place.
+          </p>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {[
+              {
+                title: "Daily Logging",
+                description: "Log pain levels, mood, energy, and lifestyle factors in under a minute with our gentle, guided flow.",
+                icon: (
+                  <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ),
+              },
+              {
+                title: "Insights & Trends",
+                description: "Beautiful visualizations reveal patterns you might miss — connecting the dots between symptoms and triggers.",
+                icon: (
+                  <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                  </svg>
+                ),
+              },
+              {
+                title: "My Letter",
+                description: "Write a personal letter to share with your doctor, partner, or loved ones about life with endometriosis.",
+                icon: (
+                  <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                  </svg>
+                ),
+              },
+            ].map((feature) => (
               <div
                 key={feature.title}
-                className="rounded-lg border-2 bg-surface p-6"
-                style={{ borderColor: feature.color }}
+                className="card-hover cursor-pointer rounded-2xl border border-border bg-surface p-8"
               >
-                <h2 className="mb-2 font-serif text-lg font-semibold text-foreground">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-green/[0.12] text-accent-green">
+                  {feature.icon}
+                </div>
+                <h3 className="font-serif text-xl font-semibold text-foreground">
                   {feature.title}
-                </h2>
-                <p className="text-sm leading-6 text-muted">
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-muted">
                   {feature.description}
                 </p>
+                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-accent-green transition-all">
+                  Learn more <span aria-hidden="true">&rarr;</span>
+                </span>
               </div>
             ))}
           </div>
-        </section>
-
-        {/* About */}
-        <section className="relative z-10 flex w-full flex-col items-center gap-6">
-          <div className="pointer-events-none absolute -inset-10 rounded-full bg-background opacity-70 blur-2xl" />
-          <h2 className="relative font-serif text-2xl font-semibold tracking-tight text-foreground">
-            Why do we exist?
-          </h2>
-          <div className="relative h-px w-16 bg-accent-clay" />
-          <div className="relative max-w-lg space-y-4 text-center text-base leading-7 text-muted">
-            <p>
-              Endometriosis is a chronic condition in which tissue similar to the
-              uterine lining grows outside the uterus. It can cause persistent
-              pain, fatigue, and digestive symptoms that affect daily life in ways
-              that are often invisible to others. Around 1 in 10 women live with
-              endometriosis, yet diagnosis frequently takes many years.
-            </p>
-            <p>
-              <span className="font-serif font-semibold text-foreground">livingwithendo</span>{" "}
-              is a private space to track how you feel over time — including
-              symptoms, movement, food, and where you are in your cycle. By
-              bringing this information together, it becomes easier to notice
-              patterns, understand what helps or worsens symptoms, and have more
-              informed conversations with healthcare providers.
-            </p>
-            <p>
-              This site was created by someone who has lived with endometriosis
-              for decades, often with severe pain and significant disruption to
-              everyday life. It began as a tool to support her own care, and is now
-              growing into something to support other women living with
-              endometriosis.
-            </p>
-          </div>
-        </section>
-      </main>
-
-      {/* Closing CTA */}
-      <section className="relative mt-12 w-full overflow-hidden bg-surface py-20">
-        {/* Decorative — warm wash */}
-        <div className="pointer-events-none absolute -right-20 top-0 h-[300px] w-[300px] rounded-full bg-[#c9a88a] opacity-[0.08] blur-[80px]" />
-        <div className="pointer-events-none absolute -left-16 bottom-0 h-[250px] w-[250px] rounded-full bg-[#8fa580] opacity-[0.06] blur-[70px]" />
-
-        <div className="flex flex-col items-center gap-6 px-6 text-center">
-          <h2 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-            Ready to start tracking?
-          </h2>
-          <p className="max-w-sm text-sm leading-6 text-muted">
-            Your experience deserves to be understood. Start logging today.
-          </p>
-          <Link
-            href="/signup"
-            className="flex h-12 items-center justify-center rounded-md bg-accent-green px-6 text-base font-medium text-white transition-colors hover:opacity-90"
-          >
-            Create an account
-          </Link>
         </div>
       </section>
 
-      {/* Disclaimer */}
-      <div className="w-full border-t border-border bg-background px-6 py-8">
+      {/* ─── SPLIT: YOU ARE NOT ALONE ─── */}
+      <section id="about" className="bg-surface px-6 py-20 md:px-12 md:py-28">
+        <div className="mx-auto grid max-w-[1100px] items-center gap-10 md:grid-cols-2 md:gap-20">
+          <div className="relative hidden overflow-hidden rounded-3xl shadow-xl md:block">
+            <Image
+              src="/images/endo-lying-side.png"
+              alt="Woman resting"
+              width={600}
+              height={480}
+              className="h-[480px] w-full object-cover"
+            />
+          </div>
+          <div>
+            <p className="section-label mb-3">You Are Not Alone</p>
+            <h2 className="font-serif text-3xl font-light leading-tight text-foreground md:text-4xl">
+              1 in 10 women live with endometriosis
+            </h2>
+            <p className="mt-4 text-base leading-7 text-muted">
+              It takes an average of 7.5 years to get diagnosed. We believe that
+              understanding your symptoms is the first step toward better care,
+              better conversations, and better days.
+            </p>
+            <Link
+              href="/signup"
+              className="mt-8 inline-flex rounded-full bg-foreground px-7 py-3 text-base font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              Start Your Journey
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── CHART PREVIEW ─── */}
+      <section className="px-6 py-20 md:px-12 md:py-28">
+        <div className="mx-auto grid max-w-[1100px] items-center gap-10 md:grid-cols-2 md:gap-16">
+          <div>
+            <p className="section-label mb-3">Data Visualization</p>
+            <h2 className="font-serif text-3xl font-light text-foreground md:text-4xl">
+              See your patterns, beautifully
+            </h2>
+            <p className="mt-4 text-base leading-7 text-muted">
+              Modern, elegant charts that make your health data easy to
+              understand at a glance. Track trends over days, weeks, or months.
+            </p>
+            <Link
+              href="/signup"
+              className="mt-8 inline-flex rounded-full bg-foreground px-7 py-3 text-base font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              Explore Your Data
+            </Link>
+          </div>
+          {/* Dark chart card */}
+          <div className="relative overflow-hidden rounded-3xl bg-foreground p-7 text-surface">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-green/[0.06] to-transparent" />
+            <p className="relative text-xs font-medium uppercase tracking-[0.12em] text-surface/40">
+              Weekly Overview
+            </p>
+            <p className="relative mt-1 font-serif text-lg text-surface/90">
+              Symptom Trends
+            </p>
+            <div className="relative mt-5">
+              <svg viewBox="0 0 400 140" fill="none" className="h-[140px] w-full">
+                <line x1="0" y1="35" x2="400" y2="35" stroke="rgba(255,255,255,0.05)" />
+                <line x1="0" y1="70" x2="400" y2="70" stroke="rgba(255,255,255,0.05)" />
+                <line x1="0" y1="105" x2="400" y2="105" stroke="rgba(255,255,255,0.05)" />
+                <path d="M0,105 L57,85 L114,95 L171,60 L228,75 L285,45 L342,65 L400,55 L400,140 L0,140Z" fill="url(#goldGrad)" opacity="0.25" />
+                <path d="M0,80 L57,70 L114,90 L171,75 L228,50 L285,65 L342,40 L400,50 L400,140 L0,140Z" fill="url(#terraGrad)" opacity="0.15" />
+                <path d="M0,105 L57,85 L114,95 L171,60 L228,75 L285,45 L342,65 L400,55" stroke="#d4b465" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M0,80 L57,70 L114,90 L171,75 L228,50 L285,65 L342,40 L400,50" stroke="#cc9478" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="285" cy="45" r="4" fill="#d4b465" />
+                <circle cx="342" cy="40" r="4" fill="#cc9478" />
+                <defs>
+                  <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#d4b465" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="#d4b465" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="terraGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#cc9478" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#cc9478" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <div className="relative mt-3 flex gap-5">
+              <span className="flex items-center gap-1.5 text-xs text-surface/60">
+                <span className="h-2 w-2 rounded-full bg-gold-light" /> Pain
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-surface/60">
+                <span className="h-2 w-2 rounded-full bg-terracotta-light" /> Fatigue
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-surface/60">
+                <span className="h-2 w-2 rounded-full bg-muted" /> Mood
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── DATA VIZ GRID ─── */}
+      <section className="px-6 pb-20 md:px-12 md:pb-28">
+        <div className="mx-auto grid max-w-[1100px] gap-5 md:grid-cols-2">
+          {/* Bar chart card */}
+          <div className="relative overflow-hidden rounded-3xl bg-foreground p-7 text-surface">
+            <p className="text-xs font-medium uppercase tracking-[0.12em] text-surface/40">
+              Last 14 Days
+            </p>
+            <p className="mt-1 font-serif text-lg text-surface/90">Pain Overview</p>
+            <div className="mt-5 flex items-end gap-1.5" style={{ height: 100 }}>
+              {[35,55,70,40,85,60,30,50,75,45,65,35,80,50].map((h, i) => (
+                <div
+                  key={i}
+                  className="flex-1 rounded-t transition-opacity hover:opacity-100"
+                  style={{
+                    height: `${h}%`,
+                    background: i % 3 === 0
+                      ? "linear-gradient(to top, #b8943f, #d4b465)"
+                      : "linear-gradient(to top, #b87858, #cc9478)",
+                    opacity: 0.85,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+          {/* Stats card */}
+          <div className="flex flex-col justify-between overflow-hidden rounded-3xl bg-foreground p-7 text-surface">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-surface/40">
+                Your Streak
+              </p>
+              <p className="mt-1 font-serif text-5xl font-light text-gold-light">14</p>
+              <p className="mt-1 text-sm text-surface/40">consecutive days logged</p>
+            </div>
+            <div className="mt-6">
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-surface/40">
+                Monthly Heatmap
+              </p>
+              <div className="mt-3 grid grid-cols-7 gap-1">
+                {[15,30,50,70,35,20,55,25,80,45,15,40,60,30,10,55,35,65,20,50,15].map((v, i) => (
+                  <div
+                    key={i}
+                    className="aspect-square rounded transition-transform hover:scale-125"
+                    style={{
+                      background: v > 50
+                        ? `rgba(184, 120, 88, ${v / 100})`
+                        : `rgba(184, 148, 63, ${v / 100})`,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── HOW IT WORKS ─── */}
+      <section id="how-it-works" className="bg-surface px-6 py-20 md:px-12 md:py-28">
+        <div className="mx-auto grid max-w-[1100px] items-center gap-10 md:grid-cols-2 md:gap-20">
+          <div className="relative hidden overflow-hidden rounded-3xl shadow-xl md:block">
+            <Image
+              src="/images/endo-hot-water-bottle.png"
+              alt="Woman with hot water bottle"
+              width={600}
+              height={500}
+              className="h-[500px] w-full object-cover"
+            />
+          </div>
+          <div>
+            <p className="section-label mb-3">Easy as 1, 2, 3</p>
+            <h2 className="mb-8 font-serif text-3xl font-light text-foreground md:text-4xl">
+              Ready for clarity?
+            </h2>
+            {[
+              { num: "1", title: "Create Your Profile", desc: "Set up your account with your endo history, treatment plan, and healthcare providers." },
+              { num: "2", title: "Log Daily", desc: "Spend a minute each day tracking your symptoms, lifestyle, and how you're feeling." },
+              { num: "3", title: "Discover Patterns", desc: "Review your trends, share insights with your doctor, and take control of your care." },
+            ].map((step, i) => (
+              <div
+                key={step.num}
+                className={`flex items-start gap-4 py-5 ${i < 2 ? "border-b border-border" : ""}`}
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-[1.5px] border-accent-green text-sm font-semibold text-accent-green">
+                  {step.num}
+                </div>
+                <div>
+                  <h4 className="font-serif text-lg font-semibold text-foreground">
+                    {step.title}
+                  </h4>
+                  <p className="mt-1 text-sm leading-6 text-muted">{step.desc}</p>
+                </div>
+              </div>
+            ))}
+            <Link
+              href="/signup"
+              className="mt-8 inline-flex rounded-full bg-foreground px-7 py-3 text-base font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              Get Started Free
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── TESTIMONIALS ─── */}
+      <section className="px-6 py-20 text-center md:px-12 md:py-28">
+        <p className="section-label mb-3">Community Voices</p>
+        <h2 className="font-serif text-3xl font-light text-foreground md:text-4xl">
+          You are not alone in this
+        </h2>
+        <div className="mx-auto mt-10 grid max-w-[1100px] gap-5 md:grid-cols-3">
+          {[
+            { quote: "For the first time, I could show my doctor exactly what I was experiencing. The patterns were right there in the data.", author: "Sarah K." },
+            { quote: "The letter feature helped me explain to my partner what living with endo really feels like. It changed our relationship.", author: "Emma L." },
+            { quote: "I finally feel like I have a tool that understands me. It's calming, beautiful, and actually useful every single day.", author: "Maya R." },
+          ].map((t) => (
+            <div
+              key={t.author}
+              className="card-hover rounded-2xl border border-border bg-surface p-8 text-left"
+            >
+              <p className="font-serif text-4xl leading-none text-accent-green">
+                &ldquo;
+              </p>
+              <p className="mt-2 text-[0.95rem] leading-7 text-foreground">
+                {t.quote}
+              </p>
+              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.15em] text-muted">
+                &mdash; {t.author}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── CTA ─── */}
+      <section className="relative overflow-hidden bg-foreground px-6 py-24 text-center md:py-32">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[800px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-green/[0.06] blur-[100px]" />
+        <h2 className="relative mx-auto max-w-[600px] font-serif text-3xl font-light leading-tight text-surface md:text-4xl lg:text-5xl">
+          Your body tells a story. Start listening.
+        </h2>
+        <p className="relative mx-auto mt-5 max-w-[450px] text-base leading-7 text-surface/45">
+          Join thousands of people with endometriosis who are taking control of
+          their health, one day at a time.
+        </p>
+        <Link
+          href="/signup"
+          className="relative mt-8 inline-flex rounded-full bg-accent-green px-8 py-3.5 text-base font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(184,148,63,0.3)]"
+        >
+          Start Your Journey
+        </Link>
+      </section>
+
+      {/* ─── DISCLAIMER ─── */}
+      <div className="border-t border-border bg-background px-6 py-8">
         <div className="mx-auto max-w-lg text-center text-xs leading-5 text-muted">
           <p className="font-serif text-sm font-medium text-foreground">
             Important notice
           </p>
           <p className="mt-2">
-            livingwithendo is a personal self-tracking and reflection tool. It is
-            not a medical device, does not provide medical advice, and is not
+            Living with Endo is a personal self-tracking and reflection tool. It
+            is not a medical device, does not provide medical advice, and is not
             intended to diagnose, treat, or replace professional healthcare.
             Always consult a qualified healthcare provider for medical decisions.
           </p>
         </div>
       </div>
 
-      <footer className="flex flex-col items-center gap-2 py-24 text-center text-sm text-muted">
-        <p>Your data stays yours — stored securely with end-to-end authentication.</p>
-        <div className="flex gap-4">
-          <Link href="/privacy" className="text-accent-green underline hover:opacity-80">
-            Privacy Policy
-          </Link>
-          <Link href="/terms" className="text-accent-green underline hover:opacity-80">
-            Terms of Use
-          </Link>
+      {/* ─── FOOTER ─── */}
+      <footer className="flex flex-col items-center justify-between gap-4 bg-foreground px-6 py-8 text-sm text-surface/30 md:flex-row md:px-12">
+        <p className="font-serif text-base text-surface/50">Living with Endo</p>
+        <div className="flex gap-6">
+          <Link href="/privacy" className="transition-colors hover:text-surface/60">Privacy</Link>
+          <Link href="/terms" className="transition-colors hover:text-surface/60">Terms</Link>
         </div>
-        <p>&copy; 2026 livingwithendo</p>
+        <p>&copy; 2026 Living with Endo</p>
       </footer>
     </div>
   );

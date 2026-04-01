@@ -43,20 +43,28 @@ export default function AuthenticatedLayout({
     { href: "/dashboard/settings", label: "Settings" },
   ];
 
+  const isActive = (href: string) =>
+    pathname === href || (href === "/profile" && pathname.startsWith("/profile"));
+
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b border-border px-6 py-3">
+      <nav className="sticky top-0 z-40 border-b border-border bg-surface/85 px-6 py-4 backdrop-blur-[24px] md:px-10">
         <div className="flex items-center justify-between">
+          {/* Logo */}
+          <a href="/dashboard" className="font-serif text-xl font-semibold text-foreground">
+            Living with Endo
+          </a>
+
           {/* Desktop links */}
-          <div className="hidden md:flex md:gap-4">
+          <div className="hidden items-center gap-1 md:flex">
             {links.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className={`text-sm font-medium ${
-                  pathname === link.href || (link.href === "/profile" && pathname.startsWith("/profile"))
-                    ? "text-foreground underline decoration-accent-clay underline-offset-4"
-                    : "text-muted hover:text-foreground"
+                className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                  isActive(link.href)
+                    ? "bg-foreground/[0.06] text-foreground"
+                    : "text-muted hover:bg-foreground/[0.04] hover:text-foreground"
                 }`}
               >
                 {link.label}
@@ -64,37 +72,41 @@ export default function AuthenticatedLayout({
             ))}
           </div>
 
-          {/* Hamburger button (mobile) */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="flex flex-col justify-center gap-1 md:hidden"
-            aria-label="Toggle menu"
-          >
-            <span className={`block h-0.5 w-5 bg-foreground transition-transform ${menuOpen ? "translate-y-1.5 rotate-45" : ""}`} />
-            <span className={`block h-0.5 w-5 bg-foreground transition-opacity ${menuOpen ? "opacity-0" : ""}`} />
-            <span className={`block h-0.5 w-5 bg-foreground transition-transform ${menuOpen ? "-translate-y-1.5 -rotate-45" : ""}`} />
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Desktop sign out */}
+            <button
+              onClick={handleSignOut}
+              className="hidden rounded-full border border-border px-4 py-2 text-sm text-muted transition-all hover:border-foreground/20 hover:text-foreground md:block"
+            >
+              Sign out
+            </button>
 
-          {/* Desktop sign out */}
-          <button
-            onClick={handleSignOut}
-            className="hidden text-sm text-muted hover:text-foreground md:block"
-          >
-            Sign out
-          </button>
+            {/* Hamburger button (mobile) */}
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-foreground/[0.04] md:hidden"
+              aria-label="Toggle menu"
+            >
+              <div className="flex flex-col justify-center gap-[5px]">
+                <span className={`block h-[1.5px] w-5 bg-foreground transition-all duration-300 ${menuOpen ? "translate-y-[6.5px] rotate-45" : ""}`} />
+                <span className={`block h-[1.5px] w-5 bg-foreground transition-all duration-300 ${menuOpen ? "opacity-0" : ""}`} />
+                <span className={`block h-[1.5px] w-5 bg-foreground transition-all duration-300 ${menuOpen ? "-translate-y-[6.5px] -rotate-45" : ""}`} />
+              </div>
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="flex flex-col gap-3 pt-4 pb-2 md:hidden">
+          <div className="mt-4 flex flex-col gap-1 border-t border-border pt-4 md:hidden">
             {links.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className={`text-sm font-medium ${
-                  pathname === link.href || (link.href === "/profile" && pathname.startsWith("/profile"))
-                    ? "text-foreground underline decoration-accent-clay underline-offset-4"
-                    : "text-muted hover:text-foreground"
+                className={`rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
+                  isActive(link.href)
+                    ? "bg-foreground/[0.06] text-foreground"
+                    : "text-muted hover:bg-foreground/[0.04] hover:text-foreground"
                 }`}
               >
                 {link.label}
@@ -102,7 +114,7 @@ export default function AuthenticatedLayout({
             ))}
             <button
               onClick={handleSignOut}
-              className="text-left text-sm text-muted hover:text-foreground"
+              className="mt-2 rounded-xl px-4 py-3 text-left text-sm text-muted transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
             >
               Sign out
             </button>

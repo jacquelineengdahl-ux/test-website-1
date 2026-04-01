@@ -327,65 +327,21 @@ export default function DashboardPage() {
   if (loading) return null;
 
   return (
-    <div className="flex min-h-screen justify-center py-12">
-      <div className="w-full max-w-2xl space-y-6 px-4">
-        {/* Header with greeting illustration */}
+    <div className="flex min-h-screen justify-center px-4 py-10 md:py-16">
+      <div className="w-full max-w-2xl space-y-8">
+        {/* Header */}
         <div className="text-center">
-          <svg
-            width="56"
-            height="56"
-            viewBox="0 0 56 56"
-            fill="none"
-            className="mx-auto mb-3 text-accent-green"
-          >
-            <circle cx="28" cy="28" r="26" stroke="currentColor" strokeWidth="2" opacity="0.2" />
-            <circle cx="28" cy="28" r="20" stroke="currentColor" strokeWidth="1.5" opacity="0.1" />
-            <path
-              d="M28 12c-2 0-3.5 1.5-3.5 3.5S26 19 28 21c2-2 3.5-3 3.5-5.5S30 12 28 12z"
-              fill="currentColor"
-              opacity="0.6"
-            />
-            <path
-              d="M20 22c-1.5 1-2 3-1 4.5s3 2 4.5 1.2"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              opacity="0.4"
-            />
-            <path
-              d="M36 22c1.5 1 2 3 1 4.5s-3 2-4.5 1.2"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              opacity="0.4"
-            />
-            <path
-              d="M18 32c2 6 6 10 10 10s8-4 10-10"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              opacity="0.5"
-            />
-            <circle cx="22" cy="28" r="1.5" fill="currentColor" opacity="0.5" />
-            <circle cx="34" cy="28" r="1.5" fill="currentColor" opacity="0.5" />
-            <path
-              d="M24 34c1.5 1.5 4.5 1.5 6 0"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              opacity="0.6"
-            />
-          </svg>
-          <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
+          <p className="section-label mb-3">Your Dashboard</p>
+          <h1 className="font-serif text-3xl font-light text-foreground md:text-4xl">
             Welcome{displayName ? `, ${displayName}` : email ? `, ${email}` : ""}
           </h1>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-2 text-sm text-muted">
             We&apos;re glad you&apos;re here. Take it one day at a time.
           </p>
         </div>
 
         {/* Disclaimer */}
-        <div className="rounded-lg border border-border bg-surface px-5 py-3 text-center text-xs leading-5 text-muted">
+        <div className="rounded-2xl border border-border bg-surface px-6 py-4 text-center text-xs leading-5 text-muted">
           This is a self-tracking and reflection tool to support daily awareness
           and communication with your healthcare provider. It does not provide
           medical advice or diagnoses.
@@ -393,13 +349,13 @@ export default function DashboardPage() {
 
         {/* Not logged today reminder (returning users only) */}
         {logCount > 0 && !todayLog && (
-          <div className="flex items-center justify-between rounded-xl border border-accent-green/30 bg-accent-green/10 px-5 py-4">
+          <div className="flex items-center justify-between rounded-2xl border border-accent-green/30 bg-accent-green/10 px-6 py-4">
             <p className="text-sm text-foreground">
               You haven&apos;t logged today yet.
             </p>
             <a
               href="/dashboard/log"
-              className="shrink-0 rounded-md bg-accent-green px-4 py-1.5 text-sm font-medium text-white hover:opacity-90"
+              className="shrink-0 rounded-full bg-foreground px-5 py-2 text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
             >
               Log now
             </a>
@@ -407,20 +363,20 @@ export default function DashboardPage() {
         )}
 
         {/* Nav buttons */}
-        <div className="space-y-3">
-          <p className="text-center font-serif text-base font-medium text-foreground">
+        <div className="space-y-4">
+          <p className="text-center font-serif text-lg font-light text-foreground">
             What would you like to do today?
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <a
               href="/dashboard/log"
-              className="flex-1 rounded-md bg-accent-green px-4 py-2 text-center text-sm font-medium text-white hover:opacity-90"
+              className="flex-1 rounded-full bg-foreground px-5 py-3 text-center text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
             >
               Log symptoms
             </a>
             <a
               href="/dashboard/overview"
-              className="flex-1 rounded-md border border-border px-4 py-2 text-center text-sm font-medium text-foreground hover:bg-surface"
+              className="flex-1 rounded-full border-[1.5px] border-foreground px-5 py-3 text-center text-sm font-medium text-foreground transition-all hover:bg-foreground hover:text-surface"
             >
               Log Overview
             </a>
@@ -429,8 +385,13 @@ export default function DashboardPage() {
 
         {logCount === 0 ? (
           /* ── Empty state ── */
-          <div className="mx-auto max-w-md space-y-4 rounded-md border border-border bg-surface px-8 py-10 text-center">
-            <h2 className="font-serif text-lg font-semibold text-foreground">
+          <div className="card-hover mx-auto max-w-md space-y-5 rounded-2xl border border-border bg-surface px-8 py-12 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-green/[0.12]">
+              <svg width="24" height="24" fill="none" stroke="var(--accent-green)" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="font-serif text-xl font-semibold text-foreground">
               Welcome to Living with Endo
             </h2>
             <p className="text-sm text-muted">
@@ -439,7 +400,7 @@ export default function DashboardPage() {
             </p>
             <a
               href="/dashboard/log"
-              className="inline-block rounded-md bg-accent-green px-6 py-2 text-sm font-medium text-white hover:opacity-90"
+              className="inline-block rounded-full bg-foreground px-7 py-3 text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
             >
               Log your first entry
             </a>
@@ -448,7 +409,7 @@ export default function DashboardPage() {
           <>
             {/* ── Flare Alert Banner (3+ logs) ── */}
             {flareInfo && flareInfo.type === "flare" && (
-              <div className="flex items-start gap-3 rounded-xl border border-amber-300/50 bg-amber-50 px-5 py-4 dark:border-amber-700/50 dark:bg-amber-950/30">
+              <div className="flex items-start gap-3 rounded-2xl border border-amber-300/50 bg-amber-50 px-6 py-5 dark:border-amber-700/50 dark:bg-amber-950/30">
                 <svg
                   width="18"
                   height="18"
@@ -482,7 +443,7 @@ export default function DashboardPage() {
               </div>
             )}
             {flareInfo && flareInfo.type === "steady" && (
-              <div className="flex items-start gap-3 rounded-xl border border-accent-green/30 bg-accent-green/10 px-5 py-4">
+              <div className="flex items-start gap-3 rounded-2xl border border-accent-green/30 bg-accent-green/10 px-6 py-5">
                 <svg
                   width="18"
                   height="18"
@@ -518,23 +479,25 @@ export default function DashboardPage() {
 
             {/* ── Progressive Unlock (1-4 logs) ── */}
             {logCount >= 1 && logCount < 5 && (
-              <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-                <div className="mb-3 flex items-center gap-2">
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 18 18"
-                    fill="none"
-                    className="text-accent-green"
-                  >
-                    <path
-                      d="M9 1v16M1 9h16"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <h2 className="font-serif text-base font-semibold tracking-tight text-foreground">
+              <div className="card-hover rounded-2xl border border-border bg-surface p-6">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-green/[0.12]">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 18 18"
+                      fill="none"
+                      className="text-accent-green"
+                    >
+                      <path
+                        d="M9 1v16M1 9h16"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </div>
+                  <h2 className="font-serif text-lg font-semibold text-foreground">
                     Keep going
                   </h2>
                 </div>
@@ -552,14 +515,14 @@ export default function DashboardPage() {
                     </p>
                   )}
                 </div>
-                <div className="mt-3">
-                  <div className="mb-1 flex justify-between text-xs text-muted">
+                <div className="mt-4">
+                  <div className="mb-1.5 flex justify-between text-xs text-muted">
                     <span>{logCount} of 5 logs</span>
                     <span>{Math.round((logCount / 5) * 100)}%</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-border">
+                  <div className="h-2.5 w-full rounded-full bg-border">
                     <div
-                      className="h-2 rounded-full bg-accent-green transition-all"
+                      className="h-2.5 rounded-full bg-accent-green transition-all"
                       style={{ width: `${(logCount / 5) * 100}%` }}
                     />
                   </div>
@@ -568,12 +531,12 @@ export default function DashboardPage() {
             )}
 
             {/* ── Today's Status Card ── */}
-            <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <div className="card-hover rounded-2xl border border-border bg-surface p-7">
               {todayStats ? (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-green/15">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-green/[0.12]">
+                      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
                         <path
                           d="M3 8.5l3 3 7-7"
                           stroke="var(--accent-green)"
@@ -583,13 +546,13 @@ export default function DashboardPage() {
                         />
                       </svg>
                     </div>
-                    <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">
+                    <h2 className="font-serif text-xl font-semibold text-foreground">
                       Logged today
                     </h2>
                   </div>
 
                   <div className="flex items-baseline gap-2">
-                    <span className="font-serif text-4xl font-bold text-foreground">
+                    <span className="font-serif text-5xl font-light text-foreground">
                       {todayStats.avgSeverity}
                     </span>
                     <span className="text-sm text-muted">/10 avg severity</span>
@@ -600,7 +563,7 @@ export default function DashboardPage() {
                       {todayStats.topSymptoms.map((s) => (
                         <span
                           key={s.key}
-                          className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground"
+                          className="rounded-full border border-border bg-background px-3.5 py-1.5 text-xs font-medium text-foreground"
                         >
                           {LABELS[s.key] || s.key} {s.value}/10
                         </span>
@@ -608,7 +571,7 @@ export default function DashboardPage() {
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between border-t border-border pt-4">
                     {todayStats.cyclePhase ? (
                       <span className="text-xs text-muted">
                         {formatCyclePhase(todayStats.cyclePhase)}
@@ -619,16 +582,16 @@ export default function DashboardPage() {
                     {todayLog && (
                       <a
                         href={`/dashboard/log?id=${todayLog.id}`}
-                        className="text-xs font-medium text-accent-green hover:underline"
+                        className="text-xs font-medium text-accent-green transition-colors hover:text-foreground"
                       >
-                        Edit entry
+                        Edit entry &rarr;
                       </a>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3 text-center">
-                  <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">
+                <div className="space-y-4 text-center">
+                  <h2 className="font-serif text-xl font-light text-foreground">
                     How are you feeling today?
                   </h2>
                   <p className="text-sm text-muted">
@@ -637,7 +600,7 @@ export default function DashboardPage() {
                   </p>
                   <a
                     href="/dashboard/log"
-                    className="inline-block rounded-md bg-accent-green px-5 py-2 text-sm font-medium text-white hover:opacity-90"
+                    className="inline-block rounded-full bg-foreground px-6 py-2.5 text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
                   >
                     Log today&apos;s symptoms
                   </a>
@@ -646,13 +609,13 @@ export default function DashboardPage() {
             </div>
 
             {/* ── 7-Day Logging Calendar ── */}
-            <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-serif text-base font-semibold tracking-tight text-foreground">
+            <div className="card-hover rounded-2xl border border-border bg-surface p-6">
+              <div className="mb-5 flex items-center justify-between">
+                <h2 className="font-serif text-lg font-semibold text-foreground">
                   Past 7 days
                 </h2>
                 {streak > 0 && (
-                  <span className="flex items-center gap-1 rounded-full bg-accent-green/10 px-2.5 py-0.5 text-xs font-medium text-accent-green">
+                  <span className="flex items-center gap-1.5 rounded-full bg-accent-green/10 px-3 py-1 text-xs font-medium text-accent-green">
                     <svg
                       width="12"
                       height="12"
@@ -676,7 +639,7 @@ export default function DashboardPage() {
                     className="flex flex-col items-center gap-2"
                   >
                     <div
-                      className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-medium"
+                      className="flex h-11 w-11 items-center justify-center rounded-full text-xs font-medium transition-transform hover:scale-110"
                       style={{
                         backgroundColor: day.logged
                           ? "var(--accent-green)"
@@ -707,13 +670,11 @@ export default function DashboardPage() {
             >
               {/* Symptom Radar Chart */}
               {radarData.length > 0 && (
-                <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-                  <h2 className="mb-1 text-center font-serif text-base font-semibold tracking-tight text-foreground">
+                <div className="card-hover rounded-2xl border border-border bg-surface p-6">
+                  <p className="section-label mb-1 text-center">Latest Entry</p>
+                  <h2 className="mb-4 text-center font-serif text-lg font-semibold text-foreground">
                     Symptom Shape
                   </h2>
-                  <p className="mb-3 text-center text-xs text-muted">
-                    Most recent entry
-                  </p>
                   <ResponsiveContainer width="100%" height={250}>
                     <RadarChart data={radarData} outerRadius="75%">
                       <PolarGrid stroke="var(--border-color)" />
@@ -740,11 +701,12 @@ export default function DashboardPage() {
 
               {/* Pattern Insight Card (5+ logs) */}
               {correlationInsight && (
-                <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-                  <h2 className="mb-3 font-serif text-base font-semibold tracking-tight text-foreground">
+                <div className="card-hover rounded-2xl border border-border bg-surface p-6">
+                  <p className="section-label mb-1">Discovery</p>
+                  <h2 className="mb-4 font-serif text-lg font-semibold text-foreground">
                     Pattern Insight
                   </h2>
-                  <p className="mb-4 text-sm text-foreground">
+                  <p className="mb-5 text-sm leading-6 text-foreground">
                     On days when{" "}
                     <span className="font-semibold">
                       {LABELS[correlationInsight.lifestyleKey]}
@@ -755,9 +717,9 @@ export default function DashboardPage() {
                     </span>{" "}
                     tends to be higher.
                   </p>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div>
-                      <div className="mb-1 flex justify-between text-xs text-muted">
+                      <div className="mb-1.5 flex justify-between text-xs text-muted">
                         <span>
                           {LABELS[correlationInsight.lifestyleKey]} high days
                         </span>
@@ -765,9 +727,9 @@ export default function DashboardPage() {
                           {correlationInsight.highAvg}/10
                         </span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-border">
+                      <div className="h-2.5 w-full rounded-full bg-border">
                         <div
-                          className="h-2 rounded-full bg-accent-green"
+                          className="h-2.5 rounded-full bg-accent-green transition-all"
                           style={{
                             width: `${(correlationInsight.highAvg / 10) * 100}%`,
                           }}
@@ -775,7 +737,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <div>
-                      <div className="mb-1 flex justify-between text-xs text-muted">
+                      <div className="mb-1.5 flex justify-between text-xs text-muted">
                         <span>
                           {LABELS[correlationInsight.lifestyleKey]} low days
                         </span>
@@ -783,13 +745,12 @@ export default function DashboardPage() {
                           {correlationInsight.lowAvg}/10
                         </span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-border">
+                      <div className="h-2.5 w-full rounded-full bg-border">
                         <div
-                          className="h-2 rounded-full"
+                          className="h-2.5 rounded-full bg-accent-clay"
                           style={{
                             width: `${(correlationInsight.lowAvg / 10) * 100}%`,
-                            backgroundColor: "var(--text-muted)",
-                            opacity: 0.35,
+                            opacity: 0.5,
                           }}
                         />
                       </div>
