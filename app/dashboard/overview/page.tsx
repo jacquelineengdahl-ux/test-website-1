@@ -171,17 +171,16 @@ function getHeatColor(value: number): string {
   return "rgba(184, 120, 88, 1)";
 }
 
-type TimeRange = "D" | "W" | "M" | "3M" | "6M" | "Y" | "All";
+type TimeRange = "7d" | "30d" | "90d" | "1y" | "All" | "Custom";
 type ChartRow = { label: string; [k: string]: number | string };
 
 const timeRangeOptions: { value: TimeRange; label: string }[] = [
-  { value: "D", label: "D" },
-  { value: "W", label: "W" },
-  { value: "M", label: "M" },
-  { value: "3M", label: "3M" },
-  { value: "6M", label: "6M" },
-  { value: "Y", label: "Y" },
+  { value: "7d", label: "7d" },
+  { value: "30d", label: "30d" },
+  { value: "90d", label: "90d" },
+  { value: "1y", label: "1y" },
   { value: "All", label: "All" },
+  { value: "Custom", label: "Custom" },
 ];
 
 /* ─── Date utilities ───────────────────────────────────── */
@@ -212,77 +211,45 @@ function daysBetween(a: Date, b: Date): number {
   return Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function getRange(ref: Date, range: TimeRange): { start: Date; end: Date } {
+function getRange(ref: Date, range: TimeRange, customStart?: Date, customEnd?: Date): { start: Date; end: Date } {
   switch (range) {
-    case "D":
-      return { start: ref, end: ref };
-    case "W": {
-      const s = startOfWeek(ref);
-      return { start: s, end: addDays(s, 6) };
-    }
-    case "M":
+    case "7d":
+      return { start: addDays(ref, -6), end: ref };
+    case "30d":
+      return { start: addDays(ref, -29), end: ref };
+    case "90d":
+      return { start: addDays(ref, -89), end: ref };
+    case "1y":
       return {
-        start: new Date(ref.getFullYear(), ref.getMonth(), 1),
-        end: new Date(ref.getFullYear(), ref.getMonth() + 1, 0),
-      };
-    case "3M": {
-      const endDate = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
-      const startDate = new Date(ref.getFullYear(), ref.getMonth() - 2, 1);
-      return { start: startDate, end: endDate };
-    }
-    case "6M": {
-      const endDate = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
-      const startDate = new Date(ref.getFullYear(), ref.getMonth() - 5, 1);
-      return { start: startDate, end: endDate };
-    }
-    case "Y":
-      return {
-        start: new Date(ref.getFullYear(), 0, 1),
-        end: new Date(ref.getFullYear(), 11, 31),
+        start: new Date(ref.getFullYear() - 1, ref.getMonth(), ref.getDate()),
+        end: ref,
       };
     case "All":
       return {
         start: new Date(2000, 0, 1),
         end: new Date(2099, 11, 31),
       };
+    case "Custom":
+      return {
+        start: customStart ?? addDays(ref, -29),
+        end: customEnd ?? ref,
+      };
   }
 }
 
-function navigate(ref: Date, range: TimeRange, dir: -1 | 1): Date {
+function getRangeLabel(ref: Date, range: TimeRange, customStart?: Date, customEnd?: Date): string {
+  const { start, end } = getRange(ref, range, customStart, customEnd);
   switch (range) {
-    case "D":
-      return addDays(ref, dir);
-    case "W":
-      return addDays(ref, dir * 7);
-    case "M":
-      return new Date(ref.getFullYear(), ref.getMonth() + dir, 1);
-    case "3M":
-      return new Date(ref.getFullYear(), ref.getMonth() + dir * 3, 1);
-    case "6M":
-      return new Date(ref.getFullYear(), ref.getMonth() + dir * 6, 1);
-    case "Y":
-      return new Date(ref.getFullYear() + dir, ref.getMonth(), 1);
-    case "All":
-      return ref;
-  }
-}
-
-function getRangeLabel(ref: Date, range: TimeRange): string {
-  const { start, end } = getRange(ref, range);
-  switch (range) {
-    case "D":
-      return fmtDate(ref);
-    case "W":
+    case "7d":
+    case "30d":
+    case "90d":
       return `${fmtShort(start)} – ${fmtShort(end)}`;
-    case "M":
-      return ref.toLocaleDateString("en", { month: "long", year: "numeric" });
-    case "3M":
-    case "6M":
+    case "1y":
       return `${fmtShort(start)} – ${fmtShort(end)}`;
-    case "Y":
-      return ref.getFullYear().toString();
     case "All":
       return "All time";
+    case "Custom":
+      return `${fmtShort(start)} – ${fmtShort(end)}`;
   }
 }
 
@@ -292,8 +259,10 @@ function aggregateEntries(
   entries: LogEntry[],
   range: TimeRange,
   ref: Date,
+  cStart?: Date,
+  cEnd?: Date,
 ): ChartRow[] {
-  const { start, end } = getRange(ref, range);
+  const { start, end } = getRange(ref, range, cStart, cEnd);
   const startStr = fmtDate(start);
   const endStr = fmtDate(end);
 
@@ -301,25 +270,20 @@ function aggregateEntries(
     (e) => e.log_date >= startStr && e.log_date <= endStr,
   );
 
-  if (range === "D" || range === "W") {
-    return filtered.map((e) => {
-      const row: ChartRow = { label: e.log_date.slice(5) };
-      for (const k of numericKeys) row[k] = e[k];
-      return row;
-    });
-  }
+  const days = daysBetween(start, end);
 
-  if (range === "M") {
+  // Short ranges (up to 30 days): show individual days
+  if (days <= 30) {
     return filtered.map((e) => {
       const d = new Date(e.log_date + "T00:00:00");
-      const row: ChartRow = { label: d.getDate().toString() };
+      const row: ChartRow = { label: fmtShort(d) };
       for (const k of numericKeys) row[k] = e[k];
       return row;
     });
   }
 
-  if (range === "3M" || range === "6M") {
-    // Aggregate by week
+  // Medium ranges (31-180 days): aggregate by week
+  if (days <= 180) {
     const weekBuckets: Record<string, { sum: Record<string, number>; count: number; sortKey: string }> = {};
     for (const e of filtered) {
       const d = new Date(e.log_date + "T00:00:00");
@@ -342,7 +306,7 @@ function aggregateEntries(
       });
   }
 
-  // Year / All: average by month
+  // Long ranges (180+ days): aggregate by month
   const buckets: Record<string, { sum: Record<string, number>; count: number; sortKey: string }> = {};
   for (const e of filtered) {
     const d = new Date(e.log_date + "T00:00:00");
@@ -354,24 +318,6 @@ function aggregateEntries(
     for (const k of numericKeys) buckets[monthKey].sum[k] += e[k];
   }
 
-  if (range === "Y") {
-    const monthOrder = Array.from({ length: 12 }, (_, i) => {
-      const key = `${ref.getFullYear()}-${String(i + 1).padStart(2, "0")}`;
-      return key;
-    });
-
-    return monthOrder
-      .filter((m) => buckets[m])
-      .map((m) => {
-        const b = buckets[m];
-        const d = new Date(m + "-01T00:00:00");
-        const row: ChartRow = { label: fmtMonth(d) };
-        for (const k of numericKeys) row[k] = Math.round((b.sum[k] / b.count) * 10) / 10;
-        return row;
-      });
-  }
-
-  // All: sort chronologically
   return Object.values(buckets)
     .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
     .map((b) => {
@@ -686,18 +632,57 @@ function SymptomBarChart({
   );
 }
 
-/* ─── Heatmap grid ─────────────────────────────────────── */
+/* ─── Cycle phase colors ──────────────────────────────── */
 
-function HeatmapGrid({ data }: { data: ChartRow[] }) {
+const cyclePhaseColors: Record<string, string> = {
+  menstrual: "#C4685A",
+  follicular: "#E4B5B5",
+  ovulation: "#E0C878",
+  luteal: "#92A8C8",
+  on_pill: "#B09AD4",
+  on_hormonal_treatment: "#B09AD4",
+};
+
+function getCycleColor(phase: string | null): string | null {
+  if (!phase) return null;
+  for (const [key, color] of Object.entries(cyclePhaseColors)) {
+    if (phase.includes(key)) return color;
+  }
+  return null;
+}
+
+/* ─── Monthly Heatmap ─────────────────────────────────── */
+
+type HeatmapCategory = "Pain" | "Other Symptoms" | "Lifestyle Triggers" | "All";
+
+function DailyHeatmap({ entries }: { entries: LogEntry[] }) {
+  const [category, setCategory] = useState<HeatmapCategory>("All");
   const [hoveredCell, setHoveredCell] = useState<{
-    row: string; col: number; value: number; dateLabel: string; x: number; y: number;
+    row: string; col: number; value: number; dateStr: string; x: number; y: number;
   } | null>(null);
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
-  if (data.length === 0) {
+  // Build date list from entries (already filtered by time range)
+  const dates = useMemo(() => {
+    const sorted = [...entries].sort((a, b) => a.log_date.localeCompare(b.log_date));
+    return sorted.map((e) => e.log_date);
+  }, [entries]);
+
+  const entryMap = useMemo(() => {
+    const map: Record<string, LogEntry> = {};
+    for (const e of entries) map[e.log_date] = e;
+    return map;
+  }, [entries]);
+
+  const visibleKeys = useMemo(() => {
+    const group = heatmapGroups.find((g) => g.label === category);
+    if (group) return group.keys;
+    return heatmapGroups.flatMap((g) => g.keys);
+  }, [category]);
+
+  if (dates.length === 0) {
     return (
-      <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm card-hover">
-        <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">Heatmap</h2>
+      <div className="rounded-2xl border border-border bg-surface p-6">
+        <h2 className="mb-4 font-serif text-lg font-semibold text-foreground">Heatmap</h2>
         <div className="py-8 text-center">
           <EmptyChartIcon />
           <p className="text-sm text-muted">No data for this period</p>
@@ -707,127 +692,142 @@ function HeatmapGrid({ data }: { data: ChartRow[] }) {
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm card-hover">
-      <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">Heatmap</h2>
+    <div className="rounded-2xl border border-border bg-surface p-6">
+      {/* Header */}
+      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="font-serif text-lg font-semibold text-foreground">Heatmap</h2>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value as HeatmapCategory)}
+          className="rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-accent-green focus:outline-none"
+        >
+          <option value="All">All</option>
+          <option value="Pain">Pain</option>
+          <option value="Other Symptoms">Other Symptoms</option>
+          <option value="Lifestyle Triggers">Lifestyle Triggers</option>
+        </select>
+      </div>
+
+      {/* Grid */}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-xs">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-surface pr-2 text-left font-medium text-muted" style={{ minWidth: 120 }} />
-              {data.map((d, i) => (
-                <th key={i} className="px-0.5 pb-1 text-center font-medium text-muted" style={{ minWidth: 32 }}>
-                  {d.label}
-                </th>
-              ))}
+              <th className="sticky left-0 z-10 bg-surface pr-2 text-left font-medium text-muted" style={{ minWidth: 110 }} />
+              {dates.map((d, i) => {
+                const date = new Date(d + "T00:00:00");
+                return (
+                  <th key={i} className="px-0.5 pb-1 text-center font-medium text-muted" style={{ minWidth: 28 }}>
+                    <div>{date.getDate()}</div>
+                    <div className="text-[9px] opacity-60">{date.toLocaleDateString("en", { month: "short" })}</div>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
-            {heatmapGroups.map((group) => (
-              <Fragment key={group.label}>
-                <tr>
-                  <td
-                    colSpan={data.length + 1}
-                    className="sticky left-0 z-10 bg-surface pt-3 pb-1 font-serif text-xs font-semibold tracking-tight text-muted"
-                  >
-                    {group.label}
+            {/* Cycle phase row */}
+            <tr>
+              <td className="sticky left-0 z-10 bg-surface pr-2 py-0.5 text-left font-medium text-accent-green" style={{ minWidth: 110 }}>
+                Cycle Phase
+              </td>
+              {dates.map((d, i) => {
+                const entry = entryMap[d];
+                const color = entry ? getCycleColor(entry.cycle_phase) : null;
+                return (
+                  <td key={i} className="px-0.5 py-0.5">
+                    <div
+                      className="mx-auto rounded-[4px]"
+                      style={{
+                        width: 24, height: 24,
+                        backgroundColor: color || "rgba(214, 208, 200, 0.12)",
+                        border: color ? "none" : "1px dashed rgba(168, 162, 158, 0.3)",
+                      }}
+                      title={entry?.cycle_phase ? entry.cycle_phase.split(",").map((p: string) => cyclePhaseLabels[p.trim()] || p.trim()).join(", ") : "No data"}
+                    />
                   </td>
-                </tr>
-                {group.keys.map((key) => {
-                  const isRowHighlighted = hoveredRow === key;
-                  const isAnyRowHovered = hoveredRow !== null;
-                  return (
-                  <tr
-                    key={key}
-                    style={{
-                      opacity: isAnyRowHovered && !isRowHighlighted ? 0.4 : 1,
-                      transition: "opacity 0.2s ease",
-                    }}
-                    onMouseEnter={() => setHoveredRow(key)}
-                    onMouseLeave={() => setHoveredRow(null)}
-                  >
-                    <td className="sticky left-0 z-10 bg-surface pr-2 py-0.5 text-left text-muted" style={{ minWidth: 120 }}>
-                      {symptomLabels[key] || key}
-                    </td>
-                    {data.map((d, colIdx) => {
-                      const val = typeof d[key] === "number" ? (d[key] as number) : 0;
-                      const isHovered =
-                        hoveredCell?.row === (symptomLabels[key] || key) &&
-                        hoveredCell?.col === colIdx;
+                );
+              })}
+            </tr>
 
-                      return (
-                        <td
-                          key={colIdx}
-                          className="px-0.5 py-0.5"
-                          onMouseEnter={(e) => {
-                            const rect = (e.target as HTMLElement).getBoundingClientRect();
-                            setHoveredCell({
-                              row: symptomLabels[key] || key,
-                              col: colIdx,
-                              value: val,
-                              dateLabel: String(d.label),
-                              x: rect.left + rect.width / 2,
-                              y: rect.top,
-                            });
-                            setHoveredRow(key);
-                          }}
-                          onMouseLeave={() => { setHoveredCell(null); setHoveredRow(null); }}
-                        >
-                          <div
-                            className="mx-auto"
-                            style={{
-                              width: 26,
-                              height: 26,
-                              borderRadius: 5,
-                              backgroundColor: getHeatColor(val),
-                              transform: isHovered ? "scale(1.3)" : "scale(1)",
-                              boxShadow: isHovered ? "0 2px 8px rgba(0,0,0,0.18)" : "none",
-                              transition: "transform 0.15s ease, box-shadow 0.15s ease",
-                              position: "relative",
-                              zIndex: isHovered ? 10 : 1,
-                            }}
-                          />
-                        </td>
-                      );
-                    })}
-                  </tr>
+            <tr><td colSpan={dates.length + 1} className="h-2" /></tr>
+
+            {/* Symptom rows */}
+            {visibleKeys.map((key) => (
+              <tr key={key}>
+                <td className="sticky left-0 z-10 bg-surface pr-2 py-0.5 text-left text-muted" style={{ minWidth: 110 }}>
+                  {symptomLabels[key] || key}
+                </td>
+                {dates.map((d, colIdx) => {
+                  const entry = entryMap[d];
+                  const val = entry ? ((entry[key as keyof LogEntry] as number) ?? 0) : 0;
+                  const isHovered = hoveredCell?.row === key && hoveredCell?.col === colIdx;
+
+                  return (
+                    <td
+                      key={colIdx}
+                      className="px-0.5 py-0.5"
+                      onMouseEnter={(e) => {
+                        const rect = (e.target as HTMLElement).getBoundingClientRect();
+                        setHoveredCell({ row: key, col: colIdx, value: val, dateStr: d, x: rect.left + rect.width / 2, y: rect.top });
+                      }}
+                      onMouseLeave={() => setHoveredCell(null)}
+                    >
+                      <div
+                        className="mx-auto"
+                        style={{
+                          width: 24, height: 24, borderRadius: 4,
+                          backgroundColor: getHeatColor(val),
+                          transform: isHovered ? "scale(1.3)" : "scale(1)",
+                          boxShadow: isHovered ? "0 2px 8px rgba(0,0,0,0.18)" : "none",
+                          transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                          position: "relative",
+                          zIndex: isHovered ? 10 : 1,
+                        }}
+                      />
+                    </td>
                   );
                 })}
-              </Fragment>
+              </tr>
             ))}
           </tbody>
         </table>
       </div>
 
+      {/* Tooltip */}
       {hoveredCell && (
         <div
-          className="pointer-events-none fixed z-50 rounded-lg border border-border bg-surface px-3 py-2 text-xs shadow-lg animate-tooltip-in"
-          style={{
-            left: hoveredCell.x,
-            top: hoveredCell.y - 52,
-            transform: "translateX(-50%)",
-          }}
+          className="pointer-events-none fixed z-50 rounded-xl border border-border bg-surface px-3 py-2 text-xs shadow-lg animate-tooltip-in"
+          style={{ left: hoveredCell.x, top: hoveredCell.y - 52, transform: "translateX(-50%)" }}
         >
           <div className="flex items-center gap-2">
-            <span
-              className="inline-block h-3 w-3 rounded-[3px]"
-              style={{ backgroundColor: getHeatColor(hoveredCell.value) }}
-            />
-            <span className="font-semibold text-foreground">{hoveredCell.row}</span>
+            <span className="inline-block h-3 w-3 rounded-[3px]" style={{ backgroundColor: getHeatColor(hoveredCell.value) }} />
+            <span className="font-semibold text-foreground">{symptomLabels[hoveredCell.row] || hoveredCell.row}</span>
           </div>
           <div className="mt-0.5 text-muted">
-            {hoveredCell.dateLabel}
-            <span className="text-muted"> · </span>
-            <span className="font-semibold text-foreground">{hoveredCell.value}/10</span>
+            {hoveredCell.dateStr} · <span className="font-semibold text-foreground">{hoveredCell.value}/10</span>
           </div>
         </div>
       )}
 
-      <div className="mt-3 flex items-center justify-center gap-0.5 text-xs text-muted">
-        <span className="mr-1">0</span>
-        {Array.from({ length: 11 }, (_, v) => (
-          <div key={v} className="rounded-[3px]" style={{ width: 14, height: 14, backgroundColor: getHeatColor(v) }} />
-        ))}
-        <span className="ml-1">10</span>
+      {/* Legends */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-0.5 text-xs text-muted">
+          <span className="mr-1">Severity: 0</span>
+          {Array.from({ length: 11 }, (_, v) => (
+            <div key={v} className="rounded-[3px]" style={{ width: 12, height: 12, backgroundColor: getHeatColor(v) }} />
+          ))}
+          <span className="ml-1">10</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+          <span>Cycle:</span>
+          {Object.entries(cyclePhaseColors).filter(([k]) => k !== "on_pill").map(([key, color]) => (
+            <span key={key} className="flex items-center gap-1">
+              <span className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ backgroundColor: color }} />
+              {cyclePhaseLabels[key] || key}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -839,9 +839,12 @@ export default function OverviewPage() {
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [timeRange, setTimeRange] = useState<TimeRange>("W");
+  const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [refDate, setRefDate] = useState(() => new Date());
+  const [customStart, setCustomStart] = useState(() => fmtDate(addDays(new Date(), -29)));
+  const [customEnd, setCustomEnd] = useState(() => fmtDate(new Date()));
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [dailyLogsOpen, setDailyLogsOpen] = useState(false);
   const [hiddenSeries, setHiddenSeries] = useState<Set<string>>(new Set());
 
   const toggleSeries = useCallback((key: string) => {
@@ -922,7 +925,8 @@ export default function OverviewPage() {
     }
 
     // Top recurring symptom (most days with value > 0)
-    let topRecurring = "\u2014";
+    let topRecurringCount = 0;
+    let topRecurringName = "\u2014";
     if (current30.length > 0) {
       const symptomKeys = numericKeys.filter((k) => !["inactivity", "overexertion", "coffee", "alcohol", "smoking", "diet", "sleep", "stress"].includes(k));
       const freq: Record<string, number> = {};
@@ -935,12 +939,14 @@ export default function OverviewPage() {
       }
       const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
       if (sorted.length > 0) {
-        topRecurring = symptomLabels[sorted[0][0]] || sorted[0][0];
+        topRecurringCount = sorted[0][1];
+        topRecurringName = symptomLabels[sorted[0][0]] || sorted[0][0];
       }
     }
 
     // Highest pain (single worst score in 30 days)
-    let highestPain = "\u2014";
+    let highestPainScore = "\u2014";
+    let highestPainName = "";
     if (current30.length > 0) {
       const painKeys = ["pelvic_pain", "lower_back_pain", "leg_pain", "chest_pain", "shoulder_pain", "headache", "bowel_pain", "urination_pain", "bowel_urination_pain", "intercourse_pain"] as const;
       let maxVal = 0;
@@ -955,11 +961,12 @@ export default function OverviewPage() {
         }
       }
       if (maxVal > 0) {
-        highestPain = `${symptomLabels[maxKey] || maxKey} (${maxVal}/10)`;
+        highestPainScore = `${maxVal}/10`;
+        highestPainName = symptomLabels[maxKey] || maxKey;
       }
     }
 
-    return { entriesThisMonth, avgSeverity, topRecurring, highestPain };
+    return { entriesThisMonth, avgSeverity, topRecurringCount, topRecurringName, highestPainScore, highestPainName };
   }, [current30]);
 
   /* ── 7-day area chart data ── */
@@ -1088,10 +1095,21 @@ export default function OverviewPage() {
 
   /* ── History chart data ── */
 
+  const customStartDate = useMemo(() => new Date(customStart + "T00:00:00"), [customStart]);
+  const customEndDate = useMemo(() => new Date(customEnd + "T00:00:00"), [customEnd]);
+
   const chartData = useMemo(
-    () => aggregateEntries(chronological, timeRange, refDate),
-    [chronological, timeRange, refDate],
+    () => aggregateEntries(chronological, timeRange, refDate, customStartDate, customEndDate),
+    [chronological, timeRange, refDate, customStartDate, customEndDate],
   );
+
+  // Filtered entries for area charts (raw entries within selected range)
+  const filteredChronological = useMemo(() => {
+    const { start, end } = getRange(refDate, timeRange, customStartDate, customEndDate);
+    const startStr = fmtDate(start);
+    const endStr = fmtDate(end);
+    return chronological.filter((e) => e.log_date >= startStr && e.log_date <= endStr);
+  }, [chronological, timeRange, refDate, customStartDate, customEndDate]);
 
   /* ── Export handlers ── */
 
@@ -1134,12 +1152,12 @@ export default function OverviewPage() {
     doc.setFont("times", "normal");
     doc.setFontSize(11);
     doc.setTextColor(120, 113, 108);
-    const rangeLabel = getRangeLabel(refDate, timeRange);
+    const rangeLabel = getRangeLabel(refDate, timeRange, customStartDate, customEndDate);
     doc.text(rangeLabel, pw / 2, 33, { align: "center" });
 
     let y = 45;
 
-    const { start, end } = getRange(refDate, timeRange);
+    const { start, end } = getRange(refDate, timeRange, customStartDate, customEndDate);
     const rangeEntries = entries.filter(
       (e) => e.log_date >= fmtDate(start) && e.log_date <= fmtDate(end)
     );
@@ -1265,17 +1283,20 @@ export default function OverviewPage() {
         {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {[
-            { value: stats.entriesThisMonth, label: "Entries this month" },
-            { value: stats.avgSeverity, label: "Avg severity" },
-            { value: stats.topRecurring, label: "Top recurring symptom", small: true },
-            { value: stats.highestPain, label: "Highest pain (30 days)", small: true },
+            { value: String(stats.entriesThisMonth), label: "Logs This Month", size: "text-2xl" },
+            { value: String(stats.avgSeverity), label: "Avg Severity", size: "text-2xl" },
+            { value: stats.topRecurringName, label: "Top Symptom", size: "text-base" },
+            { value: stats.highestPainScore, label: "Highest Pain Level", size: "text-xl" },
           ].map((card) => (
             <div
               key={card.label}
-              className="card-hover rounded-2xl border border-border bg-surface px-4 py-4 text-center"
+              className="card-hover flex flex-col rounded-2xl border border-border bg-surface px-4 pt-4 pb-4 text-center"
+              style={{ height: 96 }}
             >
-              <p className={`font-serif font-semibold text-foreground ${("small" in card && card.small) ? "text-sm leading-snug" : "text-2xl"}`}>{card.value}</p>
-              <p className="mt-1 text-xs text-muted">{card.label}</p>
+              <div className="flex flex-1 items-center justify-center">
+                <p className={`font-serif font-semibold text-foreground ${card.size}`}>{card.value}</p>
+              </div>
+              <p className="text-xs text-muted">{card.label}</p>
             </div>
           ))}
         </div>
@@ -1387,44 +1408,50 @@ export default function OverviewPage() {
         </div>
 
         {/* Time range selector */}
-        <div className="space-y-3">
-          <div className="flex justify-center">
-            <div className="inline-flex gap-1 text-sm font-medium">
-              {timeRangeOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => { setTimeRange(opt.value); setRefDate(new Date()); }}
-                  className={`rounded-full px-3 py-1.5 transition-all duration-200 ${
-                    timeRange === opt.value
-                      ? "bg-foreground text-surface"
-                      : "text-foreground hover:bg-surface"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {timeRangeOptions.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => { setTimeRange(opt.value); setRefDate(new Date()); }}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                  timeRange === opt.value
+                    ? "bg-foreground text-surface"
+                    : "bg-surface text-foreground hover:bg-foreground/[0.06]"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
 
-          {timeRange !== "All" && (
-            <div className="flex items-center justify-center gap-4">
-              <button
-                onClick={() => setRefDate(navigate(refDate, timeRange, -1))}
-                className="rounded-full p-1.5 text-lg leading-none text-muted transition-all duration-200 hover:scale-110 hover:text-foreground"
-              >
-                ‹
-              </button>
-              <span className="min-w-[10rem] text-center text-sm font-medium text-foreground">
-                {getRangeLabel(refDate, timeRange)}
-              </span>
-              <button
-                onClick={() => setRefDate(navigate(refDate, timeRange, 1))}
-                className="rounded-full p-1.5 text-lg leading-none text-muted transition-all duration-200 hover:scale-110 hover:text-foreground"
-              >
-                ›
-              </button>
+          {timeRange === "Custom" && (
+            <div className="flex items-center justify-center gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">From</label>
+                <input
+                  type="date"
+                  value={customStart}
+                  onChange={(e) => setCustomStart(e.target.value)}
+                  className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-accent-green focus:outline-none"
+                />
+              </div>
+              <span className="mt-5 text-muted">&ndash;</span>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">To</label>
+                <input
+                  type="date"
+                  value={customEnd}
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                  className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-accent-green focus:outline-none"
+                />
+              </div>
             </div>
           )}
+
+          <p className="text-center text-xs text-muted">
+            {getRangeLabel(refDate, timeRange, customStartDate, customEndDate)}
+          </p>
 
           <div className="flex justify-center gap-3">
             <button
@@ -1443,20 +1470,31 @@ export default function OverviewPage() {
         </div>
 
         {/* Area charts – trends over time (show when 2+ entries) */}
-        {chronological.length >= 2 && (
+        {filteredChronological.length >= 2 && (
           <div className="space-y-6">
-            <SymptomAreaChart title="Pain Levels" data={chronological} lines={painLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
-            <SymptomAreaChart title="Other Symptoms" data={chronological} lines={otherLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
-            <SymptomAreaChart title="Lifestyle Triggers" data={chronological} lines={lifestyleLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
+            <SymptomAreaChart title="Pain Levels" data={filteredChronological} lines={painLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
+            <SymptomAreaChart title="Other Symptoms" data={filteredChronological} lines={otherLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
+            <SymptomAreaChart title="Lifestyle Triggers" data={filteredChronological} lines={lifestyleLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
           </div>
         )}
 
-        {/* Heatmap – deep dive at the bottom */}
-        <HeatmapGrid data={chartData} />
+        {/* Heatmap – daily view matching selected time range */}
+        <DailyHeatmap entries={filteredChronological} />
 
-        {/* Daily logs – clickable accordion */}
+        {/* Daily logs – collapsible section */}
         <div className="space-y-2">
-          <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Daily logs</h2>
+          <button
+            onClick={() => setDailyLogsOpen(!dailyLogsOpen)}
+            className="flex w-full items-center justify-between py-2"
+          >
+            <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">Detailed List of Daily Log Entries</h2>
+            <span className={`text-muted transition-transform duration-200 ${dailyLogsOpen ? "rotate-180" : ""}`}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          </button>
+          {dailyLogsOpen && (
           <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
             {entries.map((entry) => {
               const isOpen = expandedId === entry.id;
@@ -1544,6 +1582,7 @@ export default function OverviewPage() {
               );
             })}
           </ul>
+          )}
         </div>
       </div>
     </div>
