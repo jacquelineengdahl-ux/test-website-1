@@ -177,10 +177,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── CHART PREVIEW ─── */}
+      {/* ─── DATA VIZ 2×2 GRID ─── */}
       <section className="px-6 py-20 md:px-12 md:py-28">
-        <div className="mx-auto grid max-w-[1100px] items-center gap-10 md:grid-cols-2 md:gap-16">
-          <div>
+        <div className="mx-auto grid max-w-[1100px] gap-5 md:grid-cols-2">
+          {/* Text block – top left */}
+          <div className="flex flex-col justify-center">
             <p className="section-label mb-3">Data Visualization</p>
             <h2 className="font-serif text-3xl font-light text-foreground md:text-4xl">
               See your patterns, beautifully
@@ -191,12 +192,38 @@ export default function Home() {
             </p>
             <Link
               href="/signup"
-              className="mt-8 inline-flex rounded-full bg-foreground px-7 py-3 text-base font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
+              className="mt-8 inline-flex self-start rounded-full bg-foreground px-7 py-3 text-base font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
             >
               Explore Your Data
             </Link>
           </div>
-          {/* Dark chart card */}
+          {/* Quick Stats card – top right */}
+          <div className="relative overflow-hidden rounded-3xl bg-foreground p-7 text-surface">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-green/[0.06] to-transparent" />
+            <p className="relative text-xs font-medium uppercase tracking-[0.12em] text-surface/40">
+              Dashboard
+            </p>
+            <p className="relative mt-1 font-serif text-lg text-surface/90">
+              Quick Stats
+            </p>
+            <div className="relative mt-5 grid grid-cols-2 gap-3">
+              {[
+                { value: "14", label: "Logs This Month" },
+                { value: "4.2", label: "Avg Severity" },
+                { value: "Pelvic", label: "Top Symptom" },
+                { value: "7/10", label: "Highest Pain Level" },
+              ].map((card) => (
+                <div
+                  key={card.label}
+                  className="rounded-xl border border-surface/10 bg-surface/[0.06] px-3 py-4 text-center"
+                >
+                  <p className="font-serif text-2xl font-semibold text-surface/90">{card.value}</p>
+                  <p className="mt-1 text-[11px] text-surface/40">{card.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Symptom Trends card – bottom left */}
           <div className="relative overflow-hidden rounded-3xl bg-foreground p-7 text-surface">
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-green/[0.06] to-transparent" />
             <p className="relative text-xs font-medium uppercase tracking-[0.12em] text-surface/40">
@@ -206,94 +233,124 @@ export default function Home() {
               Symptom Trends
             </p>
             <div className="relative mt-5">
-              <svg viewBox="0 0 400 140" fill="none" className="h-[140px] w-full">
-                <line x1="0" y1="35" x2="400" y2="35" stroke="rgba(255,255,255,0.05)" />
-                <line x1="0" y1="70" x2="400" y2="70" stroke="rgba(255,255,255,0.05)" />
-                <line x1="0" y1="105" x2="400" y2="105" stroke="rgba(255,255,255,0.05)" />
-                <path d="M0,105 L57,85 L114,95 L171,60 L228,75 L285,45 L342,65 L400,55 L400,140 L0,140Z" fill="url(#goldGrad)" opacity="0.25" />
-                <path d="M0,80 L57,70 L114,90 L171,75 L228,50 L285,65 L342,40 L400,50 L400,140 L0,140Z" fill="url(#terraGrad)" opacity="0.15" />
-                <path d="M0,105 L57,85 L114,95 L171,60 L228,75 L285,45 L342,65 L400,55" stroke="#d4b465" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M0,80 L57,70 L114,90 L171,75 L228,50 L285,65 L342,40 L400,50" stroke="#cc9478" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="285" cy="45" r="4" fill="#d4b465" />
-                <circle cx="342" cy="40" r="4" fill="#cc9478" />
+              <svg viewBox="0 0 420 210" fill="none" className="h-[170px] w-full">
+                {/* Area fills – smooth curves, baseline y:200 */}
+                {/* Pelvic (blue) – 2→3→1→5→5→3 */}
+                <path d="M10,160 C50,148 70,140 90,140 C110,140 130,180 170,176 C210,172 220,100 250,100 C280,100 300,132 330,140 C360,148 390,160 410,160 L410,200 L10,200Z" fill="url(#prevBlueGrad)" />
+                {/* Lower Back (pink) – 4→3→3→0→3→2 */}
+                <path d="M10,120 C40,128 70,140 90,140 C110,140 140,136 170,140 C200,144 220,200 250,200 C280,200 300,160 330,140 C360,120 390,160 410,160 L410,200 L10,200Z" fill="url(#prevPinkGrad)" />
+                {/* Leg (red) – 1→3→4→3→1→2 */}
+                <path d="M10,180 C40,168 70,148 90,140 C110,132 140,120 170,120 C200,120 220,140 250,140 C280,140 300,168 330,180 C360,192 390,168 410,160 L410,200 L10,200Z" fill="url(#prevRedGrad)" />
+                {/* Headache (orange) – 0→0→4→3→1→2 */}
+                <path d="M10,200 C40,200 70,200 90,200 C110,200 140,140 170,120 C200,100 220,140 250,140 C280,140 300,168 330,180 C360,192 390,168 410,160 L410,200 L10,200Z" fill="url(#prevOrangeGrad)" />
+                {/* Bloating (green) – 1→2→1→2→2→2 */}
+                <path d="M10,180 C40,172 70,164 90,160 C110,156 140,176 170,180 C200,184 220,164 250,160 C280,156 300,160 330,160 C360,160 390,160 410,160 L410,200 L10,200Z" fill="url(#prevGreenGrad)" />
+                {/* Stroke lines */}
+                <path d="M10,160 C50,148 70,140 90,140 C110,140 130,180 170,176 C210,172 220,100 250,100 C280,100 300,132 330,140 C360,148 390,160 410,160" stroke="#92A8C8" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M10,120 C40,128 70,140 90,140 C110,140 140,136 170,140 C200,144 220,200 250,200 C280,200 300,160 330,140 C360,120 390,160 410,160" stroke="#E4B5B5" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M10,180 C40,168 70,148 90,140 C110,132 140,120 170,120 C200,120 220,140 250,140 C280,140 300,168 330,180 C360,192 390,168 410,160" stroke="#C4685A" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M10,200 C40,200 70,200 90,200 C110,200 140,140 170,120 C200,100 220,140 250,140 C280,140 300,168 330,180 C360,192 390,168 410,160" stroke="#D4836E" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M10,180 C40,172 70,164 90,160 C110,156 140,176 170,180 C200,184 220,164 250,160 C280,156 300,160 330,160 C360,160 390,160 410,160" stroke="#A8C49A" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                {/* Data point dots */}
+                {[[10,160],[90,140],[170,176],[250,100],[330,140],[410,160]].map(([cx,cy], i) => (
+                  <circle key={`b${i}`} cx={cx} cy={cy} r="3" fill="#92A8C8" />
+                ))}
+                {[[10,120],[90,140],[170,140],[250,200],[330,140],[410,160]].map(([cx,cy], i) => (
+                  <circle key={`p${i}`} cx={cx} cy={cy} r="3" fill="#E4B5B5" />
+                ))}
+                {[[10,180],[90,140],[170,120],[250,140],[330,180],[410,160]].map(([cx,cy], i) => (
+                  <circle key={`r${i}`} cx={cx} cy={cy} r="3" fill="#C4685A" />
+                ))}
+                {[[10,200],[90,200],[170,120],[250,140],[330,180],[410,160]].map(([cx,cy], i) => (
+                  <circle key={`o${i}`} cx={cx} cy={cy} r="3" fill="#D4836E" />
+                ))}
+                {[[10,180],[90,160],[170,180],[250,160],[330,160],[410,160]].map(([cx,cy], i) => (
+                  <circle key={`g${i}`} cx={cx} cy={cy} r="3" fill="#A8C49A" />
+                ))}
                 <defs>
-                  <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#d4b465" stopOpacity="0.5" />
-                    <stop offset="100%" stopColor="#d4b465" stopOpacity="0" />
+                  <linearGradient id="prevBlueGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#92A8C8" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#92A8C8" stopOpacity="0" />
                   </linearGradient>
-                  <linearGradient id="terraGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#cc9478" stopOpacity="0.4" />
-                    <stop offset="100%" stopColor="#cc9478" stopOpacity="0" />
+                  <linearGradient id="prevPinkGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#E4B5B5" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#E4B5B5" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="prevRedGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#C4685A" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#C4685A" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="prevOrangeGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#D4836E" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#D4836E" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="prevGreenGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#A8C49A" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#A8C49A" stopOpacity="0" />
                   </linearGradient>
                 </defs>
               </svg>
             </div>
-            <div className="relative mt-3 flex gap-5">
+            <div className="relative mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
               <span className="flex items-center gap-1.5 text-xs text-surface/60">
-                <span className="h-2 w-2 rounded-full bg-gold-light" /> Pain
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "#92A8C8" }} /> Pelvic
               </span>
               <span className="flex items-center gap-1.5 text-xs text-surface/60">
-                <span className="h-2 w-2 rounded-full bg-terracotta-light" /> Fatigue
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "#E4B5B5" }} /> Lower Back
               </span>
               <span className="flex items-center gap-1.5 text-xs text-surface/60">
-                <span className="h-2 w-2 rounded-full bg-muted" /> Mood
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "#C4685A" }} /> Leg
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-surface/60">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "#D4836E" }} /> Headache
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-surface/60">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "#A8C49A" }} /> Bloating
               </span>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ─── DATA VIZ GRID ─── */}
-      <section className="px-6 pb-20 md:px-12 md:pb-28">
-        <div className="mx-auto grid max-w-[1100px] gap-5 md:grid-cols-2">
-          {/* Bar chart card */}
+          {/* Monthly Heatmap card */}
           <div className="relative overflow-hidden rounded-3xl bg-foreground p-7 text-surface">
-            <p className="text-xs font-medium uppercase tracking-[0.12em] text-surface/40">
-              Last 14 Days
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-green/[0.06] to-transparent" />
+            <p className="relative text-xs font-medium uppercase tracking-[0.12em] text-surface/40">
+              Your Activity
             </p>
-            <p className="mt-1 font-serif text-lg text-surface/90">Pain Overview</p>
-            <div className="mt-5 flex items-end gap-1.5" style={{ height: 100 }}>
-              {[35,55,70,40,85,60,30,50,75,45,65,35,80,50].map((h, i) => (
+            <p className="relative mt-1 font-serif text-lg text-surface/90">
+              Monthly Heatmap
+            </p>
+            <div className="relative mt-5 grid grid-cols-7 gap-2">
+              {[0,3,5,7,3.5,2,5.5,2.5,8,4.5,1,4,6,3,1,5.5,3.5,6.5,2,5,1.5,4,7,0,2,8,3,6].map((v, i) => (
                 <div
                   key={i}
-                  className="flex-1 rounded-t transition-opacity hover:opacity-100"
+                  className="aspect-square rounded"
                   style={{
-                    height: `${h}%`,
-                    background: i % 3 === 0
-                      ? "linear-gradient(to top, #b8943f, #d4b465)"
-                      : "linear-gradient(to top, #b87858, #cc9478)",
-                    opacity: 0.85,
+                    backgroundColor:
+                      v === 0 ? "rgba(214, 208, 200, 0.08)" :
+                      v <= 3 ? `rgba(184, 148, 63, ${0.2 + v * 0.1})` :
+                      v <= 5 ? `rgba(212, 180, 101, 0.65)` :
+                      `rgba(184, 120, 88, ${0.5 + (v - 5) * 0.1})`,
                   }}
                 />
               ))}
             </div>
-          </div>
-          {/* Stats card */}
-          <div className="flex flex-col justify-between overflow-hidden rounded-3xl bg-foreground p-7 text-surface">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.12em] text-surface/40">
-                Your Streak
-              </p>
-              <p className="mt-1 font-serif text-5xl font-light text-gold-light">14</p>
-              <p className="mt-1 text-sm text-surface/40">consecutive days logged</p>
-            </div>
-            <div className="mt-6">
-              <p className="text-xs font-medium uppercase tracking-[0.12em] text-surface/40">
-                Monthly Heatmap
-              </p>
-              <div className="mt-3 grid grid-cols-7 gap-1">
-                {[15,30,50,70,35,20,55,25,80,45,15,40,60,30,10,55,35,65,20,50,15].map((v, i) => (
-                  <div
-                    key={i}
-                    className="aspect-square rounded transition-transform hover:scale-125"
-                    style={{
-                      background: v > 50
-                        ? `rgba(184, 120, 88, ${v / 100})`
-                        : `rgba(184, 148, 63, ${v / 100})`,
-                    }}
-                  />
-                ))}
-              </div>
+            <div className="relative mt-4 flex items-center gap-0.5 text-xs text-surface/40">
+              <span className="mr-1">0</span>
+              {Array.from({ length: 11 }, (_, v) => (
+                <div
+                  key={v}
+                  className="rounded-[3px]"
+                  style={{
+                    width: 14,
+                    height: 14,
+                    backgroundColor:
+                      v === 0 ? "rgba(214, 208, 200, 0.08)" :
+                      v <= 3 ? `rgba(184, 148, 63, ${0.2 + v * 0.1})` :
+                      v <= 5 ? `rgba(212, 180, 101, 0.65)` :
+                      `rgba(184, 120, 88, ${0.5 + (v - 5) * 0.1})`,
+                  }}
+                />
+              ))}
+              <span className="ml-1">10</span>
             </div>
           </div>
         </div>
