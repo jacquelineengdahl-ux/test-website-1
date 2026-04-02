@@ -107,6 +107,255 @@ const GOAL_SUB_OPTIONS: Record<string, string[]> = {
   "Mental health": ["Therapy/counseling", "Anxiety management", "Acceptance", "Support group", "Mindfulness"],
 };
 
+/* ── Phone number data ── */
+const COUNTRY_CODES = [
+  { flag: "🇸🇪", code: "+46", name: "Sweden" },
+  { flag: "🇺🇸", code: "+1", name: "United States" },
+  { flag: "🇬🇧", code: "+44", name: "United Kingdom" },
+  { flag: "🇩🇪", code: "+49", name: "Germany" },
+  { flag: "🇫🇷", code: "+33", name: "France" },
+  { flag: "🇳🇴", code: "+47", name: "Norway" },
+  { flag: "🇩🇰", code: "+45", name: "Denmark" },
+  { flag: "🇫🇮", code: "+358", name: "Finland" },
+  { flag: "🇳🇱", code: "+31", name: "Netherlands" },
+  { flag: "🇪🇸", code: "+34", name: "Spain" },
+  { flag: "🇮🇹", code: "+39", name: "Italy" },
+  { flag: "🇵🇹", code: "+351", name: "Portugal" },
+  { flag: "🇦🇹", code: "+43", name: "Austria" },
+  { flag: "🇨🇭", code: "+41", name: "Switzerland" },
+  { flag: "🇧🇪", code: "+32", name: "Belgium" },
+  { flag: "🇮🇪", code: "+353", name: "Ireland" },
+  { flag: "🇵🇱", code: "+48", name: "Poland" },
+  { flag: "🇨🇿", code: "+420", name: "Czech Republic" },
+  { flag: "🇬🇷", code: "+30", name: "Greece" },
+  { flag: "🇦🇺", code: "+61", name: "Australia" },
+  { flag: "🇳🇿", code: "+64", name: "New Zealand" },
+  { flag: "🇨🇦", code: "+1", name: "Canada" },
+  { flag: "🇯🇵", code: "+81", name: "Japan" },
+  { flag: "🇰🇷", code: "+82", name: "South Korea" },
+  { flag: "🇮🇳", code: "+91", name: "India" },
+  { flag: "🇧🇷", code: "+55", name: "Brazil" },
+  { flag: "🇲🇽", code: "+52", name: "Mexico" },
+  { flag: "🇿🇦", code: "+27", name: "South Africa" },
+  { flag: "🇮🇱", code: "+972", name: "Israel" },
+  { flag: "🇹🇷", code: "+90", name: "Turkey" },
+];
+
+function PhoneInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  // Parse existing value into code + number
+  const [selectedCode, setSelectedCode] = useState(() => {
+    // Try to match an existing area code from the value
+    if (value) {
+      const match = COUNTRY_CODES.find((c) => value.startsWith(c.code));
+      if (match) return match.code;
+    }
+    return "+46"; // default Sweden
+  });
+  const [localNumber, setLocalNumber] = useState(() => {
+    if (value) {
+      const match = COUNTRY_CODES.find((c) => value.startsWith(c.code));
+      if (match) return value.slice(match.code.length).trim();
+      // If value doesn't start with a code, treat entire thing as local
+      if (!value.startsWith("+")) return value;
+    }
+    return "";
+  });
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const selected = COUNTRY_CODES.find((c) => c.code === selectedCode) ?? COUNTRY_CODES[0];
+
+  const filtered = search
+    ? COUNTRY_CODES.filter((c) =>
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        c.code.includes(search)
+      )
+    : COUNTRY_CODES;
+
+  function updateFull(code: string, num: string) {
+    const cleaned = num.replace(/^\s+/, "");
+    const full = cleaned ? `${code} ${cleaned}` : "";
+    onChange(full);
+  }
+
+  // Sync combined value on mount if local number exists but stored value doesn't have the code
+  useEffect(() => {
+    if (localNumber && value && !value.startsWith("+")) {
+      updateFull(selectedCode, localNumber);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function handleSelectCode(code: string) {
+    setSelectedCode(code);
+    setDropdownOpen(false);
+    setSearch("");
+    updateFull(code, localNumber);
+  }
+
+  function handleNumberChange(num: string) {
+    setLocalNumber(num);
+    updateFull(selectedCode, num);
+  }
+
+  return (
+    <div className="flex gap-2">
+      {/* Country code selector */}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setDropdownOpen(!dropdownOpen)}
+          className="flex h-full items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-3 text-sm text-foreground hover:bg-surface transition-colors"
+        >
+          <span className="text-base">{selected.flag}</span>
+          <span className="text-muted">{selected.code}</span>
+          <svg className="h-3 w-3 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {dropdownOpen && (
+          <div className="absolute left-0 top-full z-40 mt-1 w-64 overflow-hidden rounded-xl border border-border bg-surface shadow-lg">
+            <div className="border-b border-border px-3 py-2">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search country..."
+                autoFocus
+                className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
+              />
+            </div>
+            <div className="max-h-48 overflow-y-auto">
+              {filtered.map((c) => (
+                <button
+                  key={`${c.flag}${c.code}${c.name}`}
+                  type="button"
+                  onMouseDown={() => handleSelectCode(c.code)}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-background transition-colors"
+                >
+                  <span className="text-base">{c.flag}</span>
+                  <span className="text-muted">{c.code}</span>
+                  <span className="text-foreground">{c.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      {/* Number input */}
+      <input
+        type="tel"
+        value={localNumber}
+        onChange={(e) => handleNumberChange(e.target.value)}
+        placeholder="70 123 4567"
+        className="flex-1 rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+      />
+    </div>
+  );
+}
+
+function formatPhoneDisplay(phone: string): string {
+  if (!phone) return "";
+  // Find matching country code
+  const match = COUNTRY_CODES.find((c) => phone.startsWith(c.code));
+  if (!match) return phone;
+  const local = phone.slice(match.code.length).trim();
+  if (!local) return match.code;
+
+  // US/Canada: +1(917)992-1234
+  if (match.code === "+1" && local.length >= 10) {
+    const digits = local.replace(/\D/g, "");
+    if (digits.length === 10) {
+      return `${match.code}(${digits.slice(0, 3)})${digits.slice(3, 6)}-${digits.slice(6)}`;
+    }
+    return `${match.code}(${local})`;
+  }
+
+  // Most other countries: +46 (0)707644253
+  // If local starts with 0, wrap it: +46 (0)707644253
+  if (local.startsWith("0")) {
+    return `${match.code} (0)${local.slice(1)}`;
+  }
+  // If no leading 0, just format as +46 707644253
+  return `${match.code} ${local}`;
+}
+
+/* ── Location autocomplete component ── */
+function LocationAutocomplete({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [query, setQuery] = useState(value);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => { setQuery(value); }, [value]);
+
+  function handleInput(input: string) {
+    setQuery(input);
+    onChange(input);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (input.length < 2) { setSuggestions([]); return; }
+
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(input)}&count=6&language=en&format=json`
+        );
+        const data = await res.json();
+        if (data.results) {
+          const items = data.results.map(
+            (r: { name: string; country: string; admin1?: string }) =>
+              r.admin1 && r.admin1 !== r.name ? `${r.name}, ${r.admin1}, ${r.country}` : `${r.name}, ${r.country}`
+          );
+          // Deduplicate
+          setSuggestions([...new Set<string>(items)]);
+          setShowSuggestions(true);
+        } else {
+          setSuggestions([]);
+        }
+      } catch {
+        setSuggestions([]);
+      }
+    }, 300);
+  }
+
+  function selectSuggestion(s: string) {
+    setQuery(s);
+    onChange(s);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  }
+
+  return (
+    <div className="relative">
+      <input
+        id="location"
+        type="text"
+        value={query}
+        onChange={(e) => handleInput(e.target.value)}
+        onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+        placeholder="Start typing a city..."
+        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+      />
+      {showSuggestions && suggestions.length > 0 && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-xl border border-border bg-surface shadow-lg">
+          {suggestions.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onMouseDown={() => selectSuggestion(s)}
+              className="w-full px-4 py-2.5 text-left text-sm text-foreground hover:bg-background transition-colors first:rounded-t-xl last:rounded-b-xl"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Tooltip component ── */
 function Tooltip({ text }: { text: string }) {
   const [show, setShow] = useState(false);
@@ -355,12 +604,13 @@ function pillsToString(selected: string[], otherValue: string, subSelections?: R
 }
 
 /* ── Accordion Section Component ── */
-function AccordionSection({ id, title, subtitle, isOpen, onToggle, children }: {
+function AccordionSection({ id, title, subtitle, isOpen, onToggle, onEdit, children }: {
   id: string;
   title: string;
   subtitle?: string;
   isOpen: boolean;
   onToggle: () => void;
+  onEdit?: () => void;
   children: React.ReactNode;
 }) {
   return (
@@ -370,16 +620,29 @@ function AccordionSection({ id, title, subtitle, isOpen, onToggle, children }: {
         onClick={onToggle}
         className="flex w-full items-center justify-between p-5 text-left transition-colors hover:bg-background/50"
       >
-        <div>
+        <div className="min-w-0 flex-1">
           <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">{title}</h2>
-          {subtitle && !isOpen && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
+          {subtitle && !isOpen && <p className="mt-0.5 text-sm text-muted truncate">{subtitle}</p>}
         </div>
-        <svg
-          className={`h-5 w-5 shrink-0 text-muted transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+        <div className="flex shrink-0 items-center gap-2 ml-3">
+          {onEdit && isOpen && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onEdit(); } }}
+              className="text-xs text-muted hover:text-foreground"
+            >
+              Edit
+            </span>
+          )}
+          <svg
+            className={`h-5 w-5 text-muted transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </button>
       {isOpen && (
         <div className="border-t border-border px-5 pb-5 pt-4">
@@ -428,12 +691,23 @@ export default function ProfilePage() {
   // Accordion state (multi-open)
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
 
-  // Providers locked state
+  // Locked (saved/view) states per section
+  const [personalLocked, setPersonalLocked] = useState(false);
+  const [medicalLocked, setMedicalLocked] = useState(false);
+  const [treatmentLocked, setTreatmentLocked] = useState(false);
   const [providersLocked, setProvidersLocked] = useState(false);
 
   // Goals: other text input
   const [goalOther, setGoalOther] = useState("");
   const [goalSubSelections, setGoalSubSelections] = useState<Record<string, string[]>>({});
+
+  // Toast
+  const [savedToast, setSavedToast] = useState(false);
+
+  function showSavedToast() {
+    setSavedToast(true);
+    setTimeout(() => setSavedToast(false), 2000);
+  }
 
   // Save / error
   const [savingPersonal, setSavingPersonal] = useState(false);
@@ -503,6 +777,17 @@ export default function ProfilePage() {
 
         setHealthcareProviders(profile.healthcare_providers ?? []);
         setProvidersLocked((profile.healthcare_providers ?? []).length > 0);
+
+        // Initialize locked states based on existing data
+        if (profile.name || profile.date_of_birth || profile.country) {
+          setPersonalLocked(true);
+        }
+        if (profile.first_symptom_date || profile.diagnosis_date || profile.endo_stage) {
+          setMedicalLocked(true);
+        }
+        if (profile.hormonal_treatment || profile.treatment_plan || profile.supporting_treatment || (profile.treatment_goals ?? []).length > 0) {
+          setTreatmentLocked(true);
+        }
 
         // Parse goals (with sub-selections)
         const goals = profile.treatment_goals ?? [];
@@ -649,8 +934,12 @@ export default function ProfilePage() {
     setSavingPersonal(false);
     if (upsertError) {
       setError(upsertError.message);
-    } else if (isWelcome) {
-      setOpenSections(new Set(["medical"]));
+    } else {
+      setPersonalLocked(true);
+      showSavedToast();
+      if (isWelcome) {
+        setOpenSections(new Set(["medical"]));
+      }
     }
   }
 
@@ -677,8 +966,11 @@ export default function ProfilePage() {
     setSavingMedical(false);
     if (upsertError) {
       setError(upsertError.message);
-    } else if (isWelcome) {
-      setOpenSections(new Set(["treatment"]));
+    } else {
+      setMedicalLocked(true);
+      if (isWelcome) {
+        setOpenSections(new Set(["treatment"]));
+      }
     }
   }
 
@@ -719,6 +1011,7 @@ export default function ProfilePage() {
       setError(upsertError.message);
     } else {
       setTreatmentGoals(allGoals);
+      setTreatmentLocked(true);
       if (isWelcome) {
         setOpenSections(new Set(["providers"]));
       }
@@ -776,6 +1069,14 @@ export default function ProfilePage() {
 
   function removeMedicalEvent(index: number) {
     setMedicalEvents(medicalEvents.filter((_, i) => i !== index));
+  }
+
+  function moveMedicalEvent(index: number, direction: "up" | "down") {
+    const newEvents = [...medicalEvents];
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= newEvents.length) return;
+    [newEvents[index], newEvents[swapIndex]] = [newEvents[swapIndex], newEvents[index]];
+    setMedicalEvents(newEvents);
   }
 
   // ── Goal helpers ──
@@ -949,14 +1250,23 @@ export default function ProfilePage() {
 
   // ── Dynamic subtitles ──
   const personalSubtitle = name
-    ? `${name}${age !== null ? `, ${age} years old` : ""}`
+    ? [name, age !== null ? `${age}` : "", country].filter(Boolean).join(" \u00B7 ")
     : undefined;
 
-  const medicalSubtitle = [endoStage, diagnosisYear ? `Diagnosed ${diagnosisYear}` : ""].filter(Boolean).join(" \u00B7 ") || undefined;
+  const filledEvents = medicalEvents.filter((e) => e.year || e.type);
+  const medicalSubtitle = [
+    endoStage,
+    diagnosisYear ? `Diagnosed ${diagnosisYear}` : "",
+    filledEvents.length > 0 ? `${filledEvents.length} event${filledEvents.length === 1 ? "" : "s"}` : "",
+  ].filter(Boolean).join(" \u00B7 ") || undefined;
 
   const activeGoals = treatmentGoals.filter((g) => g.trim());
+  const treatmentPillsSummary = treatmentPlanSelected.filter((s) => s !== "Other").slice(0, 2);
+  const supportingSummary = supportingSelected.filter((s) => s !== "Other").slice(0, 2);
   const treatmentSubtitle = [
     hormonalTreatment || "",
+    treatmentPillsSummary.length > 0 ? treatmentPillsSummary.join(", ") : "",
+    supportingSummary.length > 0 ? supportingSummary.join(", ") : "",
     activeGoals.length > 0 ? `${activeGoals.length} goal${activeGoals.length === 1 ? "" : "s"}` : "",
   ].filter(Boolean).join(" \u00B7 ") || undefined;
 
@@ -968,6 +1278,15 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-background py-10 md:py-16 px-4 md:px-6">
+      {/* Saved toast */}
+      {savedToast && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-[fadeIn_0.2s_ease] flex items-center gap-2 rounded-full bg-accent-green px-6 py-3 text-sm font-medium text-white shadow-lg">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          Your changes have been saved
+        </div>
+      )}
       <div className="mx-auto w-full max-w-lg space-y-4">
         <div>
           <p className="section-label">Account</p>
@@ -1025,63 +1344,77 @@ export default function ProfilePage() {
           subtitle={personalSubtitle}
           isOpen={openSections.has("personal")}
           onToggle={() => toggleSection("personal")}
+          onEdit={personalLocked ? () => setPersonalLocked(false) : undefined}
         >
-          <form onSubmit={handleSavePersonal} className="space-y-3">
-            <div>
-              <label htmlFor="name" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Name</label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-              />
+          {personalLocked ? (
+            <div className="space-y-3">
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">Name</p>
+                <p className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">{name || <span className="text-muted">Not set</span>}</p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">Date of birth</p>
+                <p className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">
+                  {dateOfBirth ? `${formatDate(dateOfBirth)}${age !== null ? ` (${age} years old)` : ""}` : <span className="text-muted">Not set</span>}
+                </p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">Email</p>
+                <p className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">{email}</p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">Phone number</p>
+                <p className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">{mobileNumber ? formatPhoneDisplay(mobileNumber) : <span className="text-muted">Not set</span>}</p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">Location</p>
+                <p className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">{country || <span className="text-muted">Not set</span>}</p>
+              </div>
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Email</label>
-              <p className="rounded-xl border border-border bg-background/50 px-4 py-3 text-sm text-muted">{email}</p>
-            </div>
-            <div>
-              <label htmlFor="date-of-birth" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Date of birth</label>
-              <input
-                id="date-of-birth"
-                type="date"
-                value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-              />
-            </div>
-            <div>
-              <label htmlFor="mobile-number" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Mobile number</label>
-              <input
-                id="mobile-number"
-                type="tel"
-                value={mobileNumber}
-                onChange={(e) => setMobileNumber(e.target.value)}
-                placeholder="Your mobile number"
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-              />
-            </div>
-            <div>
-              <label htmlFor="country" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Country</label>
-              <input
-                id="country"
-                type="text"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                placeholder="Your country"
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={savingPersonal}
-              className="w-full rounded-full bg-foreground py-2 font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
-            >
-              {savingPersonal ? "Saving..." : "Save"}
-            </button>
-          </form>
+          ) : (
+            <form onSubmit={handleSavePersonal} className="space-y-3">
+              <div>
+                <label htmlFor="name" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Name</label>
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name"
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                />
+              </div>
+              <div>
+                <label htmlFor="date-of-birth" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Date of birth</label>
+                <input
+                  id="date-of-birth"
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Email</label>
+                <p className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">{email}</p>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Phone number</label>
+                <PhoneInput value={mobileNumber} onChange={setMobileNumber} />
+              </div>
+              <div>
+                <label htmlFor="location" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Location</label>
+                <LocationAutocomplete value={country} onChange={setCountry} />
+              </div>
+              <button
+                type="submit"
+                disabled={savingPersonal}
+                className="w-full rounded-full bg-foreground py-2 font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
+              >
+                {savingPersonal ? "Saving..." : "Save"}
+              </button>
+            </form>
+          )}
         </AccordionSection>
 
         {/* ── 2. Medical Background ── */}
@@ -1091,135 +1424,229 @@ export default function ProfilePage() {
           subtitle={medicalSubtitle}
           isOpen={openSections.has("medical")}
           onToggle={() => toggleSection("medical")}
+          onEdit={medicalLocked ? () => setMedicalLocked(false) : undefined}
         >
-          <form onSubmit={handleSaveMedicalBackground} className="space-y-3">
-            {/* Year inputs side by side */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="first-symptom-year" className="mb-1 flex items-center text-xs font-semibold uppercase tracking-wider text-muted">
-                  Year of first symptom
-                  <Tooltip text="You don't need to know exactly, but if you remember when you first started having issues, enter that year." />
-                </label>
-                <input
-                  id="first-symptom-year"
-                  type="number"
-                  min="1950"
-                  max={new Date().getFullYear()}
-                  value={firstSymptomYear}
-                  onChange={(e) => setFirstSymptomYear(e.target.value)}
-                  placeholder="e.g. 2015"
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-                />
-              </div>
-              <div>
-                <label htmlFor="diagnosis-year" className="mb-1 flex items-center text-xs font-semibold uppercase tracking-wider text-muted">
-                  Year of diagnosis
-                  <Tooltip text="The year you received your endometriosis diagnosis." />
-                </label>
-                <input
-                  id="diagnosis-year"
-                  type="number"
-                  min="1950"
-                  max={new Date().getFullYear()}
-                  value={diagnosisYear}
-                  onChange={(e) => setDiagnosisYear(e.target.value)}
-                  placeholder="e.g. 2020"
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-                />
-              </div>
-            </div>
-            {/* Time to diagnosis highlight box */}
-            {ttd && (
-              <div className="rounded-xl border-2 border-accent-green bg-accent-green/[0.06] px-5 py-4 text-center">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Time to diagnosis</p>
-                <p className="text-2xl font-serif font-semibold text-foreground">{ttd}</p>
-              </div>
-            )}
-            <div>
-              <label htmlFor="endo-stage" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Endo stage</label>
-              <select
-                id="endo-stage"
-                value={endoStage}
-                onChange={(e) => setEndoStage(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-              >
-                <option value="">Select...</option>
-                <option value="Stage I">Stage I</option>
-                <option value="Stage II">Stage II</option>
-                <option value="Stage III">Stage III</option>
-                <option value="Stage IV">Stage IV</option>
-                <option value="Not sure">Not sure</option>
-              </select>
-            </div>
-
-            {/* Medical Events Timeline */}
-            <div className="pt-6 border-t border-border mt-6">
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted">Medical Events</label>
-              <p className="mb-3 text-sm text-muted">Track important medical events in your endo journey.</p>
-
-              {medicalEvents.length > 0 && (
-                <div className="space-y-2 mb-3">
-                  {medicalEvents.map((event, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <div className="flex-1 space-y-1">
-                        <div className="grid grid-cols-2 gap-2">
-                          <input
-                            type="number"
-                            min="1950"
-                            max={new Date().getFullYear()}
-                            value={event.year}
-                            onChange={(e) => updateMedicalEvent(i, "year", e.target.value)}
-                            placeholder="Year"
-                            className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-accent-green focus:outline-none"
-                          />
-                          <select
-                            value={event.type}
-                            onChange={(e) => updateMedicalEvent(i, "type", e.target.value)}
-                            className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-accent-green focus:outline-none"
-                          >
-                            <option value="">Type...</option>
-                            {MEDICAL_EVENT_TYPES.map((t) => (
-                              <option key={t} value={t}>{t}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <input
-                          type="text"
-                          value={event.notes}
-                          onChange={(e) => updateMedicalEvent(i, "notes", e.target.value)}
-                          placeholder="Short description (optional)"
-                          className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-accent-green focus:outline-none"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeMedicalEvent(i)}
-                        className="mt-1 shrink-0 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-red-600 hover:border-red-300"
-                      >
-                        Remove
-                      </button>
+          {medicalLocked ? (
+            <div className="space-y-4">
+              {/* Year highlights side by side */}
+              {(firstSymptomYear || diagnosisYear) && (
+                <div className="grid grid-cols-2 gap-3">
+                  {firstSymptomYear && (
+                    <div className="rounded-xl border border-border bg-background px-4 py-3 text-center">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">First symptom</p>
+                      <p className="text-2xl font-serif font-semibold text-foreground">{firstSymptomYear}</p>
                     </div>
-                  ))}
+                  )}
+                  {diagnosisYear && (
+                    <div className="rounded-xl border border-border bg-background px-4 py-3 text-center">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Diagnosis</p>
+                      <p className="text-2xl font-serif font-semibold text-foreground">{diagnosisYear}</p>
+                    </div>
+                  )}
                 </div>
               )}
+              {/* Time to diagnosis accent box */}
+              {ttd && (
+                <div className="rounded-xl border-2 border-accent-green bg-accent-green/[0.06] px-5 py-4 text-center">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Time to diagnosis</p>
+                  <p className="text-2xl font-serif font-semibold text-foreground">{ttd}</p>
+                </div>
+              )}
+              {/* Endo stage pill */}
+              {endoStage && (
+                <div>
+                  <span className="inline-block rounded-full bg-foreground/10 px-3 py-1 text-sm font-medium text-foreground">
+                    {endoStage}
+                  </span>
+                </div>
+              )}
+              {/* Medical events timeline (locked view) */}
+              {(() => {
+                const sortedEvents = [...medicalEvents]
+                  .filter((e) => e.year || e.type)
+                  .sort((a, b) => Number(b.year || 0) - Number(a.year || 0));
+                if (sortedEvents.length === 0) return null;
+                return (
+                  <div className="pt-4 border-t border-border">
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Medical Events</p>
+                    <div className="relative pl-6">
+                      {/* Vertical timeline line */}
+                      <div className="absolute left-[7px] top-1 bottom-1 w-px bg-border" />
+                      <div className="space-y-4">
+                        {sortedEvents.map((event, i) => (
+                          <div key={i} className="relative">
+                            {/* Timeline dot */}
+                            <div className="absolute -left-6 top-1 h-3.5 w-3.5 rounded-full border-2 border-accent-green bg-surface" />
+                            <div className="flex items-baseline gap-3">
+                              <span className="font-serif text-lg font-semibold text-foreground shrink-0">{event.year || "?"}</span>
+                              {event.type && (
+                                <span className="rounded-full bg-accent-green/15 border border-accent-green/30 px-2 py-0.5 text-[11px] font-medium text-foreground shrink-0">
+                                  {event.type}
+                                </span>
+                              )}
+                            </div>
+                            {event.notes && (
+                              <p className="mt-0.5 text-sm text-muted">{event.notes}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          ) : (
+            <form onSubmit={handleSaveMedicalBackground} className="space-y-3">
+              {/* Year inputs side by side */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="first-symptom-year" className="mb-1 flex items-center text-xs font-semibold uppercase tracking-wider text-muted">
+                    Year of first symptom
+                    <Tooltip text="You don't need to know exactly, but if you remember when you first started having issues, enter that year." />
+                  </label>
+                  <input
+                    id="first-symptom-year"
+                    type="number"
+                    min="1950"
+                    max={new Date().getFullYear()}
+                    value={firstSymptomYear}
+                    onChange={(e) => setFirstSymptomYear(e.target.value)}
+                    placeholder="e.g. 2015"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="diagnosis-year" className="mb-1 flex items-center text-xs font-semibold uppercase tracking-wider text-muted">
+                    Year of diagnosis
+                    <Tooltip text="The year you received your endometriosis diagnosis." />
+                  </label>
+                  <input
+                    id="diagnosis-year"
+                    type="number"
+                    min="1950"
+                    max={new Date().getFullYear()}
+                    value={diagnosisYear}
+                    onChange={(e) => setDiagnosisYear(e.target.value)}
+                    placeholder="e.g. 2020"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                  />
+                </div>
+              </div>
+              {/* Time to diagnosis highlight box */}
+              {ttd && (
+                <div className="rounded-xl border-2 border-accent-green bg-accent-green/[0.06] px-5 py-4 text-center">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Time to diagnosis</p>
+                  <p className="text-2xl font-serif font-semibold text-foreground">{ttd}</p>
+                </div>
+              )}
+              <div>
+                <label htmlFor="endo-stage" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Endo stage</label>
+                <select
+                  id="endo-stage"
+                  value={endoStage}
+                  onChange={(e) => setEndoStage(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                >
+                  <option value="">Select...</option>
+                  <option value="Stage I">Stage I</option>
+                  <option value="Stage II">Stage II</option>
+                  <option value="Stage III">Stage III</option>
+                  <option value="Stage IV">Stage IV</option>
+                  <option value="Not sure">Not sure</option>
+                </select>
+              </div>
+
+              {/* Medical Events Timeline (edit mode) */}
+              <div className="pt-6 border-t border-border mt-6">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted">Medical Events</label>
+                <p className="mb-3 text-sm text-muted">Track important medical events in your endo journey.</p>
+
+                {medicalEvents.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {medicalEvents.map((event, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <div className="flex-1 space-y-1">
+                          <div className="grid grid-cols-2 gap-2">
+                            <input
+                              type="number"
+                              min="1950"
+                              max={new Date().getFullYear()}
+                              value={event.year}
+                              onChange={(e) => updateMedicalEvent(i, "year", e.target.value)}
+                              placeholder="Year"
+                              className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-accent-green focus:outline-none"
+                            />
+                            <select
+                              value={event.type}
+                              onChange={(e) => updateMedicalEvent(i, "type", e.target.value)}
+                              className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-accent-green focus:outline-none"
+                            >
+                              <option value="">Type...</option>
+                              {MEDICAL_EVENT_TYPES.map((t) => (
+                                <option key={t} value={t}>{t}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <input
+                            type="text"
+                            value={event.notes}
+                            onChange={(e) => updateMedicalEvent(i, "notes", e.target.value)}
+                            placeholder="Short description (optional)"
+                            className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-accent-green focus:outline-none"
+                          />
+                        </div>
+                        <div className="flex flex-col items-center gap-0.5 mt-1">
+                          <button
+                            type="button"
+                            onClick={() => moveMedicalEvent(i, "up")}
+                            disabled={i === 0}
+                            className="rounded p-0.5 text-muted hover:text-foreground disabled:opacity-30"
+                            title="Move up"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 4l4 4H4l4-4z" fill="currentColor"/></svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveMedicalEvent(i, "down")}
+                            disabled={i === medicalEvents.length - 1}
+                            className="rounded p-0.5 text-muted hover:text-foreground disabled:opacity-30"
+                            title="Move down"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 12l4-4H4l4 4z" fill="currentColor"/></svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeMedicalEvent(i)}
+                            className="rounded p-0.5 text-muted hover:text-red-600"
+                            title="Remove"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={addMedicalEvent}
+                  className="text-sm text-accent-green hover:underline"
+                >
+                  + Add event
+                </button>
+              </div>
 
               <button
-                type="button"
-                onClick={addMedicalEvent}
-                className="text-sm text-accent-green hover:underline"
+                type="submit"
+                disabled={savingMedical}
+                className="w-full rounded-full bg-foreground py-2 font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
               >
-                + Add event
+                {savingMedical ? "Saving..." : "Save"}
               </button>
-            </div>
-
-            <button
-              type="submit"
-              disabled={savingMedical}
-              className="w-full rounded-full bg-foreground py-2 font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
-            >
-              {savingMedical ? "Saving..." : "Save"}
-            </button>
-          </form>
+            </form>
+          )}
         </AccordionSection>
 
         {/* ── 3. Treatment Plan ── */}
@@ -1229,203 +1656,296 @@ export default function ProfilePage() {
           subtitle={treatmentSubtitle}
           isOpen={openSections.has("treatment")}
           onToggle={() => toggleSection("treatment")}
+          onEdit={treatmentLocked ? () => setTreatmentLocked(false) : undefined}
         >
-          <form onSubmit={handleSaveTreatment} className="space-y-3">
-            {/* Hormonal Treatment */}
-            <div>
-              <label htmlFor="hormonal-treatment" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Hormonal Treatment</label>
-              <select
-                id="hormonal-treatment"
-                value={hormonalTreatment}
-                onChange={(e) => {
-                  setHormonalTreatment(e.target.value);
-                  setHormonalBrand("");
-                  if (!e.target.value) setHormonalTreatmentStartDate("");
-                }}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-              >
-                <option value="">None / not currently on treatment</option>
-                {hormonalTreatments.filter(t => t.value !== "Other hormonal treatment").map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-                <option value="Other hormonal treatment">Other hormonal treatment</option>
-              </select>
-
-              {/* Step 2: Brand selector */}
+          {treatmentLocked ? (
+            <div className="space-y-4">
+              {/* Hormonal Treatment (locked) */}
               {hormonalTreatment && (
-                <div className="mt-3">
-                  <label htmlFor="hormonal-brand" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Specific Brand</label>
-                  {brandOptions.length > 0 ? (
-                    <select
-                      id="hormonal-brand"
-                      value={hormonalBrand}
-                      onChange={(e) => setHormonalBrand(e.target.value)}
-                      className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-                    >
-                      <option value="">Select brand...</option>
-                      {brandOptions.map((brand) => (
-                        <option key={brand} value={brand}>{brand}</option>
-                      ))}
-                      <option value="__other__">Other</option>
-                    </select>
-                  ) : (
-                    <input
-                      id="hormonal-brand"
-                      type="text"
-                      value={hormonalBrand}
-                      onChange={(e) => setHormonalBrand(e.target.value)}
-                      placeholder="Enter brand or medication name..."
-                      className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-                    />
-                  )}
-                  {hormonalBrand === "__other__" && (
-                    <input
-                      type="text"
-                      value=""
-                      onChange={(e) => setHormonalBrand(e.target.value)}
-                      placeholder="Enter brand name..."
-                      className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-                    />
-                  )}
-                </div>
-              )}
-
-              {hormonalTreatment && (
-                <div className="mt-3">
-                  <label htmlFor="treatment-start-date" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Treatment Start Date</label>
-                  <input
-                    id="treatment-start-date"
-                    type="date"
-                    value={hormonalTreatmentStartDate}
-                    onChange={(e) => setHormonalTreatmentStartDate(e.target.value)}
-                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-                  />
-                </div>
-              )}
-              {(() => {
-                const info = getTreatmentInfo(hormonalTreatment);
-                if (!info || info.commonSideEffects.length === 0) return null;
-                return (
-                  <div className="mt-3 rounded-xl border border-accent-green/20 bg-accent-green/[0.04] px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Known Side Effects</p>
-                    <p className="text-xs text-muted mb-2">{info.description}</p>
-                    <ul className="space-y-0.5 text-xs text-muted">
-                      {info.commonSideEffects.map((se) => (
-                        <li key={se} className="flex items-start gap-1.5">
-                          <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-accent-green" />
-                          {se}
-                        </li>
-                      ))}
-                    </ul>
-                    {info.cycleInfo && (
-                      <p className="mt-2 text-xs text-accent-green/80">{info.cycleInfo}</p>
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Hormonal Treatment</p>
+                  <div className="rounded-xl border-2 border-accent-green bg-accent-green/[0.06] px-5 py-4">
+                    <p className="text-base font-medium text-foreground">
+                      {hormonalTreatment}{hormonalBrand && hormonalBrand !== "__other__" ? ` \u00B7 ${hormonalBrand}` : ""}
+                    </p>
+                    {hormonalTreatmentStartDate && (
+                      <p className="mt-1 text-sm text-muted">Started {formatDate(hormonalTreatmentStartDate)}</p>
                     )}
                   </div>
-                );
-              })()}
-            </div>
+                </div>
+              )}
 
-            {/* Medical Treatment Plan - pills */}
-            <div className="pt-6 border-t border-border mt-6">
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted">Medical Treatment Plan</label>
-              <CollapsiblePillSelector
-                options={MEDICAL_TREATMENT_OPTIONS}
-                selected={treatmentPlanSelected}
-                onChange={setTreatmentPlanSelected}
-                otherValue={treatmentPlanOther}
-                onOtherChange={setTreatmentPlanOther}
-              />
-            </div>
+              {/* Medical Treatment Plan (locked) */}
+              {(treatmentPlanSelected.filter((s) => s !== "Other").length > 0 || treatmentPlanOther) && (
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Medical Treatment Plan</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {treatmentPlanSelected.filter((s) => s !== "Other").map((item) => (
+                      <span key={item} className="rounded-full bg-foreground px-3 py-1.5 text-sm text-surface">
+                        {item}
+                      </span>
+                    ))}
+                    {treatmentPlanOther && (
+                      <span className="rounded-full bg-foreground px-3 py-1.5 text-sm text-surface">
+                        {treatmentPlanOther}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
 
-            {/* Supporting Treatment - pills */}
-            <div className="pt-6 border-t border-border mt-6">
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted">Supporting Treatment</label>
-              <CollapsiblePillSelector
-                options={SUPPORTING_TREATMENT_OPTIONS}
-                selected={supportingSelected}
-                onChange={setSupportingSelected}
-                otherValue={supportingOther}
-                onOtherChange={setSupportingOther}
-                subOptions={SUPPORTING_SUB_OPTIONS}
-                subSelections={supportingSubSelections}
-                onSubSelectionsChange={setSupportingSubSelections}
-              />
-            </div>
-
-            {/* Personal Goals & Next Steps */}
-            <div className="pt-6 border-t border-border mt-6">
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted">Personal Goals & Next Steps</label>
-              <p className="mb-2 text-sm text-muted">Select your priorities:</p>
-              <CollapsiblePillSelector
-                options={GOAL_OPTIONS}
-                selected={treatmentGoals.filter((g) => GOAL_OPTIONS.includes(g))}
-                onChange={(selected) => {
-                  // Keep custom goals, update known goals
-                  const custom = treatmentGoals.filter((g) => !GOAL_OPTIONS.includes(g));
-                  setTreatmentGoals([...selected, ...custom]);
-                }}
-                otherValue={goalOther}
-                onOtherChange={setGoalOther}
-                subOptions={GOAL_SUB_OPTIONS}
-                subSelections={goalSubSelections}
-                onSubSelectionsChange={setGoalSubSelections}
-              />
-
-              {/* Your priorities list with reorder */}
-              {treatmentGoals.length > 0 && (
-                <div className="mt-4">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Your priorities</p>
+              {/* Supporting Treatment (locked) */}
+              {(supportingSelected.filter((s) => s !== "Other").length > 0 || supportingOther) && (
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Supporting Treatment</p>
                   <div className="space-y-1.5">
-                    {treatmentGoals.map((goal, i) => {
-                      const subs = goalSubSelections[goal];
-                      const displayLabel = subs && subs.length > 0 ? `${goal}: ${subs.join(", ")}` : goal;
+                    {supportingSelected.filter((s) => s !== "Other").map((item) => {
+                      const subs = supportingSubSelections[item];
                       return (
-                        <div key={`${goal}-${i}`} className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
-                          <span className="flex-1 text-sm text-foreground">{displayLabel}</span>
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => moveGoal(i, "up")}
-                              disabled={i === 0}
-                              className="rounded p-0.5 text-muted hover:text-foreground disabled:opacity-30"
-                              title="Move up"
-                            >
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 4l4 4H4l4-4z" fill="currentColor"/></svg>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => moveGoal(i, "down")}
-                              disabled={i === treatmentGoals.length - 1}
-                              className="rounded p-0.5 text-muted hover:text-foreground disabled:opacity-30"
-                              title="Move down"
-                            >
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 12l4-4H4l4 4z" fill="currentColor"/></svg>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => removeGoal(i)}
-                              className="rounded p-0.5 text-muted hover:text-red-600"
-                              title="Remove"
-                            >
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                            </button>
-                          </div>
+                        <div key={item} className="text-sm">
+                          <span className="font-medium text-foreground">{item}</span>
+                          {subs && subs.length > 0 && (
+                            <span className="text-muted"> &mdash; {subs.join(", ")}</span>
+                          )}
                         </div>
                       );
                     })}
+                    {supportingOther && (
+                      <div className="text-sm">
+                        <span className="font-medium text-foreground">{supportingOther}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
-            </div>
 
-            <button
-              type="submit"
-              disabled={savingTreatment}
-              className="w-full rounded-full bg-foreground py-2 font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
-            >
-              {savingTreatment ? "Saving..." : "Save"}
-            </button>
-          </form>
+              {/* Goals (locked) */}
+              {activeGoals.length > 0 && (
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Goals &amp; Next Steps</p>
+                  <ol className="space-y-1">
+                    {activeGoals.map((goal, i) => {
+                      // Check if goal has sub-selections encoded as "Parent: sub1, sub2"
+                      const colonIdx = goal.indexOf(":");
+                      let parent = goal;
+                      let subsText = "";
+                      if (colonIdx > 0) {
+                        parent = goal.substring(0, colonIdx).trim();
+                        subsText = goal.substring(colonIdx + 1).trim();
+                      }
+                      return (
+                        <li key={`${goal}-${i}`} className="flex items-baseline gap-2 text-sm">
+                          <span className="shrink-0 font-serif text-base font-semibold text-accent-green">{i + 1}.</span>
+                          <span>
+                            <span className="font-medium text-foreground">{parent}</span>
+                            {subsText && <span className="text-muted"> &mdash; {subsText}</span>}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
+              )}
+
+            </div>
+          ) : (
+            <form onSubmit={handleSaveTreatment} className="space-y-3">
+              {/* Hormonal Treatment */}
+              <div>
+                <label htmlFor="hormonal-treatment" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Hormonal Treatment</label>
+                <select
+                  id="hormonal-treatment"
+                  value={hormonalTreatment}
+                  onChange={(e) => {
+                    setHormonalTreatment(e.target.value);
+                    setHormonalBrand("");
+                    if (!e.target.value) setHormonalTreatmentStartDate("");
+                  }}
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                >
+                  <option value="">None / not currently on treatment</option>
+                  {hormonalTreatments.filter(t => t.value !== "Other hormonal treatment").map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                  <option value="Other hormonal treatment">Other hormonal treatment</option>
+                </select>
+
+                {/* Step 2: Brand selector */}
+                {hormonalTreatment && (
+                  <div className="mt-3">
+                    <label htmlFor="hormonal-brand" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Specific Brand</label>
+                    {brandOptions.length > 0 ? (
+                      <select
+                        id="hormonal-brand"
+                        value={hormonalBrand}
+                        onChange={(e) => setHormonalBrand(e.target.value)}
+                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                      >
+                        <option value="">Select brand...</option>
+                        {brandOptions.map((brand) => (
+                          <option key={brand} value={brand}>{brand}</option>
+                        ))}
+                        <option value="__other__">Other</option>
+                      </select>
+                    ) : (
+                      <input
+                        id="hormonal-brand"
+                        type="text"
+                        value={hormonalBrand}
+                        onChange={(e) => setHormonalBrand(e.target.value)}
+                        placeholder="Enter brand or medication name..."
+                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                      />
+                    )}
+                    {hormonalBrand === "__other__" && (
+                      <input
+                        type="text"
+                        value=""
+                        onChange={(e) => setHormonalBrand(e.target.value)}
+                        placeholder="Enter brand name..."
+                        className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                      />
+                    )}
+                  </div>
+                )}
+
+                {hormonalTreatment && (
+                  <div className="mt-3">
+                    <label htmlFor="treatment-start-date" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Treatment Start Date</label>
+                    <input
+                      id="treatment-start-date"
+                      type="date"
+                      value={hormonalTreatmentStartDate}
+                      onChange={(e) => setHormonalTreatmentStartDate(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                    />
+                  </div>
+                )}
+                {(() => {
+                  const info = getTreatmentInfo(hormonalTreatment);
+                  if (!info || info.commonSideEffects.length === 0) return null;
+                  return (
+                    <div className="mt-3 rounded-xl border border-accent-green/20 bg-accent-green/[0.04] px-4 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Known Side Effects</p>
+                      <p className="text-xs text-muted mb-2">{info.description}</p>
+                      <ul className="space-y-0.5 text-xs text-muted">
+                        {info.commonSideEffects.map((se) => (
+                          <li key={se} className="flex items-start gap-1.5">
+                            <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-accent-green" />
+                            {se}
+                          </li>
+                        ))}
+                      </ul>
+                      {info.cycleInfo && (
+                        <p className="mt-2 text-xs text-accent-green/80">{info.cycleInfo}</p>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Medical Treatment Plan - pills */}
+              <div className="pt-6 border-t border-border mt-6">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted">Medical Treatment Plan</label>
+                <CollapsiblePillSelector
+                  options={MEDICAL_TREATMENT_OPTIONS}
+                  selected={treatmentPlanSelected}
+                  onChange={setTreatmentPlanSelected}
+                  otherValue={treatmentPlanOther}
+                  onOtherChange={setTreatmentPlanOther}
+                />
+              </div>
+
+              {/* Supporting Treatment - pills */}
+              <div className="pt-6 border-t border-border mt-6">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted">Supporting Treatment</label>
+                <CollapsiblePillSelector
+                  options={SUPPORTING_TREATMENT_OPTIONS}
+                  selected={supportingSelected}
+                  onChange={setSupportingSelected}
+                  otherValue={supportingOther}
+                  onOtherChange={setSupportingOther}
+                  subOptions={SUPPORTING_SUB_OPTIONS}
+                  subSelections={supportingSubSelections}
+                  onSubSelectionsChange={setSupportingSubSelections}
+                />
+              </div>
+
+              {/* Personal Goals & Next Steps */}
+              <div className="pt-6 border-t border-border mt-6">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted">Personal Goals & Next Steps</label>
+                <p className="mb-2 text-sm text-muted">Select your priorities:</p>
+                <CollapsiblePillSelector
+                  options={GOAL_OPTIONS}
+                  selected={treatmentGoals.filter((g) => GOAL_OPTIONS.includes(g))}
+                  onChange={(selected) => {
+                    // Keep custom goals, update known goals
+                    const custom = treatmentGoals.filter((g) => !GOAL_OPTIONS.includes(g));
+                    setTreatmentGoals([...selected, ...custom]);
+                  }}
+                  otherValue={goalOther}
+                  onOtherChange={setGoalOther}
+                  subOptions={GOAL_SUB_OPTIONS}
+                  subSelections={goalSubSelections}
+                  onSubSelectionsChange={setGoalSubSelections}
+                />
+
+                {/* Your priorities list with reorder */}
+                {treatmentGoals.length > 0 && (
+                  <div className="mt-4">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Your priorities</p>
+                    <div className="space-y-1.5">
+                      {treatmentGoals.map((goal, i) => {
+                        const subs = goalSubSelections[goal];
+                        const displayLabel = subs && subs.length > 0 ? `${goal}: ${subs.join(", ")}` : goal;
+                        return (
+                          <div key={`${goal}-${i}`} className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
+                            <span className="flex-1 text-sm text-foreground">{displayLabel}</span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => moveGoal(i, "up")}
+                                disabled={i === 0}
+                                className="rounded p-0.5 text-muted hover:text-foreground disabled:opacity-30"
+                                title="Move up"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 4l4 4H4l4-4z" fill="currentColor"/></svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => moveGoal(i, "down")}
+                                disabled={i === treatmentGoals.length - 1}
+                                className="rounded p-0.5 text-muted hover:text-foreground disabled:opacity-30"
+                                title="Move down"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 12l4-4H4l4 4z" fill="currentColor"/></svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeGoal(i)}
+                                className="rounded p-0.5 text-muted hover:text-red-600"
+                                title="Remove"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={savingTreatment}
+                className="w-full rounded-full bg-foreground py-2 font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
+              >
+                {savingTreatment ? "Saving..." : "Save"}
+              </button>
+            </form>
+          )}
         </AccordionSection>
 
         {/* ── 4. Healthcare Providers ── */}
@@ -1435,6 +1955,7 @@ export default function ProfilePage() {
           subtitle={providersSubtitle}
           isOpen={openSections.has("providers")}
           onToggle={() => toggleSection("providers")}
+          onEdit={providersLocked && healthcareProviders.length > 0 ? () => setProvidersLocked(false) : undefined}
         >
           {providersLocked && healthcareProviders.length > 0 ? (
             <div className="space-y-3">
@@ -1450,13 +1971,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => setProvidersLocked(false)}
-                className="w-full rounded-full border border-border py-2 text-sm font-medium text-foreground hover:bg-background"
-              >
-                Edit providers
-              </button>
             </div>
           ) : (
             <form onSubmit={handleSaveProviders} className="space-y-3">
