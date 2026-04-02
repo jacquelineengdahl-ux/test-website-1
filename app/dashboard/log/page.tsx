@@ -170,20 +170,24 @@ function LogForm() {
   const [profileHormonalTreatment, setProfileHormonalTreatment] = useState("");
   const [profileHormonalBrand, setProfileHormonalBrand] = useState("");
   const [profileTreatmentStartDate, setProfileTreatmentStartDate] = useState("");
+  const [currentPackStartDate, setCurrentPackStartDate] = useState("");
+  const [customPackLength, setCustomPackLength] = useState("");
   const [pillDayInfo, setPillDayInfo] = useState<PillDayInfo | null>(null);
 
   // Hormonal treatment note
   const [hormonalTreatmentNote, setHormonalTreatmentNote] = useState("");
 
   // Calculate pill day whenever log date or treatment info changes
+  // Uses current pack start date (not treatment start date) for accuracy
   useEffect(() => {
-    if (profileHormonalTreatment && profileTreatmentStartDate && logDate) {
-      const info = calculatePillDay(profileHormonalTreatment, profileHormonalBrand, profileTreatmentStartDate, logDate);
+    const packDate = currentPackStartDate || profileTreatmentStartDate;
+    if (profileHormonalTreatment && packDate && logDate) {
+      const info = calculatePillDay(profileHormonalTreatment, profileHormonalBrand, packDate, logDate, customPackLength ? Number(customPackLength) : undefined);
       setPillDayInfo(info);
     } else {
       setPillDayInfo(null);
     }
-  }, [logDate, profileHormonalTreatment, profileHormonalBrand, profileTreatmentStartDate]);
+  }, [logDate, profileHormonalTreatment, profileHormonalBrand, profileTreatmentStartDate, currentPackStartDate, customPackLength]);
 
   // Notes
   const [notes, setNotes] = useState("");
@@ -211,6 +215,15 @@ function LogForm() {
         }
         if (profile.hormonal_treatment_start_date) {
           setProfileTreatmentStartDate(profile.hormonal_treatment_start_date);
+        }
+        // Load pack tracking from localStorage
+        try {
+          const packStart = localStorage.getItem(`pack_start_date_${data.user.id}`);
+          if (packStart) setCurrentPackStartDate(packStart);
+          const packLen = localStorage.getItem(`pack_length_${data.user.id}`);
+          if (packLen) setCustomPackLength(packLen);
+        } catch {
+          // Ignore
         }
       }
 

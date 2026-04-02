@@ -283,25 +283,28 @@ export function calculatePillDay(
   brand: string,
   startDate: string,
   logDate: string,
+  customLength?: number,
 ): PillDayInfo | null {
   const treatment = getTreatmentInfo(treatmentCategory);
   if (!treatment?.packCycle || !startDate) return null;
 
   // Use brand-specific cycle if available
   const cycle = treatment.packCycle.brandSpecific?.[brand] ?? treatment.packCycle;
+  const effectiveLength = customLength ?? cycle.length;
+
   const start = new Date(startDate + "T00:00:00");
   const log = new Date(logDate + "T00:00:00");
   const diffMs = log.getTime() - start.getTime();
   if (diffMs < 0) return null;
 
   const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const dayInCycle = (totalDays % cycle.length) + 1;
-  const packNumber = Math.floor(totalDays / cycle.length) + 1;
+  const dayInCycle = (totalDays % effectiveLength) + 1;
+  const packNumber = Math.floor(totalDays / effectiveLength) + 1;
 
-  // Find which phase this day falls in
+  // Find which phase this day falls in (use original phases, capped to custom length)
   const phase = cycle.phases.find(
-    (p) => dayInCycle >= p.days[0] && dayInCycle <= p.days[1],
+    (p) => dayInCycle >= p.days[0] && dayInCycle <= Math.min(p.days[1], effectiveLength),
   ) ?? cycle.phases[cycle.phases.length - 1];
 
-  return { day: dayInCycle, totalDays: cycle.length, phase, packNumber };
+  return { day: dayInCycle, totalDays: effectiveLength, phase, packNumber };
 }

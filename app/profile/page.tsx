@@ -750,6 +750,8 @@ export default function ProfilePage() {
   const [hormonalTreatment, setHormonalTreatment] = useState("");
   const [hormonalBrand, setHormonalBrand] = useState("");
   const [hormonalTreatmentStartDate, setHormonalTreatmentStartDate] = useState("");
+  const [currentPackStartDate, setCurrentPackStartDate] = useState("");
+  const [customPackLength, setCustomPackLength] = useState("");
   const [treatmentPlanSelected, setTreatmentPlanSelected] = useState<string[]>([]);
   const [treatmentPlanOther, setTreatmentPlanOther] = useState("");
   const [supportingSelected, setSupportingSelected] = useState<string[]>([]);
@@ -911,6 +913,17 @@ export default function ProfilePage() {
         if (stored) setMedicalEvents(JSON.parse(stored));
       } catch {
         // Ignore parse errors
+      }
+
+      // Load pack tracking from localStorage
+      // TODO: Migrate to DB columns
+      try {
+        const packStart = localStorage.getItem(`pack_start_date_${uid}`);
+        if (packStart) setCurrentPackStartDate(packStart);
+        const packLen = localStorage.getItem(`pack_length_${uid}`);
+        if (packLen) setCustomPackLength(packLen);
+      } catch {
+        // Ignore
       }
 
       // Open first section if welcome flow or no profile data
@@ -1099,6 +1112,12 @@ export default function ProfilePage() {
       treatment_goals: allGoals,
       updated_at: new Date().toISOString(),
     });
+
+    // Save pack tracking to localStorage
+    if (userId) {
+      localStorage.setItem(`pack_start_date_${userId}`, currentPackStartDate);
+      localStorage.setItem(`pack_length_${userId}`, customPackLength);
+    }
 
     setSavingTreatment(false);
     if (upsertError) {
@@ -1878,6 +1897,9 @@ export default function ProfilePage() {
                     {hormonalTreatmentStartDate && (
                       <p className="mt-0.5 text-xs text-muted">Started {formatDate(hormonalTreatmentStartDate)}</p>
                     )}
+                    {currentPackStartDate && (
+                      <p className="mt-0.5 text-xs text-muted">Current pack started {formatDate(currentPackStartDate)} · {customPackLength || "28"}-day cycle</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -2032,7 +2054,10 @@ export default function ProfilePage() {
 
                   {hormonalTreatment && (
                     <div className="mt-3">
-                      <label htmlFor="treatment-start-date" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Treatment Start Date</label>
+                      <label htmlFor="treatment-start-date" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">
+                        Treatment Start Date
+                        <span className="ml-1 normal-case tracking-normal font-normal text-muted/60">— when you started this treatment</span>
+                      </label>
                       <input
                         id="treatment-start-date"
                         type="date"
@@ -2042,6 +2067,44 @@ export default function ProfilePage() {
                       />
                     </div>
                   )}
+
+                  {/* Pack tracking */}
+                  {hormonalTreatment && (() => {
+                    const info = getTreatmentInfo(hormonalTreatment);
+                    if (!info?.packCycle) return null;
+                    const defaultLength = info.packCycle.brandSpecific?.[hormonalBrand]?.length ?? info.packCycle.length;
+                    return (
+                      <div className="mt-3 rounded-xl border border-accent-green/20 bg-accent-green/[0.04] px-4 py-3 space-y-3">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted">Pack / Chart Tracking</p>
+                        <div>
+                          <label htmlFor="pack-start" className="mb-1 block text-xs text-muted">First day of current pack</label>
+                          <input
+                            id="pack-start"
+                            type="date"
+                            value={currentPackStartDate}
+                            onChange={(e) => setCurrentPackStartDate(e.target.value)}
+                            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="pack-length" className="mb-1 block text-xs text-muted">
+                            My pack length (days)
+                            <span className="ml-1 text-muted/60">— default {defaultLength}, adjust if you skip placebos</span>
+                          </label>
+                          <input
+                            id="pack-length"
+                            type="number"
+                            min="1"
+                            max="365"
+                            value={customPackLength || defaultLength}
+                            onChange={(e) => setCustomPackLength(e.target.value)}
+                            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {(() => {
                     const info = getTreatmentInfo(hormonalTreatment);
                     if (!info || info.commonSideEffects.length === 0) return null;
