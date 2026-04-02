@@ -506,26 +506,28 @@ function CollapsiblePillSelector({
               const subs = subSelections?.[item] ?? [];
               const hasSubs = subOptions && subOptions[item];
               return (
-                <div key={item} className="flex items-center gap-2 flex-wrap">
-                  <span className="rounded-full bg-foreground px-3 py-1 text-sm text-surface">{item}</span>
-                  {subs.map((sub) => (
-                    <span key={sub} className="rounded-full bg-accent-green/15 border border-accent-green/30 px-2 py-0.5 text-[11px] text-foreground">
-                      {sub}
-                    </span>
-                  ))}
-                  {hasSubs && (
-                    <button
-                      type="button"
-                      onClick={() => setExpandedPill(item)}
-                      className="text-[11px] text-muted hover:text-foreground"
-                    >
-                      {subs.length > 0 ? "edit" : "+ details"}
-                    </button>
-                  )}
+                <div key={item} className="flex gap-2">
+                  <span className="shrink-0 rounded-full bg-foreground px-3 py-1 text-sm text-surface self-start mt-0.5">{item}</span>
+                  <div className="flex flex-1 flex-wrap items-center gap-1.5">
+                    {subs.map((sub) => (
+                      <span key={sub} className="rounded-full bg-accent-green/15 border border-accent-green/30 px-2 py-0.5 text-[11px] text-foreground">
+                        {sub}
+                      </span>
+                    ))}
+                    {hasSubs && (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedPill(item)}
+                        className="text-[11px] text-muted hover:text-foreground"
+                      >
+                        {subs.length > 0 ? "edit" : "+ details"}
+                      </button>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={() => toggle(item)}
-                    className="text-muted hover:text-red-500 ml-auto"
+                    className="shrink-0 self-start mt-1 text-muted hover:text-red-500"
                     title="Remove"
                   >
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
