@@ -909,36 +909,11 @@ export default function ProfilePage() {
         }
       }
 
-      // Load medical events from localStorage
-      // TODO: Migrate to DB column `medical_events` (jsonb) — needs Supabase migration
-      try {
-        const stored = localStorage.getItem(`medical_events_${uid}`);
-        if (stored) setMedicalEvents(JSON.parse(stored));
-      } catch {
-        // Ignore parse errors
-      }
-
-      // Load pack tracking from localStorage
-      // TODO: Migrate to DB columns
-      try {
-        const packStart = localStorage.getItem(`pack_start_date_${uid}`);
-        if (packStart) setCurrentPackStartDate(packStart);
-        const packLen = localStorage.getItem(`pack_length_${uid}`);
-        if (packLen) setCustomPackLength(packLen);
-      } catch {
-        // Ignore
-      }
-
-      // Load noticed side effects from localStorage
-      try {
-        const storedEffects = localStorage.getItem(`noticed_side_effects_${uid}`);
-        if (storedEffects) {
-          const parsed = JSON.parse(storedEffects);
-          if (parsed.effects) setNoticedSideEffects(parsed.effects);
-        }
-      } catch {
-        // Ignore
-      }
+      // Load medical events, pack tracking, and noticed side effects from DB
+      setMedicalEvents(profile.medical_events ?? []);
+      setCurrentPackStartDate(profile.current_pack_start_date ?? "");
+      setCustomPackLength(profile.custom_pack_length ? String(profile.custom_pack_length) : "");
+      setNoticedSideEffects(profile.noticed_side_effects ?? []);
 
       // Open first section if welcome flow or no profile data
       const hasData = profile && (profile.name || profile.country || profile.diagnosis_date);
@@ -1059,14 +1034,6 @@ export default function ProfilePage() {
     setError("");
     setSavingMedical(true);
 
-    const { error: upsertError } = await supabase.from("profiles").upsert({
-      id: userId,
-      first_symptom_date: yearToDate(firstSymptomYear) || null,
-      diagnosis_date: yearToDate(diagnosisYear) || null,
-      endo_stage: endoStage || null,
-      updated_at: new Date().toISOString(),
-    });
-
     // Auto-sort events chronologically (newest first) before saving
     const sorted = [...medicalEvents]
       .filter((e) => e.year || e.type || e.notes)
@@ -1077,11 +1044,14 @@ export default function ProfilePage() {
       });
     setMedicalEvents(sorted);
 
-    // Save medical events to localStorage
-    // TODO: Migrate to DB column `medical_events` (jsonb) — needs Supabase migration
-    if (userId) {
-      localStorage.setItem(`medical_events_${userId}`, JSON.stringify(sorted));
-    }
+    const { error: upsertError } = await supabase.from("profiles").upsert({
+      id: userId,
+      first_symptom_date: yearToDate(firstSymptomYear) || null,
+      diagnosis_date: yearToDate(diagnosisYear) || null,
+      endo_stage: endoStage || null,
+      medical_events: sorted,
+      updated_at: new Date().toISOString(),
+    });
 
     setSavingMedical(false);
     if (upsertError) {
@@ -1124,15 +1094,11 @@ export default function ProfilePage() {
       treatment_plan: pillsToString(treatmentPlanSelected, treatmentPlanOther) || null,
       supporting_treatment: pillsToString(supportingSelected, supportingOther, supportingSubSelections) || null,
       treatment_goals: allGoals,
+      current_pack_start_date: currentPackStartDate || null,
+      custom_pack_length: customPackLength ? Number(customPackLength) : null,
+      noticed_side_effects: noticedSideEffects,
       updated_at: new Date().toISOString(),
     });
-
-    // Save pack tracking to localStorage
-    if (userId) {
-      localStorage.setItem(`pack_start_date_${userId}`, currentPackStartDate);
-      localStorage.setItem(`pack_length_${userId}`, customPackLength);
-      localStorage.setItem(`noticed_side_effects_${userId}`, JSON.stringify({ effects: noticedSideEffects }));
-    }
 
     setSavingTreatment(false);
     if (upsertError) {

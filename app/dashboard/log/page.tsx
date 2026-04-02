@@ -201,10 +201,10 @@ function LogForm() {
       if (!data.user) return;
       setUserId(data.user.id);
 
-      // Fetch hormonal treatment from profile
+      // Fetch hormonal treatment + pack tracking from profile
       const { data: profile } = await supabase
         .from("profiles")
-        .select("hormonal_treatment, hormonal_treatment_start_date")
+        .select("hormonal_treatment, hormonal_treatment_start_date, current_pack_start_date, custom_pack_length")
         .eq("id", data.user.id)
         .maybeSingle();
       if (profile?.hormonal_treatment) {
@@ -219,14 +219,11 @@ function LogForm() {
         if (profile.hormonal_treatment_start_date) {
           setProfileTreatmentStartDate(profile.hormonal_treatment_start_date);
         }
-        // Load pack tracking from localStorage
-        try {
-          const packStart = localStorage.getItem(`pack_start_date_${data.user.id}`);
-          if (packStart) setCurrentPackStartDate(packStart);
-          const packLen = localStorage.getItem(`pack_length_${data.user.id}`);
-          if (packLen) setCustomPackLength(packLen);
-        } catch {
-          // Ignore
+        if (profile.current_pack_start_date) {
+          setCurrentPackStartDate(profile.current_pack_start_date);
+        }
+        if (profile.custom_pack_length) {
+          setCustomPackLength(String(profile.custom_pack_length));
         }
       }
 
