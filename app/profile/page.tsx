@@ -1854,24 +1854,28 @@ export default function ProfilePage() {
               {(supportingSelected.filter((s) => s !== "Other").length > 0 || supportingOther) && (
                 <div>
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Supporting Treatment</p>
-                  <div className="space-y-1.5">
+                  <ul className="space-y-1.5">
                     {supportingSelected.filter((s) => s !== "Other").map((item) => {
                       const subs = supportingSubSelections[item];
                       return (
-                        <div key={item} className="text-sm">
-                          <span className="font-medium text-foreground">{item}</span>
-                          {subs && subs.length > 0 && (
-                            <span className="text-muted"> &mdash; {subs.join(", ")}</span>
-                          )}
-                        </div>
+                        <li key={item} className="flex items-start gap-2 text-sm">
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-green" />
+                          <span>
+                            <span className="font-medium text-foreground">{item}</span>
+                            {subs && subs.length > 0 && (
+                              <span className="text-muted"> — {subs.join(", ")}</span>
+                            )}
+                          </span>
+                        </li>
                       );
                     })}
                     {supportingOther && (
-                      <div className="text-sm">
+                      <li className="flex items-start gap-2 text-sm">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-green" />
                         <span className="font-medium text-foreground">{supportingOther}</span>
-                      </div>
+                      </li>
                     )}
-                  </div>
+                  </ul>
                 </div>
               )}
 
