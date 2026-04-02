@@ -1585,7 +1585,7 @@ export default function OverviewPage() {
             Get personalised insights about correlations between your lifestyle triggers, cycle phases, and symptom patterns.
           </p>
           <p className="mt-1.5 rounded-lg bg-accent-green/[0.06] px-3 py-2 text-xs text-muted">
-            <span className="font-semibold text-foreground">Note:</span> Analysis is based on your selected time range below ({filteredChronological.length} entries, {timeRange === "All" ? "all time" : `last ${timeRange}`}). Select <span className="font-semibold">All</span> for the most comprehensive analysis.
+            <span className="font-semibold text-foreground">Note:</span> The AI Insights is based on your selected time range below. Select <span className="font-semibold">All</span> for the most comprehensive analysis ({entries.length} entries to date), or select a specific time range you want to explore.
           </p>
 
           {insightsError && (
