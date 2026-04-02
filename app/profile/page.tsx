@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { hormonalTreatments, getTreatmentInfo } from "@/lib/hormonal-treatments";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
@@ -78,6 +79,7 @@ export default function ProfilePage() {
   const [diagnosisDate, setDiagnosisDate] = useState("");
   const [endoStage, setEndoStage] = useState("");
   const [hormonalTreatment, setHormonalTreatment] = useState("");
+  const [hormonalTreatmentStartDate, setHormonalTreatmentStartDate] = useState("");
   const [treatmentPlan, setTreatmentPlan] = useState("");
   const [supportingTreatment, setSupportingTreatment] = useState("");
   const [healthcareProviders, setHealthcareProviders] = useState<Provider[]>([]);
@@ -127,6 +129,7 @@ export default function ProfilePage() {
         setDiagnosisDate(profile.diagnosis_date ?? "");
         setEndoStage(profile.endo_stage ?? "");
         setHormonalTreatment(profile.hormonal_treatment ?? "");
+        setHormonalTreatmentStartDate(profile.hormonal_treatment_start_date ?? "");
         setTreatmentPlan(profile.treatment_plan ?? "");
         setSupportingTreatment(profile.supporting_treatment ?? "");
         setHealthcareProviders(profile.healthcare_providers ?? []);
@@ -245,6 +248,7 @@ export default function ProfilePage() {
       diagnosis_date: diagnosisDate || null,
       endo_stage: endoStage || null,
       hormonal_treatment: hormonalTreatment || null,
+      hormonal_treatment_start_date: hormonalTreatmentStartDate || null,
       treatment_plan: treatmentPlan || null,
       supporting_treatment: supportingTreatment || null,
       healthcare_providers: healthcareProviders,
@@ -645,21 +649,54 @@ export default function ProfilePage() {
                   <select
                     id="hormonal-treatment"
                     value={hormonalTreatment}
-                    onChange={(e) => setHormonalTreatment(e.target.value)}
+                    onChange={(e) => {
+                      setHormonalTreatment(e.target.value);
+                      if (!e.target.value) setHormonalTreatmentStartDate("");
+                    }}
                     className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
                   >
                     <option value="">None / not currently on treatment</option>
-                    <option value="Combined pill">Combined pill (estrogen + progestogen)</option>
-                    <option value="Progestogen-only pill">Progestogen-only pill (mini pill)</option>
-                    <option value="Hormonal IUD">Hormonal IUD (e.g. Mirena)</option>
-                    <option value="GnRH agonist">GnRH agonist (e.g. Zoladex, Lupron)</option>
-                    <option value="GnRH antagonist">GnRH antagonist (e.g. Orilissa / Elagolix)</option>
-                    <option value="Depo injection">Depo injection</option>
-                    <option value="Hormonal patch">Hormonal patch</option>
-                    <option value="Vaginal ring">Vaginal ring</option>
-                    <option value="HRT / Add-back therapy">HRT / Add-back therapy</option>
+                    {hormonalTreatments.filter(t => t.value !== "Other hormonal treatment").map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
                     <option value="Other hormonal treatment">Other hormonal treatment</option>
                   </select>
+                  {hormonalTreatment && (
+                    <div className="mt-3">
+                      <label htmlFor="treatment-start-date" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Treatment Start Date</label>
+                      <input
+                        id="treatment-start-date"
+                        type="date"
+                        value={hormonalTreatmentStartDate}
+                        onChange={(e) => setHormonalTreatmentStartDate(e.target.value)}
+                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                      />
+                    </div>
+                  )}
+                  {(() => {
+                    const info = getTreatmentInfo(hormonalTreatment);
+                    if (!info || info.commonSideEffects.length === 0) return null;
+                    return (
+                      <div className="mt-3 rounded-xl border border-accent-green/20 bg-accent-green/[0.04] px-4 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Known Side Effects</p>
+                        <p className="text-xs text-muted mb-2">{info.description}</p>
+                        {info.examples.length > 0 && (
+                          <p className="text-xs text-muted mb-2">Examples: {info.examples.join(", ")}</p>
+                        )}
+                        <ul className="space-y-0.5 text-xs text-muted">
+                          {info.commonSideEffects.map((se) => (
+                            <li key={se} className="flex items-start gap-1.5">
+                              <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-accent-green" />
+                              {se}
+                            </li>
+                          ))}
+                        </ul>
+                        {info.cycleInfo && (
+                          <p className="mt-2 text-xs text-accent-green/80">{info.cycleInfo}</p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div>
                   <label htmlFor="treatment-plan" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Medical Treatment Plan</label>
@@ -808,6 +845,31 @@ export default function ProfilePage() {
                 <ViewRow label="Time to diagnosis" value={timeToDiagnosis(firstSymptomDate, diagnosisDate)} />
                 <ViewRow label="Endo stage" value={endoStage || null} />
                 <ViewRow label="Hormonal treatment" value={hormonalTreatment || null} />
+                {hormonalTreatment && hormonalTreatmentStartDate && (
+                  <ViewRow label="Treatment started" value={formatDate(hormonalTreatmentStartDate)} />
+                )}
+                {(() => {
+                  const info = getTreatmentInfo(hormonalTreatment);
+                  if (!info || info.commonSideEffects.length === 0) return null;
+                  return (
+                    <div className="text-sm">
+                      <p className="text-muted mb-1.5">Known Side Effects</p>
+                      <div className="rounded-xl border border-border bg-background px-4 py-3">
+                        <ul className="space-y-0.5 text-xs text-muted">
+                          {info.commonSideEffects.map((se) => (
+                            <li key={se} className="flex items-start gap-1.5">
+                              <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-accent-green" />
+                              {se}
+                            </li>
+                          ))}
+                        </ul>
+                        {info.cycleInfo && (
+                          <p className="mt-2 text-xs text-accent-green/80">{info.cycleInfo}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
                 {treatmentPlan && (
                   <div className="text-sm">
                     <p className="text-muted mb-1.5">Medical Treatment Plan</p>

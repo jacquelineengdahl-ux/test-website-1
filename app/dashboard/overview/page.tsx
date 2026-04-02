@@ -372,8 +372,11 @@ function EmptyChartIcon() {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ModernTooltip(props: any) {
-  const { active, payload, label, colorMap = {} } = props;
+  const { active, payload, label, colorMap = {}, theme = "dark" } = props;
   if (!active || !payload?.length) return null;
+  const tc = theme === "dark"
+    ? { card: "rounded-xl border border-white/10 bg-foreground", label: "text-surface", text: "text-surface/60", value: "text-surface" }
+    : { card: "rounded-xl border border-border bg-surface", label: "text-foreground", text: "text-muted", value: "text-foreground" };
 
   const nonZero = payload
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -385,10 +388,10 @@ function ModernTooltip(props: any) {
 
   return (
     <div
-      className="rounded-xl border border-border bg-surface px-3 py-2.5 text-xs shadow-lg animate-tooltip-in"
+      className={`${tc.card} px-3 py-2.5 text-xs shadow-lg animate-tooltip-in`}
       style={{ backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", pointerEvents: "none" }}
     >
-      <p className="mb-1.5 font-semibold text-foreground">{label}</p>
+      <p className={`mb-1.5 font-semibold ${tc.label}`}>{label}</p>
       <div className="space-y-1">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {nonZero.map((entry: any) => {
@@ -403,7 +406,7 @@ function ModernTooltip(props: any) {
                 className="inline-block h-2.5 w-2.5 shrink-0 rounded-[3px]"
                 style={{ backgroundColor: color }}
               />
-              <span className="w-28 truncate text-muted">{entry.name}</span>
+              <span className={`w-28 truncate ${tc.text}`}>{entry.name}</span>
               <div
                 className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full"
                 style={{ backgroundColor: "rgba(168, 162, 158, 0.18)" }}
@@ -413,7 +416,7 @@ function ModernTooltip(props: any) {
                   style={{ width: `${pct}%`, backgroundColor: color }}
                 />
               </div>
-              <span className="w-6 shrink-0 text-right font-semibold tabular-nums text-foreground">
+              <span className={`w-6 shrink-0 text-right font-semibold tabular-nums ${tc.value}`}>
                 {formatted}
               </span>
             </div>
@@ -432,13 +435,16 @@ function InteractiveLegend({
   highlightedSeries,
   onToggle,
   onHighlight,
+  theme = "dark",
 }: {
   items: { key: string; label: string; color: string }[];
   hiddenSeries: Set<string>;
   highlightedSeries: string | null;
   onToggle: (key: string) => void;
   onHighlight: (key: string | null) => void;
+  theme?: CardTheme;
 }) {
+  const legendColor = theme === "dark" ? "text-surface/70" : "text-foreground";
   return (
     <div className="flex flex-wrap gap-x-3 gap-y-1.5 pl-[40px] text-xs">
       {items.map((item) => {
@@ -461,7 +467,7 @@ function InteractiveLegend({
               style={{ backgroundColor: hidden ? "#a8a29e" : item.color }}
             />
             <span
-              className="text-foreground"
+              className={legendColor}
               style={{ textDecoration: hidden ? "line-through" : "none" }}
             >
               {item.label}
@@ -481,12 +487,14 @@ function SymptomAreaChart({
   lines,
   hiddenSeries,
   onToggleSeries,
+  theme = "dark",
 }: {
   title: string;
   data: LogEntry[];
   lines: { key: string; label: string; color: string }[];
   hiddenSeries: Set<string>;
   onToggleSeries: (key: string) => void;
+  theme?: CardTheme;
 }) {
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const visibleLines = lines.filter((l) => !hiddenSeries.has(l.key));
@@ -494,10 +502,15 @@ function SymptomAreaChart({
     () => Object.fromEntries(lines.map((l) => [l.key, l.color])),
     [lines],
   );
+  const ct = useCardColors(theme);
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-2 card-hover">
-      <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">
+    <div className={`${ct.card} space-y-2`}>
+      {ct.overlay && <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-green/[0.06] to-transparent" />}
+      <p className={`relative text-xs font-medium uppercase tracking-[0.12em] ${ct.label}`}>
+        Weekly Overview
+      </p>
+      <h2 className={`relative font-serif text-lg ${ct.title}`}>
         {title}
       </h2>
       <ResponsiveContainer width="100%" height={340}>
@@ -505,17 +518,17 @@ function SymptomAreaChart({
           <defs>
             {lines.map((line) => (
               <linearGradient key={line.key} id={`area-${line.key}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={line.color} stopOpacity={0.3} />
-                <stop offset="100%" stopColor={line.color} stopOpacity={0.02} />
+                <stop offset="0%" stopColor={line.color} stopOpacity={0.35} />
+                <stop offset="100%" stopColor={line.color} stopOpacity={0} />
               </linearGradient>
             ))}
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(168, 162, 158, 0.25)" />
-          <XAxis dataKey="log_date" tick={{ fontSize: 11, fill: "#a8a29e" }} axisLine={false} tickLine={false} />
-          <YAxis domain={[0, 10]} tick={{ fontSize: 11, fill: "#a8a29e" }} axisLine={false} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={ct.grid} />
+          <XAxis dataKey="log_date" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
+          <YAxis domain={[0, 10]} tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
           <Tooltip
-            content={(props) => <ModernTooltip {...props} colorMap={colorMap} />}
-            cursor={{ stroke: "#a8a29e", strokeDasharray: "4 4", strokeWidth: 1 }}
+            content={(props) => <ModernTooltip {...props} colorMap={colorMap} theme={theme} />}
+            cursor={{ stroke: ct.cursor, strokeDasharray: "4 4", strokeWidth: 1 }}
             wrapperStyle={{ zIndex: 1000 }}
             isAnimationActive={false}
           />
@@ -528,7 +541,7 @@ function SymptomAreaChart({
               stroke={line.color}
               fill={`url(#area-${line.key})`}
               strokeWidth={2}
-              dot={{ r: 2, fill: line.color, strokeWidth: 0 }}
+              dot={{ r: 2.5, fill: line.color, strokeWidth: 0 }}
               activeDot={{ r: 6, stroke: line.color, strokeWidth: 3, fill: "#fff", strokeOpacity: 0.6 }}
               fillOpacity={highlighted && highlighted !== line.key ? 0.15 : 1}
               strokeOpacity={highlighted && highlighted !== line.key ? 0.15 : 1}
@@ -543,6 +556,7 @@ function SymptomAreaChart({
         highlightedSeries={highlighted}
         onToggle={onToggleSeries}
         onHighlight={setHighlighted}
+        theme={theme}
       />
     </div>
   );
@@ -556,12 +570,14 @@ function SymptomBarChart({
   lines,
   hiddenSeries,
   onToggleSeries,
+  theme = "dark",
 }: {
   title: string;
   data: ChartRow[];
   lines: { key: string; label: string; color: string }[];
   hiddenSeries: Set<string>;
   onToggleSeries: (key: string) => void;
+  theme?: CardTheme;
 }) {
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const visibleLines = lines.filter((l) => !hiddenSeries.has(l.key));
@@ -569,22 +585,29 @@ function SymptomBarChart({
     () => Object.fromEntries(lines.map((l) => [l.key, l.color])),
     [lines],
   );
+  const ct = useCardColors(theme);
 
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-2 card-hover">
-        <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">{title}</h2>
+      <div className={`${ct.card} space-y-2`}>
+        {ct.overlay && <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-green/[0.06] to-transparent" />}
+        <p className={`relative text-xs font-medium uppercase tracking-[0.12em] ${ct.label}`}>Breakdown</p>
+        <h2 className={`relative font-serif text-lg ${ct.title}`}>{title}</h2>
         <div className="py-8 text-center">
           <EmptyChartIcon />
-          <p className="text-sm text-muted">No data for this period</p>
+          <p className={`text-sm ${ct.emptyText}`}>No data for this period</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-2 card-hover">
-      <h2 className="text-center font-serif text-lg font-semibold tracking-tight text-muted">
+    <div className={`${ct.card} space-y-2`}>
+      {ct.overlay && <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-green/[0.06] to-transparent" />}
+      <p className={`relative text-xs font-medium uppercase tracking-[0.12em] ${ct.label}`}>
+        Breakdown
+      </p>
+      <h2 className={`relative font-serif text-lg ${ct.title}`}>
         {title}
       </h2>
       <ResponsiveContainer width="100%" height={380}>
@@ -597,12 +620,12 @@ function SymptomBarChart({
               </linearGradient>
             ))}
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(168, 162, 158, 0.25)" />
-          <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#a8a29e" }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 11, fill: "#a8a29e" }} axisLine={false} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={ct.grid} />
+          <XAxis dataKey="label" tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 11, fill: ct.axis }} axisLine={false} tickLine={false} />
           <Tooltip
-            content={(props) => <ModernTooltip {...props} colorMap={colorMap} />}
-            cursor={{ fill: "rgba(120, 113, 108, 0.10)" }}
+            content={(props) => <ModernTooltip {...props} colorMap={colorMap} theme={theme} />}
+            cursor={{ fill: ct.barCursor }}
             wrapperStyle={{ zIndex: 1000 }}
             isAnimationActive={false}
           />
@@ -627,6 +650,7 @@ function SymptomBarChart({
         highlightedSeries={highlighted}
         onToggle={onToggleSeries}
         onHighlight={setHighlighted}
+        theme={theme}
       />
     </div>
   );
@@ -655,7 +679,8 @@ function getCycleColor(phase: string | null): string | null {
 
 type HeatmapCategory = "Pain" | "Other Symptoms" | "Lifestyle Triggers" | "All";
 
-function DailyHeatmap({ entries }: { entries: LogEntry[] }) {
+function DailyHeatmap({ entries, theme = "dark" }: { entries: LogEntry[]; theme?: CardTheme }) {
+  const ct = useCardColors(theme);
   const [category, setCategory] = useState<HeatmapCategory>("All");
   const [hoveredCell, setHoveredCell] = useState<{
     row: string; col: number; value: number; dateStr: string; x: number; y: number;
@@ -681,25 +706,31 @@ function DailyHeatmap({ entries }: { entries: LogEntry[] }) {
 
   if (dates.length === 0) {
     return (
-      <div className="rounded-2xl border border-border bg-surface p-6">
-        <h2 className="mb-4 font-serif text-lg font-semibold text-foreground">Heatmap</h2>
+      <div className={ct.card}>
+        {ct.overlay && <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-green/[0.06] to-transparent" />}
+        <p className={`relative text-xs font-medium uppercase tracking-[0.12em] ${ct.label}`}>Your Activity</p>
+        <h2 className={`relative mt-1 font-serif text-lg ${ct.title}`}>Heatmap</h2>
         <div className="py-8 text-center">
           <EmptyChartIcon />
-          <p className="text-sm text-muted">No data for this period</p>
+          <p className={`text-sm ${ct.emptyText}`}>No data for this period</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-6">
+    <div className={ct.card}>
+      {ct.overlay && <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-green/[0.06] to-transparent" />}
       {/* Header */}
-      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="font-serif text-lg font-semibold text-foreground">Heatmap</h2>
+      <div className="relative mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className={`text-xs font-medium uppercase tracking-[0.12em] ${ct.label}`}>Your Activity</p>
+          <h2 className={`mt-1 font-serif text-lg ${ct.title}`}>Heatmap</h2>
+        </div>
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as HeatmapCategory)}
-          className="rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-accent-green focus:outline-none"
+          className={ct.selectClass}
         >
           <option value="All">All</option>
           <option value="Pain">Pain</option>
@@ -713,11 +744,11 @@ function DailyHeatmap({ entries }: { entries: LogEntry[] }) {
         <table className="w-full border-collapse text-xs">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-surface pr-2 text-left font-medium text-muted" style={{ minWidth: 110 }} />
+              <th className={`sticky left-0 z-10 ${ct.stickyBg} pr-2 text-left font-medium ${ct.label}`} style={{ minWidth: 110 }} />
               {dates.map((d, i) => {
                 const date = new Date(d + "T00:00:00");
                 return (
-                  <th key={i} className="px-0.5 pb-1 text-center font-medium text-muted" style={{ minWidth: 28 }}>
+                  <th key={i} className={`px-0.5 pb-1 text-center font-medium ${ct.label}`} style={{ minWidth: 28 }}>
                     <div>{date.getDate()}</div>
                     <div className="text-[9px] opacity-60">{date.toLocaleDateString("en", { month: "short" })}</div>
                   </th>
@@ -728,7 +759,7 @@ function DailyHeatmap({ entries }: { entries: LogEntry[] }) {
           <tbody>
             {/* Cycle phase row */}
             <tr>
-              <td className="sticky left-0 z-10 bg-surface pr-2 py-0.5 text-left font-medium text-accent-green" style={{ minWidth: 110 }}>
+              <td className={`sticky left-0 z-10 ${ct.stickyBg} pr-2 py-0.5 text-left font-medium text-accent-green`} style={{ minWidth: 110 }}>
                 Cycle Phase
               </td>
               {dates.map((d, i) => {
@@ -755,7 +786,7 @@ function DailyHeatmap({ entries }: { entries: LogEntry[] }) {
             {/* Symptom rows */}
             {visibleKeys.map((key) => (
               <tr key={key}>
-                <td className="sticky left-0 z-10 bg-surface pr-2 py-0.5 text-left text-muted" style={{ minWidth: 110 }}>
+                <td className={`sticky left-0 z-10 ${ct.stickyBg} pr-2 py-0.5 text-left ${ct.text}`} style={{ minWidth: 110 }}>
                   {symptomLabels[key] || key}
                 </td>
                 {dates.map((d, colIdx) => {
@@ -797,29 +828,29 @@ function DailyHeatmap({ entries }: { entries: LogEntry[] }) {
       {/* Tooltip */}
       {hoveredCell && (
         <div
-          className="pointer-events-none fixed z-50 rounded-xl border border-border bg-surface px-3 py-2 text-xs shadow-lg animate-tooltip-in"
+          className={`pointer-events-none fixed z-50 ${ct.tooltipCard}`}
           style={{ left: hoveredCell.x, top: hoveredCell.y - 52, transform: "translateX(-50%)" }}
         >
           <div className="flex items-center gap-2">
             <span className="inline-block h-3 w-3 rounded-[3px]" style={{ backgroundColor: getHeatColor(hoveredCell.value) }} />
-            <span className="font-semibold text-foreground">{symptomLabels[hoveredCell.row] || hoveredCell.row}</span>
+            <span className={`font-semibold ${ct.tooltipLabel}`}>{symptomLabels[hoveredCell.row] || hoveredCell.row}</span>
           </div>
-          <div className="mt-0.5 text-muted">
-            {hoveredCell.dateStr} · <span className="font-semibold text-foreground">{hoveredCell.value}/10</span>
+          <div className={`mt-0.5 ${ct.tooltipText}`}>
+            {hoveredCell.dateStr} · <span className={`font-semibold ${ct.tooltipValue}`}>{hoveredCell.value}/10</span>
           </div>
         </div>
       )}
 
       {/* Legends */}
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-0.5 text-xs text-muted">
+      <div className="relative mt-4 flex flex-wrap items-center justify-between gap-4">
+        <div className={`flex items-center gap-0.5 text-xs ${ct.heatLegend}`}>
           <span className="mr-1">Severity: 0</span>
           {Array.from({ length: 11 }, (_, v) => (
             <div key={v} className="rounded-[3px]" style={{ width: 12, height: 12, backgroundColor: getHeatColor(v) }} />
           ))}
           <span className="ml-1">10</span>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+        <div className={`flex flex-wrap items-center gap-2 text-xs ${ct.heatLegend}`}>
           <span>Cycle:</span>
           {Object.entries(cyclePhaseColors).filter(([k]) => k !== "on_pill").map(([key, color]) => (
             <span key={key} className="flex items-center gap-1">
@@ -831,6 +862,61 @@ function DailyHeatmap({ entries }: { entries: LogEntry[] }) {
       </div>
     </div>
   );
+}
+
+/* ─── Card theme ─────────────────────────────────────────── */
+
+type CardTheme = "dark" | "light";
+
+function useCardColors(theme: CardTheme) {
+  if (theme === "dark") {
+    return {
+      card: "relative overflow-hidden rounded-3xl bg-foreground p-7",
+      overlay: true,
+      label: "text-surface/40",
+      title: "text-surface/90",
+      text: "text-surface/50",
+      textStrong: "text-surface/90",
+      legendText: "text-surface/70",
+      grid: "rgba(255,255,255,0.06)",
+      axis: "rgba(255,255,255,0.3)",
+      cursor: "rgba(255,255,255,0.15)",
+      barCursor: "rgba(255,255,255,0.05)",
+      progressBg: "bg-white/[0.08]",
+      statCard: "relative overflow-hidden rounded-2xl bg-foreground px-4 pt-4 pb-4 text-center",
+      stickyBg: "bg-foreground",
+      selectClass: "rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-medium text-surface/70 focus:border-accent-green focus:outline-none",
+      heatLegend: "text-surface/40",
+      tooltipCard: "rounded-xl border border-white/10 bg-foreground px-3 py-2.5 text-xs shadow-lg animate-tooltip-in",
+      tooltipLabel: "text-surface",
+      tooltipText: "text-surface/60",
+      tooltipValue: "text-surface",
+      emptyText: "text-surface/40",
+    };
+  }
+  return {
+    card: "rounded-2xl border border-border bg-surface p-6 shadow-sm card-hover",
+    overlay: false,
+    label: "text-muted",
+    title: "text-foreground",
+    text: "text-muted",
+    textStrong: "text-foreground",
+    legendText: "text-foreground",
+    grid: "rgba(168,162,158,0.25)",
+    axis: "#a8a29e",
+    cursor: "#a8a29e",
+    barCursor: "rgba(120,113,108,0.10)",
+    progressBg: "bg-border",
+    statCard: "card-hover flex flex-col rounded-2xl border border-border bg-surface px-4 pt-4 pb-4 text-center",
+    stickyBg: "bg-surface",
+    selectClass: "rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-accent-green focus:outline-none",
+    heatLegend: "text-muted",
+    tooltipCard: "rounded-xl border border-border bg-surface px-3 py-2.5 text-xs shadow-lg animate-tooltip-in",
+    tooltipLabel: "text-foreground",
+    tooltipText: "text-muted",
+    tooltipValue: "text-foreground",
+    emptyText: "text-muted",
+  };
 }
 
 /* ─── Main Overview page ───────────────────────────────── */
@@ -846,6 +932,25 @@ export default function OverviewPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dailyLogsOpen, setDailyLogsOpen] = useState(false);
   const [hiddenSeries, setHiddenSeries] = useState<Set<string>>(new Set());
+  const [cardTheme, setCardTheme] = useState<CardTheme>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("cardTheme") as CardTheme) || "dark";
+    }
+    return "dark";
+  });
+  const c = useCardColors(cardTheme);
+  const [insights, setInsights] = useState<{
+    triggerCorrelations: string;
+    cyclePatterns: string;
+    hormonalTreatment: string;
+    trends: string;
+    keyObservations: string;
+    summary: string;
+  } | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState("");
+  const [profileHormonalTreatment, setProfileHormonalTreatment] = useState("");
+  const [profileHormonalStartDate, setProfileHormonalStartDate] = useState("");
 
   const toggleSeries = useCallback((key: string) => {
     setHiddenSeries((prev) => {
@@ -856,18 +961,22 @@ export default function OverviewPage() {
     });
   }, []);
 
-  /* Single data fetch — all entries */
+  /* Single data fetch — all entries + profile hormonal treatment */
   useEffect(() => {
     async function load() {
-      const { data, error } = await supabase
-        .from("symptom_logs")
-        .select("*")
-        .order("log_date", { ascending: false });
+      const [logsResult, profileResult] = await Promise.all([
+        supabase.from("symptom_logs").select("*").order("log_date", { ascending: false }),
+        supabase.from("profiles").select("hormonal_treatment, hormonal_treatment_start_date").maybeSingle(),
+      ]);
 
-      if (error) {
-        setError(error.message);
+      if (logsResult.error) {
+        setError(logsResult.error.message);
       } else {
-        setEntries(data ?? []);
+        setEntries(logsResult.data ?? []);
+      }
+      if (profileResult.data) {
+        setProfileHormonalTreatment(profileResult.data.hormonal_treatment ?? "");
+        setProfileHormonalStartDate(profileResult.data.hormonal_treatment_start_date ?? "");
       }
       setLoading(false);
     }
@@ -1266,12 +1375,34 @@ export default function OverviewPage() {
             <p className="section-label">Dashboard</p>
             <h1 className="font-serif text-3xl font-light text-foreground">Log Overview</h1>
           </div>
-          <a
-            href="/dashboard/log"
-            className="rounded-full bg-foreground px-3 py-1 text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
-          >
-            + New entry
-          </a>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                const next = cardTheme === "dark" ? "light" : "dark";
+                setCardTheme(next);
+                localStorage.setItem("cardTheme", next);
+              }}
+              className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium text-muted transition-all hover:bg-surface"
+              title={`Switch to ${cardTheme === "dark" ? "light" : "dark"} cards`}
+            >
+              {cardTheme === "dark" ? (
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                </svg>
+              ) : (
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                </svg>
+              )}
+              {cardTheme === "dark" ? "Light" : "Dark"}
+            </button>
+            <a
+              href="/dashboard/log"
+              className="rounded-full bg-foreground px-3 py-1 text-sm font-medium text-surface transition-all hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              + New entry
+            </a>
+          </div>
         </div>
 
         {error && <div className="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">{error}</div>}
@@ -1290,21 +1421,26 @@ export default function OverviewPage() {
           ].map((card) => (
             <div
               key={card.label}
-              className="card-hover flex flex-col rounded-2xl border border-border bg-surface px-4 pt-4 pb-4 text-center"
+              className={`${c.statCard} flex flex-col`}
               style={{ height: 96 }}
             >
-              <div className="flex flex-1 items-center justify-center">
-                <p className={`font-serif font-semibold text-foreground ${card.size}`}>{card.value}</p>
+              {c.overlay && <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-green/[0.06] to-transparent" />}
+              <div className="relative flex flex-1 items-center justify-center">
+                <p className={`font-serif font-semibold ${c.textStrong} ${card.size}`}>{card.value}</p>
               </div>
-              <p className="text-xs text-muted">{card.label}</p>
+              <p className={`relative text-xs ${c.label}`}>{card.label}</p>
             </div>
           ))}
         </div>
 
         {/* Recent Trends (7-Day Area Chart) */}
         {summaryChartLines.length > 0 && (
-          <div className="rounded-2xl border border-border bg-surface p-6 card-hover">
-            <h2 className="mb-3 text-center font-serif text-lg font-semibold tracking-tight text-muted">
+          <div className={c.card}>
+            {c.overlay && <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-green/[0.06] to-transparent" />}
+            <p className={`relative text-xs font-medium uppercase tracking-[0.12em] ${c.label}`}>
+              Weekly Overview
+            </p>
+            <h2 className={`relative mt-1 mb-3 font-serif text-lg ${c.title}`}>
               Recent Trends (7 Days)
             </h2>
             <ResponsiveContainer width="100%" height={200}>
@@ -1312,17 +1448,17 @@ export default function OverviewPage() {
                 <defs>
                   {summaryChartLines.map((line) => (
                     <linearGradient key={line.key} id={`summary-area-${line.key}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={line.color} stopOpacity={0.3} />
-                      <stop offset="100%" stopColor={line.color} stopOpacity={0.02} />
+                      <stop offset="0%" stopColor={line.color} stopOpacity={0.35} />
+                      <stop offset="100%" stopColor={line.color} stopOpacity={0} />
                     </linearGradient>
                   ))}
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(168, 162, 158, 0.25)" />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#a8a29e" }} axisLine={false} tickLine={false} />
-                <YAxis domain={[0, 10]} tick={{ fontSize: 11, fill: "#a8a29e" }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={c.grid} />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: c.axis }} axisLine={false} tickLine={false} />
+                <YAxis domain={[0, 10]} tick={{ fontSize: 11, fill: c.axis }} axisLine={false} tickLine={false} />
                 <Tooltip
-                  content={(props) => <ModernTooltip {...props} colorMap={summaryChartColorMap} />}
-                  cursor={{ stroke: "#a8a29e", strokeDasharray: "4 4", strokeWidth: 1 }}
+                  content={(props) => <ModernTooltip {...props} colorMap={summaryChartColorMap} theme={cardTheme} />}
+                  cursor={{ stroke: c.cursor, strokeDasharray: "4 4", strokeWidth: 1 }}
                   wrapperStyle={{ zIndex: 1000 }}
                   isAnimationActive={false}
                 />
@@ -1335,7 +1471,7 @@ export default function OverviewPage() {
                     stroke={line.color}
                     fill={`url(#summary-area-${line.key})`}
                     strokeWidth={2}
-                    dot={{ r: 2, fill: line.color, strokeWidth: 0 }}
+                    dot={{ r: 2.5, fill: line.color, strokeWidth: 0 }}
                     activeDot={{ r: 6, stroke: line.color, strokeWidth: 3, fill: "#fff", strokeOpacity: 0.6 }}
                     animationDuration={800}
                   />
@@ -1349,7 +1485,7 @@ export default function OverviewPage() {
                     className="inline-block h-2.5 w-2.5 rounded-[3px]"
                     style={{ backgroundColor: line.color }}
                   />
-                  <span className="text-foreground">{line.label}</span>
+                  <span className={c.legendText}>{line.label}</span>
                 </div>
               ))}
             </div>
@@ -1358,18 +1494,22 @@ export default function OverviewPage() {
 
         {/* Top Symptoms with Trend Arrows */}
         {topSymptomTrends.length > 0 && (
-          <div className="rounded-2xl border border-border bg-surface p-6 card-hover">
-            <h2 className="mb-4 font-serif text-lg font-semibold tracking-tight text-foreground">
+          <div className={c.card}>
+            {c.overlay && <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-green/[0.06] to-transparent" />}
+            <p className={`relative text-xs font-medium uppercase tracking-[0.12em] ${c.label}`}>
+              Overview
+            </p>
+            <h2 className={`relative mt-1 mb-4 font-serif text-lg ${c.title}`}>
               Top Symptoms
             </h2>
-            <div className="space-y-3">
+            <div className="relative space-y-3">
               {topSymptomTrends.map((item) => (
                 <div key={item.key} className="flex items-center gap-3">
-                  <span className="w-36 shrink-0 text-sm text-muted truncate">{item.label}</span>
-                  <span className="w-10 shrink-0 text-right text-sm font-semibold tabular-nums text-foreground">
+                  <span className={`w-36 shrink-0 text-sm truncate ${c.text}`}>{item.label}</span>
+                  <span className={`w-10 shrink-0 text-right text-sm font-semibold tabular-nums ${c.textStrong}`}>
                     {item.avg}/10
                   </span>
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border">
+                  <div className={`h-1.5 flex-1 overflow-hidden rounded-full ${c.progressBg}`}>
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{
@@ -1390,11 +1530,139 @@ export default function OverviewPage() {
                 </div>
               ))}
             </div>
-            <p className="mt-3 text-xs text-muted">
+            <p className={`relative mt-3 text-xs ${c.label}`}>
               Compared to previous 30 days — <span className="inline-flex items-center gap-0.5"><ArrowDown /> improving</span> · <span className="inline-flex items-center gap-0.5"><ArrowUp /> worsening</span> · <span className="inline-flex items-center gap-0.5"><Dash /> stable</span>
             </p>
           </div>
         )}
+
+        {/* ═══════════════════════════════════════════════════
+            AI INSIGHTS
+            ═══════════════════════════════════════════════════ */}
+
+        <div className="border-t border-border pt-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="section-label mb-2">Powered by AI</p>
+              <h2 className="font-serif text-2xl font-light text-foreground">
+                AI Insights
+              </h2>
+            </div>
+            <button
+              onClick={async () => {
+                setInsightsLoading(true);
+                setInsightsError("");
+                setInsights(null);
+                try {
+                  const res = await fetch("/api/insights", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      logs: entries,
+                      hormonalTreatment: profileHormonalTreatment,
+                      hormonalTreatmentStartDate: profileHormonalStartDate,
+                    }),
+                  });
+                  if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || "Failed to generate insights");
+                  }
+                  const data = await res.json();
+                  setInsights(data);
+                } catch (err: unknown) {
+                  setInsightsError(err instanceof Error ? err.message : "Something went wrong");
+                } finally {
+                  setInsightsLoading(false);
+                }
+              }}
+              disabled={insightsLoading || entries.length === 0}
+              className="rounded-full bg-accent-green px-5 py-2 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:hover:translate-y-0"
+            >
+              {insightsLoading ? "Analysing..." : "Analyse My Data"}
+            </button>
+          </div>
+          <p className="mt-2 text-sm text-muted">
+            Get personalised insights about correlations between your lifestyle triggers, cycle phases, and symptom patterns.
+          </p>
+
+          {insightsError && (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+              {insightsError}
+            </div>
+          )}
+
+          {insightsLoading && (
+            <div className="mt-6 flex flex-col items-center gap-3 py-10">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent-green border-t-transparent" />
+              <p className="text-sm text-muted">Analysing your symptom data...</p>
+            </div>
+          )}
+
+          {insights && !insightsLoading && (
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <div className="rounded-xl border border-border bg-surface p-5">
+                <div className="mb-2 flex items-center gap-2">
+                  <svg className="h-5 w-5 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                  </svg>
+                  <h3 className="font-serif text-base font-semibold text-foreground">Trigger Correlations</h3>
+                </div>
+                <p className="text-sm leading-relaxed text-muted">{insights.triggerCorrelations}</p>
+              </div>
+
+              <div className="rounded-xl border border-border bg-surface p-5">
+                <div className="mb-2 flex items-center gap-2">
+                  <svg className="h-5 w-5 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h3 className="font-serif text-base font-semibold text-foreground">Cycle Phase Patterns</h3>
+                </div>
+                <p className="text-sm leading-relaxed text-muted">{insights.cyclePatterns}</p>
+              </div>
+
+              {insights.hormonalTreatment && (
+                <div className="rounded-xl border border-border bg-surface p-5 md:col-span-2">
+                  <div className="mb-2 flex items-center gap-2">
+                    <svg className="h-5 w-5 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+                    </svg>
+                    <h3 className="font-serif text-base font-semibold text-foreground">Hormonal Treatment Impact</h3>
+                  </div>
+                  <p className="text-sm leading-relaxed text-muted">{insights.hormonalTreatment}</p>
+                </div>
+              )}
+
+              <div className="rounded-xl border border-border bg-surface p-5">
+                <div className="mb-2 flex items-center gap-2">
+                  <svg className="h-5 w-5 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+                  </svg>
+                  <h3 className="font-serif text-base font-semibold text-foreground">Trends Over Time</h3>
+                </div>
+                <p className="text-sm leading-relaxed text-muted">{insights.trends}</p>
+              </div>
+
+              <div className="rounded-xl border border-border bg-surface p-5">
+                <div className="mb-2 flex items-center gap-2">
+                  <svg className="h-5 w-5 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                  </svg>
+                  <h3 className="font-serif text-base font-semibold text-foreground">Key Observations</h3>
+                </div>
+                <p className="text-sm leading-relaxed text-muted">{insights.keyObservations}</p>
+              </div>
+
+              <div className="rounded-xl border border-accent-green/30 bg-accent-green/[0.04] p-5 md:col-span-2">
+                <h3 className="mb-1 font-serif text-base font-semibold text-foreground">Summary</h3>
+                <p className="text-sm leading-relaxed text-foreground">{insights.summary}</p>
+              </div>
+
+              <p className="text-[11px] text-muted/60 md:col-span-2">
+                These insights are generated by AI based on your logged data. They are not medical advice — always consult your healthcare provider for treatment decisions.
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* ═══════════════════════════════════════════════════
             DETAILED HISTORY
@@ -1472,14 +1740,14 @@ export default function OverviewPage() {
         {/* Area charts – trends over time (show when 2+ entries) */}
         {filteredChronological.length >= 2 && (
           <div className="space-y-6">
-            <SymptomAreaChart title="Pain Levels" data={filteredChronological} lines={painLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
-            <SymptomAreaChart title="Other Symptoms" data={filteredChronological} lines={otherLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
-            <SymptomAreaChart title="Lifestyle Triggers" data={filteredChronological} lines={lifestyleLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} />
+            <SymptomAreaChart title="Pain Levels" data={filteredChronological} lines={painLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} theme={cardTheme} />
+            <SymptomAreaChart title="Other Symptoms" data={filteredChronological} lines={otherLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} theme={cardTheme} />
+            <SymptomAreaChart title="Lifestyle Triggers" data={filteredChronological} lines={lifestyleLines} hiddenSeries={hiddenSeries} onToggleSeries={toggleSeries} theme={cardTheme} />
           </div>
         )}
 
         {/* Heatmap – daily view matching selected time range */}
-        <DailyHeatmap entries={filteredChronological} />
+        <DailyHeatmap entries={filteredChronological} theme={cardTheme} />
 
         {/* Daily logs – collapsible section */}
         <div className="space-y-2">

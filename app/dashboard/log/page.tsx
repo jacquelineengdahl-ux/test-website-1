@@ -168,6 +168,9 @@ function LogForm() {
   // Hormonal treatment from profile
   const [profileHormonalTreatment, setProfileHormonalTreatment] = useState("");
 
+  // Hormonal treatment note
+  const [hormonalTreatmentNote, setHormonalTreatmentNote] = useState("");
+
   // Notes
   const [notes, setNotes] = useState("");
 
@@ -229,6 +232,7 @@ function LogForm() {
         setDiet(entry.diet);
         setSleep(entry.sleep);
         setNotes(entry.notes ?? "");
+        setHormonalTreatmentNote(entry.hormonal_treatment_note ?? "");
 
         // Parse cycle_phase
         if (entry.cycle_phase) {
@@ -298,6 +302,7 @@ function LogForm() {
         }
         return phases.length > 0 ? phases.join(",") : null;
       })(),
+      hormonal_treatment_note: hormonalTreatmentNote || null,
       notes: notes || null,
     };
 
@@ -557,6 +562,20 @@ function LogForm() {
                 No hormonal treatment set in your profile yet.{" "}
                 <a href="/profile" className="text-accent-green underline">Add it in profile</a>
               </p>
+            )}
+            {cyclePhases.includes("on_hormonal_treatment") && (
+              <div className="mt-3">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">
+                  Treatment observation (optional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={hormonalTreatmentNote}
+                  onChange={(e) => setHormonalTreatmentNote(e.target.value)}
+                  placeholder="E.g. Week 2 of new pack — feeling more moody than usual"
+                  className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted/50 resize-y focus:border-accent-green focus:outline-none"
+                />
+              </div>
             )}
             {cyclePhases.includes("other") && (
               <input
