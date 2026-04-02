@@ -104,6 +104,24 @@ const SUPPORTING_TREATMENT_OPTIONS = [
   "Counseling/Therapy", "Pelvic floor therapy",
 ];
 
+const COMPLEMENTARY_DESCRIPTIONS: Record<string, string> = {
+  "Supplements": "Support hormone balance and reduce inflammation naturally",
+  "Anti-inflammatory diet": "Reduce systemic inflammation through targeted nutrition",
+  "Gluten-free diet": "May reduce bloating and inflammatory response in some women",
+  "Exercise": "Improves circulation, mood, and can reduce pain severity",
+  "Yoga": "Gentle movement that eases tension, supports pelvic health and calms the nervous system",
+  "Meditation": "Reduces stress hormones and helps manage chronic pain perception",
+  "Acupuncture": "May reduce pelvic pain, improve blood flow and support hormonal balance",
+  "Physiotherapy": "Targeted exercises to strengthen core and manage musculoskeletal pain",
+  "CBD": "May reduce pelvic pain, calm the nervous system and ease inflammation",
+  "Heat therapy": "Relaxes pelvic muscles and increases blood flow to reduce cramping",
+  "TENS machine": "Electrical nerve stimulation to block pain signals and provide relief",
+  "Sleep hygiene": "Quality sleep supports hormone regulation and tissue repair",
+  "Stress management": "Chronic stress worsens inflammation — managing it supports healing",
+  "Counseling/Therapy": "Emotional support for the mental health impact of chronic illness",
+  "Pelvic floor therapy": "Specialist therapy to release tension and restore pelvic function",
+};
+
 const GOAL_OPTIONS = [
   "Manage mood swings", "Brain fog", "Pain management", "Surgery preparation",
   "Egg freezing", "Supplements", "Diet changes", "Exercise routine",
@@ -125,6 +143,24 @@ const GOAL_SUB_OPTIONS: Record<string, string[]> = {
   "Surgery preparation": ["Find surgeon", "Pre-surgery fitness", "Recovery planning", "Second opinion"],
   "Exercise routine": ["Start gentle movement", "Build consistency", "Strength building", "Flexibility"],
   "Mental health": ["Therapy/counseling", "Anxiety management", "Acceptance", "Support group", "Mindfulness"],
+};
+
+const GOAL_ACTIONS: Record<string, string> = {
+  "Manage mood swings": "Communicate with loved ones, adjust daily rhythm, track triggers",
+  "Brain fog": "Prioritise sleep, reduce screen time, try omega-3 supplements",
+  "Pain management": "Discuss options with doctor, explore physiotherapy, track pain patterns",
+  "Surgery preparation": "Contact specialist clinic, get referral, plan recovery time",
+  "Egg freezing": "Contact fertility clinic, book consultation, understand timeline",
+  "Supplements": "Research evidence-based options, consult with doctor, start gradually",
+  "Diet changes": "Keep food diary, try elimination approach, consult nutritionist",
+  "Exercise routine": "Start with gentle movement, find endo-friendly classes, build slowly",
+  "Better sleep": "Establish bedtime routine, limit caffeine, track sleep quality",
+  "Reduce inflammation": "Anti-inflammatory diet, supplements, reduce stress triggers",
+  "Fertility planning": "Book fertility assessment, discuss timeline with partner, explore options",
+  "Mental health": "Find endo-aware therapist, join support community, practise self-compassion",
+  "Work-life balance": "Set boundaries, communicate needs to employer, plan rest days",
+  "Reduce medication": "Discuss tapering plan with doctor, explore complementary alternatives",
+  "Find specialist": "Research endo centres, ask for referrals, check reviews",
 };
 
 /* ── Phone number data ── */
@@ -744,6 +780,8 @@ export default function ProfilePage() {
   // Goals: other text input
   const [goalOther, setGoalOther] = useState("");
   const [goalSubSelections, setGoalSubSelections] = useState<Record<string, string[]>>({});
+  const [goalActions, setGoalActions] = useState<Record<string, string>>({});
+  const [editingGoalAction, setEditingGoalAction] = useState<string | null>(null);
 
   // Toast
   const [savedToast, setSavedToast] = useState(false);
@@ -1839,33 +1877,37 @@ export default function ProfilePage() {
               {hormonalTreatment && treatmentPlanSelected.includes("Hormonal therapy") && (
                 <div>
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Hormonal Treatment</p>
-                  <div className="rounded-xl border-2 border-accent-green bg-accent-green/[0.06] px-5 py-4">
-                    <p className="text-base font-medium text-foreground">
-                      {hormonalTreatment}{hormonalBrand && hormonalBrand !== "__other__" ? ` \u00B7 ${hormonalBrand}` : ""}
+                  <div className="inline-flex flex-col rounded-xl border border-accent-green/30 bg-accent-green/[0.04] px-4 py-2.5">
+                    <p className="text-sm font-medium text-foreground">
+                      {hormonalTreatment}{hormonalBrand && hormonalBrand !== "__other__" ? ` · ${hormonalBrand}` : ""}
                     </p>
                     {hormonalTreatmentStartDate && (
-                      <p className="mt-1 text-sm text-muted">Started {formatDate(hormonalTreatmentStartDate)}</p>
+                      <p className="mt-0.5 text-xs text-muted">Started {formatDate(hormonalTreatmentStartDate)}</p>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Supporting Treatment (locked) */}
+              {/* Complementary Care (locked) */}
               {(supportingSelected.filter((s) => s !== "Other").length > 0 || supportingOther) && (
                 <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Supporting Treatment</p>
-                  <ul className="space-y-1.5">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Complementary Care</p>
+                  <ul className="space-y-2.5">
                     {supportingSelected.filter((s) => s !== "Other").map((item) => {
                       const subs = supportingSubSelections[item];
+                      const desc = COMPLEMENTARY_DESCRIPTIONS[item];
                       return (
                         <li key={item} className="flex items-start gap-2 text-sm">
                           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-green" />
-                          <span>
-                            <span className="font-medium text-foreground">{item}</span>
-                            {subs && subs.length > 0 && (
-                              <span className="text-muted"> — {subs.join(", ")}</span>
-                            )}
-                          </span>
+                          <div>
+                            <p>
+                              <span className="font-medium text-foreground">{item}</span>
+                              {subs && subs.length > 0 && (
+                                <span className="text-muted"> — {subs.join(", ")}</span>
+                              )}
+                            </p>
+                            {desc && <p className="mt-0.5 text-xs text-muted">{desc}</p>}
+                          </div>
                         </li>
                       );
                     })}
@@ -1883,9 +1925,8 @@ export default function ProfilePage() {
               {activeGoals.length > 0 && (
                 <div>
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Goals &amp; Next Steps</p>
-                  <ol className="space-y-1">
+                  <ol className="space-y-2.5">
                     {activeGoals.map((goal, i) => {
-                      // Check if goal has sub-selections encoded as "Parent: sub1, sub2"
                       const colonIdx = goal.indexOf(":");
                       let parent = goal;
                       let subsText = "";
@@ -1893,13 +1934,59 @@ export default function ProfilePage() {
                         parent = goal.substring(0, colonIdx).trim();
                         subsText = goal.substring(colonIdx + 1).trim();
                       }
+                      const suggestedAction = GOAL_ACTIONS[parent] || "";
+                      const customAction = goalActions[parent];
+                      const displayAction = customAction !== undefined ? customAction : suggestedAction;
+                      const isEditing = editingGoalAction === parent;
                       return (
-                        <li key={`${goal}-${i}`} className="flex items-baseline gap-2 text-sm">
-                          <span className="shrink-0 font-serif text-base font-semibold text-accent-green">{i + 1}.</span>
-                          <span>
-                            <span className="font-medium text-foreground">{parent}</span>
-                            {subsText && <span className="text-muted"> &mdash; {subsText}</span>}
-                          </span>
+                        <li key={`${goal}-${i}`} className="flex gap-2 text-sm">
+                          <span className="shrink-0 font-serif text-base font-semibold text-accent-green mt-0.5">{i + 1}.</span>
+                          <div className="flex-1">
+                            <p>
+                              <span className="font-medium text-foreground">{parent}</span>
+                              {subsText && <span className="text-muted"> — {subsText}</span>}
+                            </p>
+                            {isEditing ? (
+                              <div className="mt-1 flex gap-2">
+                                <input
+                                  type="text"
+                                  value={displayAction}
+                                  onChange={(e) => setGoalActions({ ...goalActions, [parent]: e.target.value })}
+                                  placeholder={suggestedAction || "Add your next step..."}
+                                  className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-accent-green focus:outline-none"
+                                  autoFocus
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingGoalAction(null)}
+                                  className="text-xs text-muted hover:text-foreground"
+                                >
+                                  Done
+                                </button>
+                              </div>
+                            ) : displayAction ? (
+                              <p
+                                className="mt-0.5 text-xs text-muted italic cursor-pointer hover:text-foreground"
+                                onClick={() => {
+                                  if (customAction === undefined) setGoalActions({ ...goalActions, [parent]: suggestedAction });
+                                  setEditingGoalAction(parent);
+                                }}
+                              >
+                                Next step: {displayAction}
+                              </p>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setGoalActions({ ...goalActions, [parent]: "" });
+                                  setEditingGoalAction(parent);
+                                }}
+                                className="mt-0.5 text-xs text-muted hover:text-foreground"
+                              >
+                                + Add next step
+                              </button>
+                            )}
+                          </div>
                         </li>
                       );
                     })}
@@ -2018,9 +2105,9 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {/* Supporting Treatment - pills */}
+              {/* Complementary Care - pills */}
               <div className="pt-6 border-t border-border mt-6">
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted">Supporting Treatment</label>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted">Complementary Care</label>
                 <CollapsiblePillSelector
                   options={SUPPORTING_TREATMENT_OPTIONS}
                   selected={supportingSelected}
