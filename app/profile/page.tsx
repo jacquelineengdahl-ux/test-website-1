@@ -99,7 +99,7 @@ const MEDICAL_TREATMENT_OPTIONS = [
 
 const SUPPORTING_TREATMENT_OPTIONS = [
   "Supplements", "Anti-inflammatory diet", "Gluten-free diet", "Exercise",
-  "Yoga", "Meditation", "Acupuncture", "Physiotherapy", "CBD",
+  "Meditation", "Acupuncture", "Physiotherapy", "CBD",
   "Heat therapy", "TENS machine", "Sleep hygiene", "Stress management",
   "Counseling/Therapy", "Pelvic floor therapy",
 ];
@@ -108,8 +108,7 @@ const COMPLEMENTARY_DESCRIPTIONS: Record<string, string> = {
   "Supplements": "Support hormone balance and reduce inflammation naturally",
   "Anti-inflammatory diet": "Reduce systemic inflammation through targeted nutrition",
   "Gluten-free diet": "May reduce bloating and inflammatory response in some women",
-  "Exercise": "Improves circulation, mood, and can reduce pain severity",
-  "Yoga": "Gentle movement that eases tension, supports pelvic health and calms the nervous system",
+  "Exercise": "Improves circulation, mood, and can reduce pain severity. Includes yoga for gentle movement and pelvic health",
   "Meditation": "Reduces stress hormones and helps manage chronic pain perception",
   "Acupuncture": "May reduce pelvic pain, improve blood flow and support hormonal balance",
   "Physiotherapy": "Targeted exercises to strengthen core and manage musculoskeletal pain",
@@ -132,8 +131,7 @@ const GOAL_OPTIONS = [
 const SUPPORTING_SUB_OPTIONS: Record<string, string[]> = {
   "Supplements": ["Omega-3", "Magnesium", "Vitamin B", "Vitamin C", "Vitamin D3", "Calcium", "Iron", "Zinc", "NAC", "Turmeric/Curcumin", "Probiotics", "Vitamin B complex", "CoQ10", "DIM", "Resveratrol"],
   "Anti-inflammatory diet": ["No red meat", "No dairy", "No gluten", "No sugar", "No alcohol", "No caffeine", "Mediterranean diet", "Whole foods"],
-  "Exercise": ["Walking", "Swimming", "Pilates", "Strength training", "Running", "Cycling", "Dancing"],
-  "Yoga": ["Yin yoga", "Restorative yoga", "Hatha yoga", "Vinyasa"],
+  "Exercise": ["Walking", "Swimming", "Pilates", "Strength training", "Running", "Cycling", "Dancing", "Yoga — Yin", "Yoga — Restorative", "Yoga — Hatha", "Yoga — Vinyasa"],
 };
 
 const GOAL_SUB_OPTIONS: Record<string, string[]> = {
