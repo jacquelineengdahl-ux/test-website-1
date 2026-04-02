@@ -1937,54 +1937,16 @@ export default function ProfilePage() {
                       const suggestedAction = GOAL_ACTIONS[parent] || "";
                       const customAction = goalActions[parent];
                       const displayAction = customAction !== undefined ? customAction : suggestedAction;
-                      const isEditing = editingGoalAction === parent;
                       return (
                         <li key={`${goal}-${i}`} className="flex gap-2 text-sm">
                           <span className="shrink-0 font-serif text-base font-semibold text-accent-green mt-0.5">{i + 1}.</span>
-                          <div className="flex-1">
+                          <div>
                             <p>
                               <span className="font-medium text-foreground">{parent}</span>
                               {subsText && <span className="text-muted"> — {subsText}</span>}
                             </p>
-                            {isEditing ? (
-                              <div className="mt-1 flex gap-2">
-                                <input
-                                  type="text"
-                                  value={displayAction}
-                                  onChange={(e) => setGoalActions({ ...goalActions, [parent]: e.target.value })}
-                                  placeholder={suggestedAction || "Add your next step..."}
-                                  className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-accent-green focus:outline-none"
-                                  autoFocus
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setEditingGoalAction(null)}
-                                  className="text-xs text-muted hover:text-foreground"
-                                >
-                                  Done
-                                </button>
-                              </div>
-                            ) : displayAction ? (
-                              <p
-                                className="mt-0.5 text-xs text-muted italic cursor-pointer hover:text-foreground"
-                                onClick={() => {
-                                  if (customAction === undefined) setGoalActions({ ...goalActions, [parent]: suggestedAction });
-                                  setEditingGoalAction(parent);
-                                }}
-                              >
-                                Next step: {displayAction}
-                              </p>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setGoalActions({ ...goalActions, [parent]: "" });
-                                  setEditingGoalAction(parent);
-                                }}
-                                className="mt-0.5 text-xs text-muted hover:text-foreground"
-                              >
-                                + Add next step
-                              </button>
+                            {displayAction && (
+                              <p className="mt-0.5 text-xs text-muted italic">Action: {displayAction}</p>
                             )}
                           </div>
                         </li>
@@ -2145,38 +2107,59 @@ export default function ProfilePage() {
                     <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Your priorities</p>
                     <div className="space-y-1.5">
                       {treatmentGoals.map((goal, i) => {
+                        const colonIdx = goal.indexOf(":");
+                        const parent = colonIdx > 0 ? goal.substring(0, colonIdx).trim() : goal;
                         const subs = goalSubSelections[goal];
                         const displayLabel = subs && subs.length > 0 ? `${goal}: ${subs.join(", ")}` : goal;
+                        const suggestedAction = GOAL_ACTIONS[parent] || "";
+                        const currentAction = goalActions[parent] !== undefined ? goalActions[parent] : suggestedAction;
                         return (
-                          <div key={`${goal}-${i}`} className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
-                            <span className="flex-1 text-sm text-foreground">{displayLabel}</span>
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => moveGoal(i, "up")}
-                                disabled={i === 0}
-                                className="rounded p-0.5 text-muted hover:text-foreground disabled:opacity-30"
-                                title="Move up"
-                              >
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 4l4 4H4l4-4z" fill="currentColor"/></svg>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => moveGoal(i, "down")}
-                                disabled={i === treatmentGoals.length - 1}
-                                className="rounded p-0.5 text-muted hover:text-foreground disabled:opacity-30"
-                                title="Move down"
-                              >
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 12l4-4H4l4 4z" fill="currentColor"/></svg>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => removeGoal(i)}
-                                className="rounded p-0.5 text-muted hover:text-red-600"
-                                title="Remove"
-                              >
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                              </button>
+                          <div key={`${goal}-${i}`} className="rounded-lg border border-border bg-background px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <span className="flex-1 text-sm text-foreground">{displayLabel}</span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => moveGoal(i, "up")}
+                                  disabled={i === 0}
+                                  className="rounded p-0.5 text-muted hover:text-foreground disabled:opacity-30"
+                                  title="Move up"
+                                >
+                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 4l4 4H4l4-4z" fill="currentColor"/></svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => moveGoal(i, "down")}
+                                  disabled={i === treatmentGoals.length - 1}
+                                  className="rounded p-0.5 text-muted hover:text-foreground disabled:opacity-30"
+                                  title="Move down"
+                                >
+                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 12l4-4H4l4 4z" fill="currentColor"/></svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeGoal(i)}
+                                  className="rounded p-0.5 text-muted hover:text-red-600"
+                                  title="Remove"
+                                >
+                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                                </button>
+                              </div>
+                            </div>
+                            <div className="mt-1.5">
+                              <div className="flex items-center gap-1 mb-1">
+                                <span className="text-[10px] uppercase tracking-wider text-muted">Action</span>
+                                {suggestedAction && currentAction === suggestedAction && (
+                                  <span className="rounded-full bg-accent-green/10 px-1.5 py-0.5 text-[9px] text-accent-green">AI suggested</span>
+                                )}
+                              </div>
+                              <input
+                                type="text"
+                                value={currentAction}
+                                onChange={(e) => setGoalActions({ ...goalActions, [parent]: e.target.value })}
+                                placeholder={suggestedAction || "Add your action..."}
+                                className="w-full rounded-lg border border-border/60 bg-surface px-3 py-1.5 text-xs text-foreground placeholder:text-muted/50 focus:border-accent-green focus:outline-none"
+                              />
                             </div>
                           </div>
                         );
