@@ -457,48 +457,15 @@ function CollapsiblePillSelector({
 
   return (
     <div className="space-y-3">
-      {/* All pills in one row — selected are filled, unselected are outlined */}
-      <div className="flex flex-wrap gap-1.5">
-        {options.map((option) => {
-          const isSelected = selected.includes(option);
-          const subs = subSelections?.[option] ?? [];
-          return (
-            <button
-              key={option}
-              type="button"
-              onClick={() => toggle(option)}
-              className={`rounded-full transition-colors ${
-                isSelected
-                  ? "bg-foreground px-3 py-1.5 text-sm text-surface"
-                  : "border border-border px-2.5 py-1 text-xs text-muted hover:border-foreground/30 hover:text-foreground"
-              }`}
-            >
-              {option}{isSelected && subs.length > 0 ? ` (${subs.length})` : ""}
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          onClick={() => toggle("Other")}
-          className={`rounded-full transition-colors ${
-            isOtherSelected
-              ? "bg-foreground px-3 py-1.5 text-sm text-surface"
-              : "border border-border px-2.5 py-1 text-xs text-muted hover:border-foreground/30 hover:text-foreground"
-          }`}
-        >
-          Other
-        </button>
-      </div>
-
-      {/* Sub-options panel — appears below the pills row when a pill with subs is selected */}
+      {/* Sub-options panel — appears at the TOP when a pill with subs is expanded */}
       {expandedPill && subOptions?.[expandedPill] && (
-        <div className="rounded-lg border border-accent-green/20 bg-accent-green/[0.03] px-3 py-2.5">
+        <div className="rounded-xl border border-accent-green/30 bg-accent-green/[0.04] px-4 py-3">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-medium text-foreground">{expandedPill}</p>
+            <span className="rounded-full bg-foreground px-3 py-1.5 text-sm text-surface">{expandedPill}</span>
             <button
               type="button"
               onClick={() => setExpandedPill(null)}
-              className="text-[11px] text-muted hover:text-foreground"
+              className="text-xs text-muted hover:text-foreground"
             >
               Done
             </button>
@@ -511,10 +478,10 @@ function CollapsiblePillSelector({
                   key={sub}
                   type="button"
                   onClick={() => toggleSub(expandedPill, sub)}
-                  className={`rounded-full transition-colors ${
+                  className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
                     isSubSelected
-                      ? "bg-accent-green/15 border border-accent-green/30 px-2.5 py-1 text-xs text-foreground"
-                      : "border border-border/60 px-2 py-0.5 text-[11px] text-muted hover:border-border hover:text-foreground"
+                      ? "bg-accent-green/20 border border-accent-green/40 text-foreground"
+                      : "border border-border text-muted hover:border-foreground/30 hover:text-foreground"
                   }`}
                 >
                   {sub}
@@ -525,24 +492,78 @@ function CollapsiblePillSelector({
         </div>
       )}
 
-      {/* Compact summary of sub-selections for pills not currently expanded */}
-      {subOptions && subSelections && (() => {
-        const summaries = selected
-          .filter((s) => s !== "Other" && s !== expandedPill && (subSelections[s] ?? []).length > 0)
-          .map((s) => ({ parent: s, subs: subSelections[s] }));
-        if (summaries.length === 0) return null;
+      {/* Selected pills list — those with sub-pills first, then simple ones */}
+      {(() => {
+        const selectedItems = selected.filter((s) => s !== "Other" && s !== expandedPill);
+        // Sort: items with sub-selections first
+        const withSubs = selectedItems.filter((s) => (subSelections?.[s] ?? []).length > 0 || (subOptions && subOptions[s]));
+        const withoutSubs = selectedItems.filter((s) => !((subSelections?.[s] ?? []).length > 0 || (subOptions && subOptions[s])));
+        const sorted = [...withSubs, ...withoutSubs];
+        if (sorted.length === 0) return null;
         return (
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-            {summaries.map(({ parent, subs }) => (
+          <div className="space-y-1.5">
+            {sorted.map((item) => {
+              const subs = subSelections?.[item] ?? [];
+              const hasSubs = subOptions && subOptions[item];
+              return (
+                <div key={item} className="flex items-center gap-2 flex-wrap">
+                  <span className="rounded-full bg-foreground px-3 py-1 text-sm text-surface">{item}</span>
+                  {subs.map((sub) => (
+                    <span key={sub} className="rounded-full bg-accent-green/15 border border-accent-green/30 px-2 py-0.5 text-[11px] text-foreground">
+                      {sub}
+                    </span>
+                  ))}
+                  {hasSubs && (
+                    <button
+                      type="button"
+                      onClick={() => setExpandedPill(item)}
+                      className="text-[11px] text-muted hover:text-foreground"
+                    >
+                      {subs.length > 0 ? "edit" : "+ details"}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => toggle(item)}
+                    className="text-muted hover:text-red-500 ml-auto"
+                    title="Remove"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
+      {/* Unselected pills — available to pick */}
+      {(() => {
+        const unselected = options.filter((o) => !selected.includes(o) && o !== expandedPill);
+        if (unselected.length === 0 && isOtherSelected) return null;
+        return (
+          <div className="flex flex-wrap gap-1.5">
+            {unselected.map((option) => (
               <button
-                key={parent}
+                key={option}
                 type="button"
-                onClick={() => setExpandedPill(parent)}
-                className="hover:text-foreground"
+                onClick={() => toggle(option)}
+                className="rounded-full border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-foreground/30 hover:text-foreground"
               >
-                <span className="font-medium text-foreground">{parent}:</span> {subs.join(", ")}
+                {option}
               </button>
             ))}
+            {!isOtherSelected && (
+              <button
+                type="button"
+                onClick={() => toggle("Other")}
+                className="rounded-full border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-foreground/30 hover:text-foreground"
+              >
+                Other
+              </button>
+            )}
           </div>
         );
       })()}
@@ -1051,6 +1072,7 @@ export default function ProfilePage() {
     } else {
       setTreatmentGoals(allGoals);
       setTreatmentLocked(true);
+      showSavedToast();
       if (isWelcome) {
         setOpenSections(new Set(["providers"]));
       }
@@ -1074,6 +1096,7 @@ export default function ProfilePage() {
       setError(upsertError.message);
     } else {
       setProvidersLocked(healthcareProviders.length > 0);
+      showSavedToast();
       if (isWelcome) {
         router.push("/dashboard/log?first=1");
       }
