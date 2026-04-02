@@ -99,7 +99,7 @@ const MEDICAL_TREATMENT_OPTIONS = [
 
 const SUPPORTING_TREATMENT_OPTIONS = [
   "Supplements", "Anti-inflammatory diet", "Gluten-free diet", "Exercise",
-  "Yoga", "Meditation", "Acupuncture", "Physiotherapy", "CBD/Cannabis",
+  "Yoga", "Meditation", "Acupuncture", "Physiotherapy", "CBD",
   "Heat therapy", "TENS machine", "Sleep hygiene", "Stress management",
   "Counseling/Therapy", "Pelvic floor therapy",
 ];
