@@ -618,43 +618,37 @@ function CollapsiblePillSelector({
   );
 }
 
-/* ── Parse comma-separated pills string into array + other + sub-selections ── */
+/* ── Parse pills string into array + other + sub-selections ── */
 function parsePills(value: string, knownOptions: string[], subOptionsMap?: Record<string, string[]>): { selected: string[]; other: string; subSelections: Record<string, string[]> } {
   if (!value) return { selected: [], other: "", subSelections: {} };
-  // Split on commas but respect "Parent: sub1, sub2" pattern
-  // Format: "Pill1, Parent: sub1, sub2, Pill2" — we need to parse parent:subs groups
   const subSelections: Record<string, string[]> = {};
   const selected: string[] = [];
   const others: string[] = [];
 
-  // First pass: find "Parent: sub1, sub2" patterns
-  let remaining = value;
-  if (subOptionsMap) {
-    // Sort parent keys by length descending to match longest first
-    const parentKeys = Object.keys(subOptionsMap).sort((a, b) => b.length - a.length);
-    for (const parent of parentKeys) {
-      const regex = new RegExp(`${parent.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:\\s*([^,]+(,\\s*[^,]+)*)`, 'g');
-      const match = regex.exec(remaining);
-      if (match) {
-        const subsStr = match[1];
-        const subs = subsStr.split(",").map((s) => s.trim()).filter((s) => subOptionsMap[parent].includes(s));
+  // Split on " | " (new format) or fall back to "," (old format)
+  const segments = value.includes(" | ")
+    ? value.split(" | ").map((s) => s.trim()).filter(Boolean)
+    : value.split(",").map((s) => s.trim()).filter(Boolean);
+
+  for (const segment of segments) {
+    // Check for "Parent: sub1, sub2" pattern
+    const colonIdx = segment.indexOf(":");
+    if (colonIdx > 0 && subOptionsMap) {
+      const parent = segment.substring(0, colonIdx).trim();
+      if (subOptionsMap[parent]) {
+        const subs = segment.substring(colonIdx + 1).split(",").map((s) => s.trim()).filter((s) => subOptionsMap[parent].includes(s));
         if (subs.length > 0) {
           subSelections[parent] = subs;
         }
         if (!selected.includes(parent)) selected.push(parent);
-        // Remove the matched portion from remaining
-        remaining = remaining.replace(match[0], "").replace(/,\s*,/g, ",").replace(/^,\s*|,\s*$/g, "");
+        continue;
       }
     }
-  }
-
-  // Second pass: parse remaining items
-  const items = remaining.split(",").map((s) => s.trim()).filter(Boolean);
-  for (const item of items) {
-    if (knownOptions.includes(item)) {
-      if (!selected.includes(item)) selected.push(item);
-    } else if (item) {
-      others.push(item);
+    // Plain pill or unknown
+    if (knownOptions.includes(segment)) {
+      if (!selected.includes(segment)) selected.push(segment);
+    } else if (segment) {
+      others.push(segment);
     }
   }
   if (others.length > 0) {
@@ -677,7 +671,8 @@ function pillsToString(selected: string[], otherValue: string, subSelections?: R
   if (otherValue.trim()) {
     items.push(otherValue.trim());
   }
-  return items.join(", ");
+  // Use " | " as separator to avoid conflicts with sub-selection commas
+  return items.join(" | ");
 }
 
 /* ── Accordion Section Component ── */
@@ -1928,7 +1923,7 @@ export default function ProfilePage() {
               {/* Goals (locked) */}
               {activeGoals.length > 0 && (
                 <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Goals &amp; Next Steps</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Personal Goals &amp; Next Steps</p>
                   <ol className="space-y-2.5">
                     {activeGoals.map((goal, i) => {
                       const colonIdx = goal.indexOf(":");
