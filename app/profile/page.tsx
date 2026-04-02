@@ -1561,18 +1561,20 @@ export default function ProfilePage() {
                             <p className="font-serif text-lg font-semibold text-foreground">{group.year}</p>
                             <div className="mt-1.5 space-y-2">
                               {group.events.map((event, j) => (
-                                <div key={j} className="flex items-start gap-2">
-                                  <span className="w-8 shrink-0 text-xs text-muted">{event.month ? MONTH_NAMES[Number(event.month)] : ""}</span>
-                                  <div>
+                                <div key={j}>
+                                  <div className="flex items-center gap-2">
+                                    {event.month && (
+                                      <span className="text-sm font-medium text-muted">{MONTH_NAMES[Number(event.month)]}</span>
+                                    )}
                                     {event.type && (
-                                      <span className="inline-block rounded-full bg-accent-green/15 border border-accent-green/30 px-2 py-0.5 text-[11px] font-medium text-foreground">
+                                      <span className="rounded-full bg-accent-green/15 border border-accent-green/30 px-2 py-0.5 text-[11px] font-medium text-foreground">
                                         {event.type}
                                       </span>
                                     )}
-                                    {event.notes && (
-                                      <p className="mt-0.5 text-sm text-muted">{event.notes}</p>
-                                    )}
                                   </div>
+                                  {event.notes && (
+                                    <p className="mt-0.5 text-sm text-muted">{event.notes}</p>
+                                  )}
                                 </div>
                               ))}
                             </div>
