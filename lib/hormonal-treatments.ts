@@ -1,3 +1,15 @@
+export interface PackPhase {
+  days: [number, number]; // [startDay, endDay] inclusive
+  name: string;
+  description: string;
+}
+
+export interface PackCycle {
+  length: number; // total days in one pack/cycle
+  phases: PackPhase[];
+  brandSpecific?: Record<string, { length: number; phases: PackPhase[] }>;
+}
+
 export interface HormonalTreatment {
   value: string;
   label: string;
@@ -5,6 +17,7 @@ export interface HormonalTreatment {
   examples: string[];
   commonSideEffects: string[];
   cycleInfo: string;
+  packCycle?: PackCycle;
 }
 
 export const hormonalTreatments: HormonalTreatment[] = [
@@ -23,6 +36,13 @@ export const hormonalTreatments: HormonalTreatment[] = [
       "Reduced libido",
     ],
     cycleInfo: "Typically taken for 21 days with a 7-day break. Symptoms may fluctuate between active and break weeks.",
+    packCycle: {
+      length: 28,
+      phases: [
+        { days: [1, 21], name: "Active pills", description: "Estrogen + progestogen active. Hormone levels stable." },
+        { days: [22, 28], name: "Break / placebo", description: "Hormone-free interval. Withdrawal bleed expected. Pain and mood changes may increase." },
+      ],
+    },
   },
   {
     value: "Progestogen-only pill",
@@ -40,6 +60,29 @@ export const hormonalTreatments: HormonalTreatment[] = [
       "Depression or anxiety (some users)",
     ],
     cycleInfo: "Taken continuously. Some types (e.g., Slinda) have a 4-day placebo break per 28-day pack. Mood and symptom patterns often follow the pack cycle.",
+    packCycle: {
+      length: 28,
+      phases: [
+        { days: [1, 24], name: "Active pills", description: "Progestogen active. Some users notice mood changes and irritability, especially days 1-14 of a new pack." },
+        { days: [25, 28], name: "Placebo pills", description: "No active hormone. Withdrawal bleed may occur. Mood may shift." },
+      ],
+      brandSpecific: {
+        "Slinda (drospirenone)": {
+          length: 28,
+          phases: [
+            { days: [1, 14], name: "Early active phase", description: "Drospirenone building up. Many users experience increased moodiness, irritability, or low mood during this phase." },
+            { days: [15, 24], name: "Late active phase", description: "Hormone levels more stable. Mood often improves compared to early phase." },
+            { days: [25, 28], name: "Placebo pills (green)", description: "No active hormone. Withdrawal bleed may occur. Some users feel better, others worse during this break." },
+          ],
+        },
+        "Cerazette (desogestrel)": {
+          length: 28,
+          phases: [
+            { days: [1, 28], name: "Continuous active", description: "Taken continuously without breaks. No placebo phase. Irregular spotting possible throughout." },
+          ],
+        },
+      },
+    },
   },
   {
     value: "Hormonal IUD",
@@ -109,6 +152,14 @@ export const hormonalTreatments: HormonalTreatment[] = [
       "Bloating",
     ],
     cycleInfo: "Given every 12-13 weeks. Symptoms may fluctuate — often worse in the weeks before the next injection as hormone levels drop.",
+    packCycle: {
+      length: 91,
+      phases: [
+        { days: [1, 14], name: "Peak hormone", description: "Highest progestogen levels after injection. Side effects may be strongest." },
+        { days: [15, 60], name: "Stable phase", description: "Hormone levels gradually declining but still effective." },
+        { days: [61, 91], name: "Pre-injection dip", description: "Hormone levels dropping. Symptoms and breakthrough bleeding may return. Time to schedule next injection." },
+      ],
+    },
   },
   {
     value: "Hormonal patch",
@@ -125,6 +176,15 @@ export const hormonalTreatments: HormonalTreatment[] = [
       "Bloating",
     ],
     cycleInfo: "Worn for 3 weeks (changing weekly), then 1 patch-free week. Symptom patterns may follow the 4-week cycle.",
+    packCycle: {
+      length: 28,
+      phases: [
+        { days: [1, 7], name: "Patch week 1", description: "Fresh patch applied. Hormone levels rising." },
+        { days: [8, 14], name: "Patch week 2", description: "Stable hormone delivery. Change patch." },
+        { days: [15, 21], name: "Patch week 3", description: "Final active week. Change patch." },
+        { days: [22, 28], name: "Patch-free week", description: "No patch. Withdrawal bleed expected. Symptoms may increase." },
+      ],
+    },
   },
   {
     value: "Vaginal ring",
@@ -141,6 +201,13 @@ export const hormonalTreatments: HormonalTreatment[] = [
       "Ring discomfort",
     ],
     cycleInfo: "Worn for 3 weeks, removed for 1 week (NuvaRing) or worn continuously for a year (Annovera). Symptom patterns may follow the cycle.",
+    packCycle: {
+      length: 28,
+      phases: [
+        { days: [1, 21], name: "Ring in", description: "Active hormone delivery for 3 weeks." },
+        { days: [22, 28], name: "Ring out", description: "Ring-free week. Withdrawal bleed expected. Symptoms may increase." },
+      ],
+    },
   },
   {
     value: "HRT / Add-back therapy",
@@ -202,4 +269,39 @@ export const hormonalTreatments: HormonalTreatment[] = [
 
 export function getTreatmentInfo(value: string): HormonalTreatment | undefined {
   return hormonalTreatments.find((t) => t.value === value);
+}
+
+export interface PillDayInfo {
+  day: number;
+  totalDays: number;
+  phase: PackPhase;
+  packNumber: number;
+}
+
+export function calculatePillDay(
+  treatmentCategory: string,
+  brand: string,
+  startDate: string,
+  logDate: string,
+): PillDayInfo | null {
+  const treatment = getTreatmentInfo(treatmentCategory);
+  if (!treatment?.packCycle || !startDate) return null;
+
+  // Use brand-specific cycle if available
+  const cycle = treatment.packCycle.brandSpecific?.[brand] ?? treatment.packCycle;
+  const start = new Date(startDate + "T00:00:00");
+  const log = new Date(logDate + "T00:00:00");
+  const diffMs = log.getTime() - start.getTime();
+  if (diffMs < 0) return null;
+
+  const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const dayInCycle = (totalDays % cycle.length) + 1;
+  const packNumber = Math.floor(totalDays / cycle.length) + 1;
+
+  // Find which phase this day falls in
+  const phase = cycle.phases.find(
+    (p) => dayInCycle >= p.days[0] && dayInCycle <= p.days[1],
+  ) ?? cycle.phases[cycle.phases.length - 1];
+
+  return { day: dayInCycle, totalDays: cycle.length, phase, packNumber };
 }

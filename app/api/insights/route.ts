@@ -22,9 +22,11 @@ The data contains daily logs with these fields (all scored 0-10 unless noted):
 - Lifestyle triggers: stress, inactivity, overexertion, coffee, alcohol, smoking, diet, sleep
 - Cycle phase: menstrual, follicular, ovulation, luteal, on_hormonal_treatment (can be null)
 - hormonal_treatment_note: free text observations about hormonal treatment side effects or patterns (can be null)
+- pill_day: which day of the hormonal treatment pack/cycle this entry was logged on (integer, can be null)
+- pill_day_phase: which phase of the pack cycle (e.g., "Active pills", "Placebo pills", "Early active phase") (can be null)
 - Notes: free text observations
 
-${hormonalTreatment ? `The user is currently on: ${hormonalTreatment}${hormonalTreatmentStartDate ? `, started on ${hormonalTreatmentStartDate}` : ""}.` : "The user is not currently on hormonal treatment."}
+${hormonalTreatment ? `The user is currently on: ${hormonalTreatment}${hormonalTreatmentStartDate ? `, started on ${hormonalTreatmentStartDate}` : ""}. When analyzing, pay special attention to how symptoms correlate with pill_day and pill_day_phase — for example, many users on progestogen-only pills like Slinda experience increased moodiness in the early active phase (days 1-14).` : "The user is not currently on hormonal treatment."}
 
 Analyze this data for:
 1. **Trigger Correlations**: Which lifestyle factors (stress, coffee, alcohol, sleep, diet, etc.) correlate with higher pain levels? Be specific about which triggers affect which symptoms.

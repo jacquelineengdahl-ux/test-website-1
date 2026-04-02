@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { calculatePillDay, type PillDayInfo } from "@/lib/hormonal-treatments";
 
 /* ─── Pill Button Scale ─────────────────────────────────── */
 
@@ -167,9 +168,22 @@ function LogForm() {
 
   // Hormonal treatment from profile
   const [profileHormonalTreatment, setProfileHormonalTreatment] = useState("");
+  const [profileHormonalBrand, setProfileHormonalBrand] = useState("");
+  const [profileTreatmentStartDate, setProfileTreatmentStartDate] = useState("");
+  const [pillDayInfo, setPillDayInfo] = useState<PillDayInfo | null>(null);
 
   // Hormonal treatment note
   const [hormonalTreatmentNote, setHormonalTreatmentNote] = useState("");
+
+  // Calculate pill day whenever log date or treatment info changes
+  useEffect(() => {
+    if (profileHormonalTreatment && profileTreatmentStartDate && logDate) {
+      const info = calculatePillDay(profileHormonalTreatment, profileHormonalBrand, profileTreatmentStartDate, logDate);
+      setPillDayInfo(info);
+    } else {
+      setPillDayInfo(null);
+    }
+  }, [logDate, profileHormonalTreatment, profileHormonalBrand, profileTreatmentStartDate]);
 
   // Notes
   const [notes, setNotes] = useState("");
@@ -183,11 +197,21 @@ function LogForm() {
       // Fetch hormonal treatment from profile
       const { data: profile } = await supabase
         .from("profiles")
-        .select("hormonal_treatment")
+        .select("hormonal_treatment, hormonal_treatment_start_date")
         .eq("id", data.user.id)
         .maybeSingle();
       if (profile?.hormonal_treatment) {
-        setProfileHormonalTreatment(profile.hormonal_treatment);
+        const raw = profile.hormonal_treatment;
+        if (raw.includes(":")) {
+          const [cat, brand] = raw.split(":");
+          setProfileHormonalTreatment(cat);
+          setProfileHormonalBrand(brand);
+        } else {
+          setProfileHormonalTreatment(raw);
+        }
+        if (profile.hormonal_treatment_start_date) {
+          setProfileTreatmentStartDate(profile.hormonal_treatment_start_date);
+        }
       }
 
       if (editId) {
@@ -303,6 +327,8 @@ function LogForm() {
         return phases.length > 0 ? phases.join(",") : null;
       })(),
       hormonal_treatment_note: hormonalTreatmentNote || null,
+      pill_day: pillDayInfo?.day ?? null,
+      pill_day_phase: pillDayInfo?.phase.name ?? null,
       notes: notes || null,
     };
 
@@ -551,11 +577,27 @@ function LogForm() {
               })}
             </div>
             {cyclePhases.includes("on_hormonal_treatment") && profileHormonalTreatment && (
-              <p className="mt-3 rounded-xl bg-accent-green/[0.06] px-4 py-2.5 text-xs text-muted">
-                Currently: <span className="font-medium text-foreground">{profileHormonalTreatment}</span>
-                {" "}&middot;{" "}
-                <a href="/profile" className="text-accent-green underline">Update in profile</a>
-              </p>
+              <div className="mt-3 rounded-xl bg-accent-green/[0.06] px-4 py-2.5">
+                <p className="text-xs text-muted">
+                  Currently: <span className="font-medium text-foreground">{profileHormonalTreatment}{profileHormonalBrand ? ` · ${profileHormonalBrand}` : ""}</span>
+                  {" "}&middot;{" "}
+                  <a href="/profile" className="text-accent-green underline">Update in profile</a>
+                </p>
+                {pillDayInfo && (
+                  <div className="mt-2 rounded-lg bg-surface border border-border px-3 py-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-foreground">
+                        Day {pillDayInfo.day} of {pillDayInfo.totalDays}
+                        <span className="ml-2 text-xs text-muted">Pack #{pillDayInfo.packNumber}</span>
+                      </p>
+                      <span className="rounded-full bg-accent-green/15 border border-accent-green/30 px-2 py-0.5 text-[11px] font-medium text-foreground">
+                        {pillDayInfo.phase.name}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-muted">{pillDayInfo.phase.description}</p>
+                  </div>
+                )}
+              </div>
             )}
             {cyclePhases.includes("on_hormonal_treatment") && !profileHormonalTreatment && (
               <p className="mt-3 rounded-xl bg-accent-green/[0.06] px-4 py-2.5 text-xs text-muted">
