@@ -1558,7 +1558,7 @@ export default function OverviewPage() {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                      logs: entries,
+                      logs: filteredChronological,
                       hormonalTreatment: profileHormonalTreatment,
                       hormonalTreatmentStartDate: profileHormonalStartDate,
                     }),
