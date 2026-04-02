@@ -1816,21 +1816,6 @@ export default function ProfilePage() {
         >
           {treatmentLocked ? (
             <div className="space-y-4">
-              {/* Hormonal Treatment (locked) */}
-              {hormonalTreatment && (
-                <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Hormonal Treatment</p>
-                  <div className="rounded-xl border-2 border-accent-green bg-accent-green/[0.06] px-5 py-4">
-                    <p className="text-base font-medium text-foreground">
-                      {hormonalTreatment}{hormonalBrand && hormonalBrand !== "__other__" ? ` \u00B7 ${hormonalBrand}` : ""}
-                    </p>
-                    {hormonalTreatmentStartDate && (
-                      <p className="mt-1 text-sm text-muted">Started {formatDate(hormonalTreatmentStartDate)}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {/* Medical Treatment Plan (locked) */}
               {(treatmentPlanSelected.filter((s) => s !== "Other").length > 0 || treatmentPlanOther) && (
                 <div>
@@ -1845,6 +1830,21 @@ export default function ProfilePage() {
                       <span className="rounded-full bg-foreground px-3 py-1.5 text-sm text-surface">
                         {treatmentPlanOther}
                       </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Hormonal Treatment (locked) — only shown if "Hormonal therapy" is selected */}
+              {hormonalTreatment && treatmentPlanSelected.includes("Hormonal therapy") && (
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Hormonal Treatment</p>
+                  <div className="rounded-xl border-2 border-accent-green bg-accent-green/[0.06] px-5 py-4">
+                    <p className="text-base font-medium text-foreground">
+                      {hormonalTreatment}{hormonalBrand && hormonalBrand !== "__other__" ? ` \u00B7 ${hormonalBrand}` : ""}
+                    </p>
+                    {hormonalTreatmentStartDate && (
+                      <p className="mt-1 text-sm text-muted">Started {formatDate(hormonalTreatmentStartDate)}</p>
                     )}
                   </div>
                 </div>
@@ -1910,102 +1910,8 @@ export default function ProfilePage() {
             </div>
           ) : (
             <form onSubmit={handleSaveTreatment} className="space-y-3">
-              {/* Hormonal Treatment */}
-              <div>
-                <label htmlFor="hormonal-treatment" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Hormonal Treatment</label>
-                <select
-                  id="hormonal-treatment"
-                  value={hormonalTreatment}
-                  onChange={(e) => {
-                    setHormonalTreatment(e.target.value);
-                    setHormonalBrand("");
-                    if (!e.target.value) setHormonalTreatmentStartDate("");
-                  }}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-                >
-                  <option value="">None / not currently on treatment</option>
-                  {hormonalTreatments.filter(t => t.value !== "Other hormonal treatment").map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                  <option value="Other hormonal treatment">Other hormonal treatment</option>
-                </select>
-
-                {/* Step 2: Brand selector */}
-                {hormonalTreatment && (
-                  <div className="mt-3">
-                    <label htmlFor="hormonal-brand" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Specific Brand</label>
-                    {brandOptions.length > 0 ? (
-                      <select
-                        id="hormonal-brand"
-                        value={hormonalBrand}
-                        onChange={(e) => setHormonalBrand(e.target.value)}
-                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-                      >
-                        <option value="">Select brand...</option>
-                        {brandOptions.map((brand) => (
-                          <option key={brand} value={brand}>{brand}</option>
-                        ))}
-                        <option value="__other__">Other</option>
-                      </select>
-                    ) : (
-                      <input
-                        id="hormonal-brand"
-                        type="text"
-                        value={hormonalBrand}
-                        onChange={(e) => setHormonalBrand(e.target.value)}
-                        placeholder="Enter brand or medication name..."
-                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-                      />
-                    )}
-                    {hormonalBrand === "__other__" && (
-                      <input
-                        type="text"
-                        value=""
-                        onChange={(e) => setHormonalBrand(e.target.value)}
-                        placeholder="Enter brand name..."
-                        className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-                      />
-                    )}
-                  </div>
-                )}
-
-                {hormonalTreatment && (
-                  <div className="mt-3">
-                    <label htmlFor="treatment-start-date" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Treatment Start Date</label>
-                    <input
-                      id="treatment-start-date"
-                      type="date"
-                      value={hormonalTreatmentStartDate}
-                      onChange={(e) => setHormonalTreatmentStartDate(e.target.value)}
-                      className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-                    />
-                  </div>
-                )}
-                {(() => {
-                  const info = getTreatmentInfo(hormonalTreatment);
-                  if (!info || info.commonSideEffects.length === 0) return null;
-                  return (
-                    <div className="mt-3 rounded-xl border border-accent-green/20 bg-accent-green/[0.04] px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Known Side Effects</p>
-                      <p className="text-xs text-muted mb-2">{info.description}</p>
-                      <ul className="space-y-0.5 text-xs text-muted">
-                        {info.commonSideEffects.map((se) => (
-                          <li key={se} className="flex items-start gap-1.5">
-                            <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-accent-green" />
-                            {se}
-                          </li>
-                        ))}
-                      </ul>
-                      {info.cycleInfo && (
-                        <p className="mt-2 text-xs text-accent-green/80">{info.cycleInfo}</p>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-
               {/* Medical Treatment Plan - pills */}
-              <div className="pt-6 border-t border-border mt-6">
+              <div>
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted">Medical Treatment Plan</label>
                 <CollapsiblePillSelector
                   options={MEDICAL_TREATMENT_OPTIONS}
@@ -2015,6 +1921,102 @@ export default function ProfilePage() {
                   onOtherChange={setTreatmentPlanOther}
                 />
               </div>
+
+              {/* Hormonal Treatment — only shown when "Hormonal therapy" is selected */}
+              {treatmentPlanSelected.includes("Hormonal therapy") && (
+                <div className="pt-6 border-t border-border mt-6">
+                  <label htmlFor="hormonal-treatment" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Hormonal Treatment</label>
+                  <select
+                    id="hormonal-treatment"
+                    value={hormonalTreatment}
+                    onChange={(e) => {
+                      setHormonalTreatment(e.target.value);
+                      setHormonalBrand("");
+                      if (!e.target.value) setHormonalTreatmentStartDate("");
+                    }}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                  >
+                    <option value="">Select treatment type...</option>
+                    {hormonalTreatments.filter(t => t.value !== "Other hormonal treatment").map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                    <option value="Other hormonal treatment">Other hormonal treatment</option>
+                  </select>
+
+                  {/* Step 2: Brand selector */}
+                  {hormonalTreatment && (
+                    <div className="mt-3">
+                      <label htmlFor="hormonal-brand" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Specific Brand</label>
+                      {brandOptions.length > 0 ? (
+                        <select
+                          id="hormonal-brand"
+                          value={hormonalBrand}
+                          onChange={(e) => setHormonalBrand(e.target.value)}
+                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                        >
+                          <option value="">Select brand...</option>
+                          {brandOptions.map((brand) => (
+                            <option key={brand} value={brand}>{brand}</option>
+                          ))}
+                          <option value="__other__">Other</option>
+                        </select>
+                      ) : (
+                        <input
+                          id="hormonal-brand"
+                          type="text"
+                          value={hormonalBrand}
+                          onChange={(e) => setHormonalBrand(e.target.value)}
+                          placeholder="Enter brand or medication name..."
+                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                        />
+                      )}
+                      {hormonalBrand === "__other__" && (
+                        <input
+                          type="text"
+                          value=""
+                          onChange={(e) => setHormonalBrand(e.target.value)}
+                          placeholder="Enter brand name..."
+                          className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {hormonalTreatment && (
+                    <div className="mt-3">
+                      <label htmlFor="treatment-start-date" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Treatment Start Date</label>
+                      <input
+                        id="treatment-start-date"
+                        type="date"
+                        value={hormonalTreatmentStartDate}
+                        onChange={(e) => setHormonalTreatmentStartDate(e.target.value)}
+                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                      />
+                    </div>
+                  )}
+                  {(() => {
+                    const info = getTreatmentInfo(hormonalTreatment);
+                    if (!info || info.commonSideEffects.length === 0) return null;
+                    return (
+                      <div className="mt-3 rounded-xl border border-accent-green/20 bg-accent-green/[0.04] px-4 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Known Side Effects</p>
+                        <p className="text-xs text-muted mb-2">{info.description}</p>
+                        <ul className="space-y-0.5 text-xs text-muted">
+                          {info.commonSideEffects.map((se) => (
+                            <li key={se} className="flex items-start gap-1.5">
+                              <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-accent-green" />
+                              {se}
+                            </li>
+                          ))}
+                        </ul>
+                        {info.cycleInfo && (
+                          <p className="mt-2 text-xs text-accent-green/80">{info.cycleInfo}</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
 
               {/* Supporting Treatment - pills */}
               <div className="pt-6 border-t border-border mt-6">
