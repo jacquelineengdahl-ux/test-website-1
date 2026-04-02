@@ -44,6 +44,24 @@ function timeToDiagnosis(symptomDate: string, diagDate: string): string | null {
   return parts.length > 0 ? parts.join(", ") : "Less than a month";
 }
 
+function diagnosisEmpathyMessage(symptomYear: string, diagYear: string): string | null {
+  if (!symptomYear || !diagYear) return null;
+  const years = Number(diagYear) - Number(symptomYear);
+  if (years <= 0) return null;
+  if (years <= 2) return "Faster than most — but that doesn't mean it was easy.";
+  if (years <= 6) return "Time spent searching for answers. That takes persistence.";
+  if (years <= 10) return "Unfortunately, this is the average time for diagnosis. It should not have to take this long. Living with uncertainty for that long takes endurance.";
+  return "Far longer than it should ever take. You deserved answers much sooner.";
+}
+
+const ENDO_STAGES: { value: string; label: string; description: string }[] = [
+  { value: "Stage I", label: "Stage I — Minimal", description: "Small lesions or implants on or around organs in the pelvis. Little to no scar tissue." },
+  { value: "Stage II", label: "Stage II — Mild", description: "More and slightly deeper implants than Stage I. Some scar tissue may be present." },
+  { value: "Stage III", label: "Stage III — Moderate", description: "Many deep implants, small cysts on one or both ovaries, and bands of scar tissue (adhesions)." },
+  { value: "Stage IV", label: "Stage IV — Severe", description: "Widespread deep implants, large cysts on ovaries, and dense adhesions affecting organs." },
+  { value: "Not sure", label: "Not sure", description: "You may not have had a laparoscopy yet, or your stage wasn't communicated to you." },
+];
+
 function extractYear(dateStr: string): string {
   if (!dateStr) return "";
   const match = dateStr.match(/^(\d{4})/);
@@ -671,6 +689,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Endo state
+  const [diagnosisStatus, setDiagnosisStatus] = useState<"" | "diagnosed" | "suspected" | "no">("");
   const [firstSymptomYear, setFirstSymptomYear] = useState("");
   const [diagnosisYear, setDiagnosisYear] = useState("");
   const [endoStage, setEndoStage] = useState("");
@@ -750,6 +769,13 @@ export default function ProfilePage() {
         setFirstSymptomYear(extractYear(profile.first_symptom_date ?? ""));
         setDiagnosisYear(extractYear(profile.diagnosis_date ?? ""));
         setEndoStage(profile.endo_stage ?? "");
+
+        // Infer diagnosis status from existing data
+        if (profile.diagnosis_date || profile.endo_stage) {
+          setDiagnosisStatus("diagnosed");
+        } else if (profile.first_symptom_date) {
+          setDiagnosisStatus("suspected");
+        }
 
         // Parse hormonal treatment: may be "Category:Brand"
         const rawHormonal = profile.hormonal_treatment ?? "";
@@ -968,6 +994,7 @@ export default function ProfilePage() {
       setError(upsertError.message);
     } else {
       setMedicalLocked(true);
+      showSavedToast();
       if (isWelcome) {
         setOpenSections(new Set(["treatment"]));
       }
@@ -1255,8 +1282,9 @@ export default function ProfilePage() {
 
   const filledEvents = medicalEvents.filter((e) => e.year || e.type);
   const medicalSubtitle = [
+    diagnosisStatus === "diagnosed" ? "Diagnosed" : diagnosisStatus === "suspected" ? "Suspected" : "",
     endoStage,
-    diagnosisYear ? `Diagnosed ${diagnosisYear}` : "",
+    diagnosisYear && diagnosisStatus === "diagnosed" ? `${diagnosisYear}` : "",
     filledEvents.length > 0 ? `${filledEvents.length} event${filledEvents.length === 1 ? "" : "s"}` : "",
   ].filter(Boolean).join(" \u00B7 ") || undefined;
 
@@ -1427,37 +1455,64 @@ export default function ProfilePage() {
           onEdit={medicalLocked ? () => setMedicalLocked(false) : undefined}
         >
           {medicalLocked ? (
-            <div className="space-y-4">
-              {/* Year highlights side by side */}
-              {(firstSymptomYear || diagnosisYear) && (
-                <div className="grid grid-cols-2 gap-3">
-                  {firstSymptomYear && (
-                    <div className="rounded-xl border border-border bg-background px-4 py-3 text-center">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">First symptom</p>
-                      <p className="text-2xl font-serif font-semibold text-foreground">{firstSymptomYear}</p>
-                    </div>
-                  )}
-                  {diagnosisYear && (
-                    <div className="rounded-xl border border-border bg-background px-4 py-3 text-center">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Diagnosis</p>
-                      <p className="text-2xl font-serif font-semibold text-foreground">{diagnosisYear}</p>
+            <div className="space-y-3">
+              {/* Diagnosis status */}
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">Diagnosis status</p>
+                <p className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">
+                  {diagnosisStatus === "diagnosed" ? "Diagnosed with endometriosis" :
+                   diagnosisStatus === "suspected" ? "Suspected endometriosis (not yet diagnosed)" :
+                   diagnosisStatus === "no" ? "Not diagnosed" :
+                   <span className="text-muted">Not set</span>}
+                </p>
+              </div>
+              {/* Years + time to diagnosis side by side */}
+              {(firstSymptomYear || (diagnosisYear && diagnosisStatus === "diagnosed")) && (
+                <div className="flex gap-3">
+                  {/* Left: year fields stacked */}
+                  <div className="flex-1 space-y-3">
+                    {firstSymptomYear && (
+                      <div>
+                        <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">Year symptoms started</p>
+                        <p className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">{firstSymptomYear}</p>
+                      </div>
+                    )}
+                    {diagnosisYear && diagnosisStatus === "diagnosed" && (
+                      <div>
+                        <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">Year of diagnosis</p>
+                        <p className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">{diagnosisYear}</p>
+                      </div>
+                    )}
+                  </div>
+                  {/* Right: time to diagnosis — aligned with the white boxes, not the labels */}
+                  {ttd && diagnosisStatus === "diagnosed" && (
+                    <div className="flex-1 mt-5 rounded-xl border-2 border-accent-green bg-accent-green/[0.04] px-4 py-3 flex flex-col justify-center">
+                      <p className="flex items-center gap-1.5 text-foreground">
+                        <svg className="h-4 w-4 shrink-0 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        </svg>
+                        <span className="text-lg font-serif font-semibold">{ttd}</span>
+                        <span className="text-sm">to diagnosis</span>
+                      </p>
+                      {diagnosisEmpathyMessage(firstSymptomYear, diagnosisYear) && (
+                        <p className="mt-1.5 text-xs text-muted italic">{diagnosisEmpathyMessage(firstSymptomYear, diagnosisYear)}</p>
+                      )}
                     </div>
                   )}
                 </div>
               )}
-              {/* Time to diagnosis accent box */}
-              {ttd && (
-                <div className="rounded-xl border-2 border-accent-green bg-accent-green/[0.06] px-5 py-4 text-center">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Time to diagnosis</p>
-                  <p className="text-2xl font-serif font-semibold text-foreground">{ttd}</p>
-                </div>
-              )}
-              {/* Endo stage pill */}
-              {endoStage && (
+              {/* Endo stage */}
+              {endoStage && diagnosisStatus === "diagnosed" && (
                 <div>
-                  <span className="inline-block rounded-full bg-foreground/10 px-3 py-1 text-sm font-medium text-foreground">
-                    {endoStage}
-                  </span>
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">Endo stage</p>
+                  <div className="rounded-xl border border-border bg-background px-4 py-3">
+                    <p className="text-sm font-medium text-foreground">{ENDO_STAGES.find((s) => s.value === endoStage)?.label || endoStage}</p>
+                    {(() => {
+                      const stage = ENDO_STAGES.find((s) => s.value === endoStage);
+                      if (!stage) return null;
+                      return <p className="mt-1 text-xs text-muted">{stage.description}</p>;
+                    })()}
+                  </div>
                 </div>
               )}
               {/* Medical events timeline (locked view) */}
@@ -1498,11 +1553,48 @@ export default function ProfilePage() {
             </div>
           ) : (
             <form onSubmit={handleSaveMedicalBackground} className="space-y-3">
-              {/* Year inputs side by side */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Diagnosis status */}
+              <div>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted">
+                  Have you been diagnosed with endometriosis?
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { value: "diagnosed", label: "Yes, diagnosed" },
+                    { value: "suspected", label: "Suspected, not yet diagnosed" },
+                    { value: "no", label: "No diagnosis" },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setDiagnosisStatus(opt.value)}
+                      className={`rounded-full px-4 py-2 text-sm transition-colors ${
+                        diagnosisStatus === opt.value
+                          ? "bg-foreground text-surface"
+                          : "border border-border text-foreground hover:bg-background"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                {diagnosisStatus === "suspected" && (
+                  <p className="mt-2 rounded-xl bg-accent-green/[0.06] px-4 py-2.5 text-xs text-muted">
+                    You don&apos;t need a diagnosis to track your symptoms. This app is here to help you understand your body and collect data for your healthcare providers.
+                  </p>
+                )}
+                {diagnosisStatus === "no" && (
+                  <p className="mt-2 rounded-xl bg-accent-green/[0.06] px-4 py-2.5 text-xs text-muted">
+                    Tracking your symptoms can be valuable even without a diagnosis. Your data can help you identify patterns and support conversations with your doctor.
+                  </p>
+                )}
+              </div>
+
+              {/* Year of first symptom — always shown if any status selected */}
+              {diagnosisStatus && (
                 <div>
                   <label htmlFor="first-symptom-year" className="mb-1 flex items-center text-xs font-semibold uppercase tracking-wider text-muted">
-                    Year of first symptom
+                    Year symptoms started
                     <Tooltip text="You don't need to know exactly, but if you remember when you first started having issues, enter that year." />
                   </label>
                   <input
@@ -1516,46 +1608,62 @@ export default function ProfilePage() {
                     className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
                   />
                 </div>
-                <div>
-                  <label htmlFor="diagnosis-year" className="mb-1 flex items-center text-xs font-semibold uppercase tracking-wider text-muted">
-                    Year of diagnosis
-                    <Tooltip text="The year you received your endometriosis diagnosis." />
-                  </label>
-                  <input
-                    id="diagnosis-year"
-                    type="number"
-                    min="1950"
-                    max={new Date().getFullYear()}
-                    value={diagnosisYear}
-                    onChange={(e) => setDiagnosisYear(e.target.value)}
-                    placeholder="e.g. 2020"
-                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-                  />
-                </div>
-              </div>
-              {/* Time to diagnosis highlight box */}
-              {ttd && (
-                <div className="rounded-xl border-2 border-accent-green bg-accent-green/[0.06] px-5 py-4 text-center">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Time to diagnosis</p>
-                  <p className="text-2xl font-serif font-semibold text-foreground">{ttd}</p>
-                </div>
               )}
-              <div>
-                <label htmlFor="endo-stage" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Endo stage</label>
-                <select
-                  id="endo-stage"
-                  value={endoStage}
-                  onChange={(e) => setEndoStage(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
-                >
-                  <option value="">Select...</option>
-                  <option value="Stage I">Stage I</option>
-                  <option value="Stage II">Stage II</option>
-                  <option value="Stage III">Stage III</option>
-                  <option value="Stage IV">Stage IV</option>
-                  <option value="Not sure">Not sure</option>
-                </select>
-              </div>
+
+              {/* Diagnosis-specific fields */}
+              {diagnosisStatus === "diagnosed" && (
+                <>
+                  <div>
+                    <label htmlFor="diagnosis-year" className="mb-1 flex items-center text-xs font-semibold uppercase tracking-wider text-muted">
+                      Year of diagnosis
+                      <Tooltip text="The year you received your endometriosis diagnosis." />
+                    </label>
+                    <input
+                      id="diagnosis-year"
+                      type="number"
+                      min="1950"
+                      max={new Date().getFullYear()}
+                      value={diagnosisYear}
+                      onChange={(e) => setDiagnosisYear(e.target.value)}
+                      placeholder="e.g. 2020"
+                      className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                    />
+                  </div>
+                  {/* Time to diagnosis highlight box */}
+                  {ttd && (
+                    <div className="rounded-xl border-2 border-accent-green bg-accent-green/[0.06] px-5 py-4 text-center">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Time to diagnosis</p>
+                      <p className="text-2xl font-serif font-semibold text-foreground">{ttd}</p>
+                      {diagnosisEmpathyMessage(firstSymptomYear, diagnosisYear) && (
+                        <p className="mt-2 text-sm text-muted italic">{diagnosisEmpathyMessage(firstSymptomYear, diagnosisYear)}</p>
+                      )}
+                    </div>
+                  )}
+                  <div>
+                    <label htmlFor="endo-stage" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">Endo stage</label>
+                    <select
+                      id="endo-stage"
+                      value={endoStage}
+                      onChange={(e) => setEndoStage(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:border-accent-green focus:outline-none"
+                    >
+                      <option value="">Select...</option>
+                      {ENDO_STAGES.map((s) => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </select>
+                    {endoStage && (() => {
+                      const stage = ENDO_STAGES.find((s) => s.value === endoStage);
+                      if (!stage) return null;
+                      return (
+                        <p className="mt-2 rounded-xl bg-accent-green/[0.04] border border-accent-green/20 px-4 py-2.5 text-xs text-muted">
+                          {stage.description}
+                        </p>
+                      );
+                    })()}
+                  </div>
+                </>
+              )}
 
               {/* Medical Events Timeline (edit mode) */}
               <div className="pt-6 border-t border-border mt-6">
