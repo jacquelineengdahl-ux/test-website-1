@@ -862,6 +862,7 @@ export default function ProfilePage() {
         setSupportingOther(st.other);
         setSupportingSubSelections(st.subSelections);
 
+        setAvatarUrl(profile.avatar_url ?? "");
         setHealthcareProviders(profile.healthcare_providers ?? []);
         setProvidersLocked((profile.healthcare_providers ?? []).length > 0);
 
