@@ -81,12 +81,14 @@ interface Provider {
 
 interface MedicalEvent {
   year: string;
+  month: string;
   type: string;
   notes: string;
 }
 
 const MEDICAL_EVENT_TYPES = [
-  "ER visit", "Cyst rupture", "Surgery", "Hospital stay", "Specialist visit", "Other",
+  "ER Visit", "Cyst Rupture", "Surgery", "Hospital Stay", "Specialist Visit",
+  "GP Visit", "Symptoms", "Side Effects", "Quality of Life", "Treatment", "Other",
 ];
 
 const MEDICAL_TREATMENT_OPTIONS = [
@@ -983,10 +985,20 @@ export default function ProfilePage() {
       updated_at: new Date().toISOString(),
     });
 
+    // Auto-sort events chronologically (newest first) before saving
+    const sorted = [...medicalEvents]
+      .filter((e) => e.year || e.type || e.notes)
+      .sort((a, b) => {
+        const yDiff = Number(b.year || 0) - Number(a.year || 0);
+        if (yDiff !== 0) return yDiff;
+        return Number(b.month || 0) - Number(a.month || 0);
+      });
+    setMedicalEvents(sorted);
+
     // Save medical events to localStorage
     // TODO: Migrate to DB column `medical_events` (jsonb) — needs Supabase migration
     if (userId) {
-      localStorage.setItem(`medical_events_${userId}`, JSON.stringify(medicalEvents));
+      localStorage.setItem(`medical_events_${userId}`, JSON.stringify(sorted));
     }
 
     setSavingMedical(false);
@@ -1085,7 +1097,7 @@ export default function ProfilePage() {
 
   // ── Medical events helpers ──
   function addMedicalEvent() {
-    setMedicalEvents([...medicalEvents, { year: "", type: "", notes: "" }]);
+    setMedicalEvents([...medicalEvents, { year: "", month: "", type: "", notes: "" }]);
   }
 
   function updateMedicalEvent(index: number, field: keyof MedicalEvent, value: string) {
@@ -1283,9 +1295,9 @@ export default function ProfilePage() {
   const filledEvents = medicalEvents.filter((e) => e.year || e.type);
   const medicalSubtitle = [
     diagnosisStatus === "diagnosed" ? "Diagnosed" : diagnosisStatus === "suspected" ? "Suspected" : "",
-    endoStage,
     diagnosisYear && diagnosisStatus === "diagnosed" ? `${diagnosisYear}` : "",
-    filledEvents.length > 0 ? `${filledEvents.length} event${filledEvents.length === 1 ? "" : "s"}` : "",
+    endoStage,
+    filledEvents.length > 0 ? `${filledEvents.length} Recorded Medical Event${filledEvents.length === 1 ? "" : "s"}` : "",
   ].filter(Boolean).join(" \u00B7 ") || undefined;
 
   const activeGoals = treatmentGoals.filter((g) => g.trim());
@@ -1515,34 +1527,59 @@ export default function ProfilePage() {
                   </div>
                 </div>
               )}
-              {/* Medical events timeline (locked view) */}
+              {/* Medical events timeline (locked view) — grouped by year */}
               {(() => {
+                const MONTH_NAMES = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
                 const sortedEvents = [...medicalEvents]
                   .filter((e) => e.year || e.type)
-                  .sort((a, b) => Number(b.year || 0) - Number(a.year || 0));
+                  .sort((a, b) => {
+                    const yDiff = Number(b.year || 0) - Number(a.year || 0);
+                    if (yDiff !== 0) return yDiff;
+                    return Number(b.month || 0) - Number(a.month || 0);
+                  });
                 if (sortedEvents.length === 0) return null;
+                // Group by year
+                const grouped: { year: string; events: MedicalEvent[] }[] = [];
+                for (const event of sortedEvents) {
+                  const y = event.year || "?";
+                  const last = grouped[grouped.length - 1];
+                  if (last && last.year === y) {
+                    last.events.push(event);
+                  } else {
+                    grouped.push({ year: y, events: [event] });
+                  }
+                }
                 return (
                   <div className="pt-4 border-t border-border">
                     <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Medical Events</p>
                     <div className="relative pl-6">
-                      {/* Vertical timeline line */}
                       <div className="absolute left-[7px] top-1 bottom-1 w-px bg-border" />
-                      <div className="space-y-4">
-                        {sortedEvents.map((event, i) => (
-                          <div key={i} className="relative">
-                            {/* Timeline dot */}
+                      <div className="space-y-5">
+                        {grouped.map((group) => (
+                          <div key={group.year} className="relative">
                             <div className="absolute -left-6 top-1 h-3.5 w-3.5 rounded-full border-2 border-accent-green bg-surface" />
-                            <div className="flex items-baseline gap-3">
-                              <span className="font-serif text-lg font-semibold text-foreground shrink-0">{event.year || "?"}</span>
-                              {event.type && (
-                                <span className="rounded-full bg-accent-green/15 border border-accent-green/30 px-2 py-0.5 text-[11px] font-medium text-foreground shrink-0">
-                                  {event.type}
-                                </span>
-                              )}
+                            <p className="font-serif text-lg font-semibold text-foreground">{group.year}</p>
+                            <div className="mt-1.5 space-y-2">
+                              {group.events.map((event, j) => (
+                                <div key={j} className="flex items-start gap-2">
+                                  {event.month && (
+                                    <span className="w-8 shrink-0 text-xs text-muted">{MONTH_NAMES[Number(event.month)]}</span>
+                                  )}
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      {event.type && (
+                                        <span className="rounded-full bg-accent-green/15 border border-accent-green/30 px-2 py-0.5 text-[11px] font-medium text-foreground">
+                                          {event.type}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {event.notes && (
+                                      <p className="mt-0.5 text-sm text-muted">{event.notes}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                            {event.notes && (
-                              <p className="mt-0.5 text-sm text-muted">{event.notes}</p>
-                            )}
                           </div>
                         ))}
                       </div>
@@ -1675,7 +1712,7 @@ export default function ProfilePage() {
                     {medicalEvents.map((event, i) => (
                       <div key={i} className="flex items-start gap-2">
                         <div className="flex-1 space-y-1">
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-3 gap-2">
                             <input
                               type="number"
                               min="1950"
@@ -1685,6 +1722,16 @@ export default function ProfilePage() {
                               placeholder="Year"
                               className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-accent-green focus:outline-none"
                             />
+                            <select
+                              value={event.month}
+                              onChange={(e) => updateMedicalEvent(i, "month", e.target.value)}
+                              className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-accent-green focus:outline-none"
+                            >
+                              <option value="">Month (optional)</option>
+                              {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m, idx) => (
+                                <option key={m} value={String(idx + 1)}>{m}</option>
+                              ))}
+                            </select>
                             <select
                               value={event.type}
                               onChange={(e) => updateMedicalEvent(i, "type", e.target.value)}
@@ -1704,34 +1751,14 @@ export default function ProfilePage() {
                             className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-accent-green focus:outline-none"
                           />
                         </div>
-                        <div className="flex flex-col items-center gap-0.5 mt-1">
-                          <button
-                            type="button"
-                            onClick={() => moveMedicalEvent(i, "up")}
-                            disabled={i === 0}
-                            className="rounded p-0.5 text-muted hover:text-foreground disabled:opacity-30"
-                            title="Move up"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 4l4 4H4l4-4z" fill="currentColor"/></svg>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => moveMedicalEvent(i, "down")}
-                            disabled={i === medicalEvents.length - 1}
-                            className="rounded p-0.5 text-muted hover:text-foreground disabled:opacity-30"
-                            title="Move down"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 12l4-4H4l4 4z" fill="currentColor"/></svg>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removeMedicalEvent(i)}
-                            className="rounded p-0.5 text-muted hover:text-red-600"
-                            title="Remove"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeMedicalEvent(i)}
+                          className="mt-2 shrink-0 rounded p-1 text-muted hover:text-red-600"
+                          title="Remove"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                        </button>
                       </div>
                     ))}
                   </div>
