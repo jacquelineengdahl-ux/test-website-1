@@ -105,20 +105,20 @@ const SUPPORTING_TREATMENT_OPTIONS = [
 ];
 
 const COMPLEMENTARY_DESCRIPTIONS: Record<string, string> = {
-  "Supplements": "Support hormone balance and reduce inflammation naturally",
-  "Anti-inflammatory diet": "Reduce systemic inflammation through targeted nutrition",
+  "Supplements": "Can support hormone balance and may help reduce inflammation naturally",
+  "Anti-inflammatory diet": "Can help reduce systemic inflammation through targeted nutrition",
   "Gluten-free diet": "May reduce bloating and inflammatory response in some women",
-  "Exercise": "Improves circulation, mood, and can reduce pain severity. Includes yoga for gentle movement and pelvic health",
-  "Meditation": "Reduces stress hormones and helps manage chronic pain perception",
-  "Acupuncture": "May reduce pelvic pain, improve blood flow and support hormonal balance",
-  "Physiotherapy": "Targeted exercises to strengthen core and manage musculoskeletal pain",
-  "CBD": "May reduce pelvic pain, calm the nervous system and ease inflammation",
-  "Heat therapy": "Relaxes pelvic muscles and increases blood flow to reduce cramping",
-  "TENS machine": "Electrical nerve stimulation to block pain signals and provide relief",
-  "Sleep hygiene": "Quality sleep supports hormone regulation and tissue repair",
-  "Stress management": "Chronic stress worsens inflammation — managing it supports healing",
-  "Counseling/Therapy": "Emotional support for the mental health impact of chronic illness",
-  "Pelvic floor therapy": "Specialist therapy to release tension and restore pelvic function",
+  "Exercise": "Can improve circulation and mood, and may help reduce pain severity. Includes yoga for gentle movement and pelvic health",
+  "Meditation": "Can help reduce stress hormones and may support chronic pain management",
+  "Acupuncture": "May help reduce pelvic pain, improve blood flow and support hormonal balance",
+  "Physiotherapy": "Can help strengthen core muscles and may support musculoskeletal pain management",
+  "CBD": "May help reduce pelvic pain, can calm the nervous system and ease inflammation",
+  "Heat therapy": "Can help relax pelvic muscles and may increase blood flow to reduce cramping",
+  "TENS machine": "Can help block pain signals through electrical nerve stimulation",
+  "Sleep hygiene": "Quality sleep can support hormone regulation and tissue repair",
+  "Stress management": "Chronic stress can worsen inflammation — managing it may support healing",
+  "Counseling/Therapy": "Can provide emotional support for the mental health impact of chronic illness",
+  "Pelvic floor therapy": "Can help release tension and may support restoring pelvic function",
 };
 
 const GOAL_OPTIONS = [
@@ -1904,7 +1904,12 @@ export default function ProfilePage() {
                                 <span className="text-muted"> — {subs.join(", ")}</span>
                               )}
                             </p>
-                            {desc && <p className="mt-0.5 text-xs text-muted">{desc}</p>}
+                            {desc && (
+                              <p className="mt-0.5 text-xs text-muted">
+                                <span className="inline-block rounded bg-accent-green/10 px-1 py-0.5 text-[9px] uppercase tracking-wider text-accent-green mr-1">AI</span>
+                                {desc}
+                              </p>
+                            )}
                           </div>
                         </li>
                       );
