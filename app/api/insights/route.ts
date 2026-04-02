@@ -24,6 +24,7 @@ The data contains daily logs with these fields (all scored 0-10 unless noted):
 - hormonal_treatment_note: free text observations about hormonal treatment side effects or patterns (can be null)
 - pill_day: which day of the hormonal treatment pack/cycle this entry was logged on (integer, can be null)
 - pill_day_phase: which phase of the pack cycle (e.g., "Active pills", "Placebo pills", "Early active phase") (can be null)
+- side_effects_today: comma-separated list of hormonal treatment side effects the user experienced that day (e.g., "Mood changes, Headaches, Spotting") (can be null)
 - Notes: free text observations
 
 ${hormonalTreatment ? `The user is currently on: ${hormonalTreatment}${hormonalTreatmentStartDate ? `, started on ${hormonalTreatmentStartDate}` : ""}. When analyzing, pay special attention to how symptoms correlate with pill_day and pill_day_phase — for example, many users on progestogen-only pills like Slinda experience increased moodiness in the early active phase (days 1-14).` : "The user is not currently on hormonal treatment."}
@@ -31,7 +32,7 @@ ${hormonalTreatment ? `The user is currently on: ${hormonalTreatment}${hormonalT
 Analyze this data for:
 1. **Trigger Correlations**: Which lifestyle factors (stress, coffee, alcohol, sleep, diet, etc.) correlate with higher pain levels? Be specific about which triggers affect which symptoms.
 2. **Cycle Phase Patterns**: How do symptoms vary across cycle phases? Which phases tend to be worst?
-3. **Hormonal Treatment Impact**: How do symptoms relate to the hormonal treatment? Look at hormonal_treatment_note entries for the user's own observations. If treatment start date is available, compare before/after patterns.
+3. **Hormonal Treatment Impact**: How do symptoms relate to the hormonal treatment? Look at hormonal_treatment_note entries for the user's own observations. Analyze side_effects_today to find patterns — which side effects cluster together, which correlate with specific pill days or pack phases, and whether certain side effects are improving or worsening over time. If treatment start date is available, compare before/after patterns.
 4. **Trends**: Are symptoms improving, worsening, or stable over time?
 5. **Key Observations**: Any notable patterns the user should be aware of.
 

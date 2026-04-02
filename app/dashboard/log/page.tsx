@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { calculatePillDay, type PillDayInfo } from "@/lib/hormonal-treatments";
+import { calculatePillDay, getTreatmentInfo, type PillDayInfo } from "@/lib/hormonal-treatments";
 
 /* ─── Pill Button Scale ─────────────────────────────────── */
 
@@ -177,6 +177,9 @@ function LogForm() {
   // Hormonal treatment note
   const [hormonalTreatmentNote, setHormonalTreatmentNote] = useState("");
 
+  // Side effects today
+  const [sideEffectsToday, setSideEffectsToday] = useState<string[]>([]);
+
   // Calculate pill day whenever log date or treatment info changes
   // Uses current pack start date (not treatment start date) for accuracy
   useEffect(() => {
@@ -270,6 +273,7 @@ function LogForm() {
         setSleep(entry.sleep);
         setNotes(entry.notes ?? "");
         setHormonalTreatmentNote(entry.hormonal_treatment_note ?? "");
+        setSideEffectsToday(entry.side_effects_today ? entry.side_effects_today.split(", ") : []);
 
         // Parse cycle_phase
         if (entry.cycle_phase) {
@@ -342,6 +346,7 @@ function LogForm() {
       hormonal_treatment_note: hormonalTreatmentNote || null,
       pill_day: pillDayInfo?.day ?? null,
       pill_day_phase: pillDayInfo?.phase.name ?? null,
+      side_effects_today: sideEffectsToday.length > 0 ? sideEffectsToday.join(", ") : null,
       notes: notes || null,
     };
 
@@ -618,6 +623,49 @@ function LogForm() {
                 <a href="/profile" className="text-accent-green underline">Add it in profile</a>
               </p>
             )}
+            {cyclePhases.includes("on_hormonal_treatment") && profileHormonalTreatment && (() => {
+              const treatmentInfo = getTreatmentInfo(profileHormonalTreatment);
+              const knownEffects = treatmentInfo?.commonSideEffects?.map((se) => se.replace(/\s*\(.*?\)\s*/g, "").trim()) ?? [];
+              // Add universal side effects if not already present
+              const universals = ["Breakthrough bleeding", "Spotting"];
+              const allEffects = [...knownEffects];
+              universals.forEach((u) => {
+                if (!allEffects.some((e) => e.toLowerCase() === u.toLowerCase())) {
+                  allEffects.push(u);
+                }
+              });
+              if (allEffects.length === 0) return null;
+              return (
+                <div className="mt-3">
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted">Side effects today?</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {allEffects.map((effect) => {
+                      const isSelected = sideEffectsToday.includes(effect);
+                      return (
+                        <button
+                          key={effect}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setSideEffectsToday(sideEffectsToday.filter((e) => e !== effect));
+                            } else {
+                              setSideEffectsToday([...sideEffectsToday, effect]);
+                            }
+                          }}
+                          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                            isSelected
+                              ? "bg-accent-clay/20 text-accent-clay ring-1 ring-accent-clay/30"
+                              : "bg-background text-muted hover:bg-foreground/[0.04] hover:text-foreground"
+                          }`}
+                        >
+                          {effect}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
             {cyclePhases.includes("on_hormonal_treatment") && (
               <div className="mt-3">
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">

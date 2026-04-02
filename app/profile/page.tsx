@@ -763,6 +763,9 @@ export default function ProfilePage() {
   // Medical events state (stored in localStorage until DB column is added)
   const [medicalEvents, setMedicalEvents] = useState<MedicalEvent[]>([]);
 
+  // Noticed side effects (stored in localStorage)
+  const [noticedSideEffects, setNoticedSideEffects] = useState<{ name: string; when: string }[]>([]);
+
   // Accordion state (multi-open)
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
 
@@ -922,6 +925,17 @@ export default function ProfilePage() {
         if (packStart) setCurrentPackStartDate(packStart);
         const packLen = localStorage.getItem(`pack_length_${uid}`);
         if (packLen) setCustomPackLength(packLen);
+      } catch {
+        // Ignore
+      }
+
+      // Load noticed side effects from localStorage
+      try {
+        const storedEffects = localStorage.getItem(`noticed_side_effects_${uid}`);
+        if (storedEffects) {
+          const parsed = JSON.parse(storedEffects);
+          if (parsed.effects) setNoticedSideEffects(parsed.effects);
+        }
       } catch {
         // Ignore
       }
@@ -1117,6 +1131,7 @@ export default function ProfilePage() {
     if (userId) {
       localStorage.setItem(`pack_start_date_${userId}`, currentPackStartDate);
       localStorage.setItem(`pack_length_${userId}`, customPackLength);
+      localStorage.setItem(`noticed_side_effects_${userId}`, JSON.stringify({ effects: noticedSideEffects }));
     }
 
     setSavingTreatment(false);
@@ -1904,6 +1919,24 @@ export default function ProfilePage() {
                 </div>
               )}
 
+              {/* My Noticed Side Effects (locked) */}
+              {hormonalTreatment && treatmentPlanSelected.includes("Hormonal therapy") && noticedSideEffects.length > 0 && (
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">My Noticed Side Effects</p>
+                  <ul className="space-y-1">
+                    {noticedSideEffects.map((eff, i) => (
+                      <li key={`${eff.name}-${i}`} className="flex items-start gap-2 text-sm">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-clay" />
+                        <span>
+                          <span className="font-medium text-foreground">{eff.name}</span>
+                          {eff.when && <span className="text-muted"> — {eff.when}</span>}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {/* Complementary Care (locked) */}
               {(supportingSelected.filter((s) => s !== "Other").length > 0 || supportingOther) && (
                 <div>
@@ -2122,6 +2155,113 @@ export default function ProfilePage() {
                         </ul>
                         {info.cycleInfo && (
                           <p className="mt-2 text-xs text-accent-green/80">{info.cycleInfo}</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* My Noticed Side Effects */}
+                  {(() => {
+                    const info = getTreatmentInfo(hormonalTreatment);
+                    if (!info || info.commonSideEffects.length === 0) return null;
+                    const knownEffects = info.commonSideEffects;
+                    return (
+                      <div className="mt-3 rounded-xl border border-border bg-surface px-4 py-3 space-y-3">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted">My Noticed Side Effects</p>
+                        <p className="text-xs text-muted">Select the side effects you&apos;ve personally experienced:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {knownEffects.map((se) => {
+                            const shortLabel = se.replace(/\s*\(.*?\)\s*/g, "").trim();
+                            const isSelected = noticedSideEffects.some((n) => n.name === shortLabel);
+                            return (
+                              <button
+                                key={se}
+                                type="button"
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setNoticedSideEffects(noticedSideEffects.filter((n) => n.name !== shortLabel));
+                                  } else {
+                                    setNoticedSideEffects([...noticedSideEffects, { name: shortLabel, when: "" }]);
+                                  }
+                                }}
+                                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                                  isSelected
+                                    ? "bg-accent-clay/20 text-accent-clay ring-1 ring-accent-clay/30"
+                                    : "bg-background text-muted hover:bg-foreground/[0.04] hover:text-foreground"
+                                }`}
+                              >
+                                {shortLabel}
+                              </button>
+                            );
+                          })}
+                          {/* Other option */}
+                          {(() => {
+                            const isOtherSelected = noticedSideEffects.some((n) => !knownEffects.some((se) => se.replace(/\s*\(.*?\)\s*/g, "").trim() === n.name) && n.name !== "");
+                            const hasOtherEntry = noticedSideEffects.some((n) => n.name === "__other__" || (!knownEffects.some((se) => se.replace(/\s*\(.*?\)\s*/g, "").trim() === n.name)));
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (hasOtherEntry) return;
+                                  setNoticedSideEffects([...noticedSideEffects, { name: "", when: "" }]);
+                                }}
+                                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                                  isOtherSelected
+                                    ? "bg-accent-clay/20 text-accent-clay ring-1 ring-accent-clay/30"
+                                    : "bg-background text-muted hover:bg-foreground/[0.04] hover:text-foreground"
+                                }`}
+                              >
+                                + Other
+                              </button>
+                            );
+                          })()}
+                        </div>
+
+                        {/* When inputs for selected effects */}
+                        {noticedSideEffects.length > 0 && (
+                          <div className="space-y-2 border-t border-border pt-3">
+                            {noticedSideEffects.map((eff, i) => {
+                              const isCustom = !knownEffects.some((se) => se.replace(/\s*\(.*?\)\s*/g, "").trim() === eff.name);
+                              return (
+                                <div key={`${eff.name}-${i}`} className="flex items-center gap-2">
+                                  {isCustom ? (
+                                    <input
+                                      type="text"
+                                      value={eff.name}
+                                      onChange={(e) => {
+                                        const updated = [...noticedSideEffects];
+                                        updated[i] = { ...updated[i], name: e.target.value };
+                                        setNoticedSideEffects(updated);
+                                      }}
+                                      placeholder="Side effect name..."
+                                      className="w-1/3 rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-accent-green focus:outline-none"
+                                    />
+                                  ) : (
+                                    <span className="w-1/3 text-xs font-medium text-foreground truncate">{eff.name}</span>
+                                  )}
+                                  <input
+                                    type="text"
+                                    value={eff.when}
+                                    onChange={(e) => {
+                                      const updated = [...noticedSideEffects];
+                                      updated[i] = { ...updated[i], when: e.target.value };
+                                      setNoticedSideEffects(updated);
+                                    }}
+                                    placeholder="When? e.g. Day 1-14, First week, Random"
+                                    className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted/50 focus:border-accent-green focus:outline-none"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setNoticedSideEffects(noticedSideEffects.filter((_, j) => j !== i))}
+                                    className="rounded p-0.5 text-muted hover:text-red-600"
+                                    title="Remove"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
                         )}
                       </div>
                     );
